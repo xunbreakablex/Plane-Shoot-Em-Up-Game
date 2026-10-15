@@ -1,0 +1,207 @@
+{
+    "Commands": [
+        {
+            "Name": "god",
+            "Description": "Ölümsüzlük aç/kapat: mermi, temas ve yere çarpma hasar vermez",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "heal",
+            "Description": "Can, kalkan ve füzeleri doldurur",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "power",
+            "Description": "Silah güç seviyesini ayarlar (0-4)",
+            "TypeField": "Int",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "bombs",
+            "Description": "Bomba sayısını ayarlar (0-5)",
+            "TypeField": "Int",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "scrap",
+            "Description": "Hurda ekler",
+            "TypeField": "Int",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "stage",
+            "Description": "Aşamaya atlar (1-3)",
+            "TypeField": "Int",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "skipstage",
+            "Description": "Bu aşamayı bitirir (son aşamada oyunu kazanır)",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "boss",
+            "Description": "Boss çağırır: jet shark crab octopus zeppelin dragon",
+            "TypeField": "String",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "killall",
+            "Description": "Tüm düşmanları ve düşman mermilerini temizler",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "killboss",
+            "Description": "Aktif boss'u öldürür (ödül ve kilit açma çalışır)",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "bosshp",
+            "Description": "Aktif boss canını yüzde n yapar (faz geçişlerini denemek için)",
+            "TypeField": "Int",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "unlockall",
+            "Description": "Tüm hangar slotlarını açar",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "lockall",
+            "Description": "Slot kilitlerini sıfırlar (ilk oyun durumu)",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "slots",
+            "Description": "Slot kilit durumunu listeler",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "info",
+            "Description": "Savaş durumu, teorik DPS ve boss hasar ölçümü",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Close",
+            "Description": "Close console",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "System.Diagnostic",
+            "Description": "Toggle diagnostic tool",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "System.ProjectInfo",
+            "Description": "Prints project information",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Clear",
+            "Description": "Clear all logs from console",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Quit",
+            "Description": "Quit the game",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "GL.Wireframe",
+            "Description": "Toggle wireframe rendering",
+            "TypeField": "",
+            "Locked": true,
+            "StaticMethod": true
+        },
+        {
+            "Name": "GL.Culling",
+            "Description": "Toggle culling rendering",
+            "TypeField": "",
+            "Locked": true,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Screenshot",
+            "Description": "Takes a screenshot and saves it to the user's Pictures folder",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Help",
+            "Description": "Lists all available commands",
+            "TypeField": "",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Graphics.Quality",
+            "Description": "Set the quality level of the game",
+            "TypeField": "Int",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Graphics.VSync",
+            "Description": "Set the Vertical Sync count",
+            "TypeField": "Int",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "System.TimeScale",
+            "Description": "Set the time scale of the game",
+            "TypeField": "Float",
+            "Locked": true,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Graphics.FrameRate",
+            "Description": "Set the target frame rate of the game",
+            "TypeField": "Int",
+            "Locked": false,
+            "StaticMethod": true
+        },
+        {
+            "Name": "Graphics.FullScreen",
+            "Description": "Set the game to full screen or windowed mode",
+            "TypeField": "Bool",
+            "Locked": false,
+            "StaticMethod": true
+        }
+    ]
+}

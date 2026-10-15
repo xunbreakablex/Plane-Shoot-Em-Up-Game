@@ -1,0 +1,149 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+// Isaretli dusmanlar vurulunca dusen guclendirme: parlar, uzaktan gorunur, yakininda ucaga dogru akar.
+// Ucakla yaklasinca toplanir; toplanmazsa Lifetime sonunda kaybolur.
+public class PowerUp : MonoBehaviour
+{
+    public static readonly List<PowerUp> All = new List<PowerUp>();
+
+    public const float Lifetime = 30f;
+    public const float BaseMagnet = 55f;
+    public const float CollectRadius = 10f;
+
+    public Transform core;
+    public Transform glow;
+    public Renderer coreRenderer;
+    public Renderer glowRenderer;
+    public Material[] kindMaterials;
+
+    public static readonly Color[] KindColors =
+    {
+        new Color(1f, 0.7f, 0.15f),     // P - guc
+        new Color(0.35f, 0.75f, 1f),    // S - kalkan
+        new Color(1f, 0.4f, 0.35f),     // M - fuze
+        new Color(0.8f, 0.45f, 1f),     // B - bomba
+        new Color(0.4f, 1f, 0.5f)       // + - onarim
+    };
+
+    public static readonly string[] Letters = { "P", "S", "M", "B", "+" };
+    public static readonly string[] Names = { "GÜÇ", "KALKAN", "FÜZE", "BOMBA", "ONARIM" };
+
+    public PickupKind Kind { get; private set; }
+    public float Born { get; private set; }
+
+    private Vector3 drift;
+    private float seed;
+    private bool collected;
+
+    private static MaterialPropertyBlock block;
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+
+    public static PowerUp Spawn(PowerUp prefab, Vector3 position, PickupKind kind, Vector3 scatter)
+    {
+        if (prefab == null) return null;
+
+        PowerUp p = Instantiate(prefab, position, Quaternion.identity);
+        p.Setup(kind, scatter);
+        return p;
+    }
+
+    private void Setup(PickupKind kind, Vector3 scatter)
+    {
+        Kind = kind;
+        Born = Time.time;
+        seed = Random.value * 10f;
+        drift = scatter;
+
+        if (core != null) core.localScale = Vector3.one * 2.2f;
+
+        int i = (int)kind;
+        if (coreRenderer != null && kindMaterials != null && i < kindMaterials.Length && kindMaterials[i] != null)
+            coreRenderer.sharedMaterial = kindMaterials[i];
+
+        if (glowRenderer != null)
+        {
+            if (block == null) block = new MaterialPropertyBlock();
+            Color c = KindColors[i];
+            c.a = 0.85f;
+            glowRenderer.GetPropertyBlock(block);
+            block.SetColor(ColorId, c);
+            glowRenderer.SetPropertyBlock(block);
+        }
+    }
+
+    private void OnEnable() { All.Add(this); }
+    private void OnDisable() { All.Remove(this); }
+
+    private void Update()
+    {
+        if (GameState.Paused || collected) return;
+
+        float dt = Time.deltaTime;
+        float age = Time.time - Born;
+        if (age > Lifetime)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        CombatManager mgr = CombatManager.Instance;
+        Transform player = mgr != null ? mgr.PlayerTransform : null;
+        PlaneController plane = mgr != null && mgr.flight != null ? mgr.flight.Current : null;
+        bool alive = player != null && plane != null && !plane.IsCrashed;
+
+        float distToCam = 100f;
+        if (mgr != null && mgr.cam != null)
+        {
+            distToCam = Vector3.Distance(mgr.cam.transform.position, transform.position);
+            if (glow != null) glow.rotation = mgr.cam.transform.rotation;
+        }
+
+        if (alive)
+        {
+            Vector3 to = player.position - transform.position;
+            float d = to.magnitude;
+
+            if (d < CollectRadius)
+            {
+                Collect(mgr);
+                return;
+            }
+
+            float range = BaseMagnet * RunUpgrades.Mods.magnetMul;
+            if (d < range)
+            {
+                // Yaklastikca hizlanir; ucagin hizini da asar ki yakalayabilsin
+                float k = 1f - d / range;
+                float speed = Mathf.Lerp(30f, 100f, k) + mgr.PlayerSpeed * 0.95f;
+                transform.position += to / Mathf.Max(d, 0.01f) * Mathf.Min(speed * dt, d);
+                drift = Vector3.zero;
+            }
+        }
+
+        transform.position += drift * dt;
+        drift = Vector3.Lerp(drift, Vector3.zero, 2.2f * dt);
+
+        // Gorsel: donus, havada asili salinim, uzakta buyuyen parlama
+        if (core != null)
+        {
+            core.Rotate(0f, 160f * dt, 0f, Space.Self);
+            core.localPosition = new Vector3(0f, Mathf.Sin(Time.time * 3f + seed) * 0.8f, 0f);
+        }
+
+        if (glow != null)
+            glow.localScale = Vector3.one * 11f * Mathf.Clamp(distToCam / 110f, 0.8f, 4f);
+
+        // Omrunun sonunda yanip soner
+        bool blinkOff = age > Lifetime - 6f && Mathf.Sin(age * 22f) > 0.2f;
+        if (coreRenderer != null) coreRenderer.enabled = !blinkOff;
+        if (glowRenderer != null) glowRenderer.enabled = !blinkOff;
+    }
+
+    private void Collect(CombatManager mgr)
+    {
+        collected = true;
+        if (mgr != null) mgr.OnPickup(this);
+        Destroy(gameObject);
+    }
+}
