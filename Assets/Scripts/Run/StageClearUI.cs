@@ -117,13 +117,15 @@ public class StageClearUI : MonoBehaviour
         if (GUI.Button(new Rect(bx, by, bw, 44f), "HANGARA DÖN  (donanımı değiştir)", big))
         {
             // Kampanya (skor, guc, bomba, hurda, upgrade) hangardan sonra kaldigi yerden surer
-            RunState.PrepareContinue(Mathf.Min(RunState.Stage + 1, Stages.All.Length - 1));
+            PlayerHealth leaving = CombatManager.Instance != null ? CombatManager.Instance.CurrentPlayerHealth : null;
+            RunState.PrepareContinue(Mathf.Min(RunState.Stage + 1, Stages.All.Length - 1),
+                leaving != null ? leaving.HealthFraction : 1f);
             Close();
             SceneManager.LoadScene(GameScenes.Hangar);
         }
 
         Hud.Text(new Rect(0f, by + 58f, W, 22f),
-            "Sonraki aşamada canın yarı oranda onarılır, kalkan ve füzeler dolar.",
+            $"Sonraki aşamada (hangardan dönsen de) %{GameSettings.Current.stageClearHeal * 100f:0} onarım yapılır, kalkan ve füzeler dolar.",
             new Color(0.7f, 0.76f, 0.84f), 14, TextAnchor.MiddleCenter, false);
 
         Hud.End();

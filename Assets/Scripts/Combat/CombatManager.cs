@@ -289,7 +289,8 @@ public partial class CombatManager : MonoBehaviour
         switch (p.Kind)
         {
             case PickupKind.Power:
-                if (RunState.AddPower()) text = $"GÜÇ SEVİYE {RunState.PowerLevel + 1}!";
+                // HUD'da MaxPower+1 kutu var (seviye 0 = 1 kutu): bildirim de ayni 1 tabanli olcekte
+                if (RunState.AddPower()) text = $"GÜÇ SEVİYE {RunState.PowerLevel + 1}/{RunState.MaxPower + 1}!";
                 else { RunState.AddScore(2000); text = "GÜÇ MAKSİMUM  +2000"; }
                 break;
 

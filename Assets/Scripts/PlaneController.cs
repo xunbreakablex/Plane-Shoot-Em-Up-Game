@@ -152,8 +152,6 @@ public class PlaneController : MonoBehaviour
     private const float G = 9.81f;
     private const float AgileMax = 1.6f;        // dusuk hizda kaldirma artis siniri
     private const float DownGFraction = 0.75f;  // burun asagi azami G, yukari azami G'nin kesri
-    private const float ArcadeTurnGFraction = 0.85f; // A/D tam basista donus G'si = maxG'nin kesri
-    private const float ArcadeBankRate = 220f;       // A/D ile hedef yatisa gecis hizi siniri (derece/sn)
     private float liftK, dragK, stallSpeed;
 
     private float throttle = 0.5f;
@@ -636,7 +634,9 @@ public class PlaneController : MonoBehaviour
 
         // Arcade donusu (A/D): ucak hedef yatisa kendiliginden yatar ve o yatista irtifayi koruyacak kadar
         // G ceker (koordineli donus). Yatis girisle orantili; tam basista ~1/cos = ArcadeTurnG G'lik donus.
-        float turnGMax = Mathf.Max(1.5f, maxG * ArcadeTurnGFraction);
+        // Donus gucu ve yatis hizi GameSettings'ten (arcadeTurnGFraction, arcadeBankRate)
+        GameSettings gs = GameSettings.Current;
+        float turnGMax = Mathf.Max(1.5f, maxG * gs.arcadeTurnGFraction);
         // Yatis, gereken G (1/cos) tavanin %90'inda kalacak kadar: boylece irtifa tutulabilir, ucak donerken alcalmaz
         float maxBankRad = Mathf.Acos(1f / (turnGMax * 0.9f));
         bool arcadeTurn = !grounded && Mathf.Abs(turnIn) > 0.01f && Mathf.Abs(fwd.y) < 0.85f;
@@ -722,7 +722,7 @@ public class PlaneController : MonoBehaviour
             float bankNow = Mathf.Atan2(-right.y, up.y);
             float bankTarget = turnIn * maxBankRad;
             float err = Mathf.DeltaAngle(bankNow * Mathf.Rad2Deg, bankTarget * Mathf.Rad2Deg) * Mathf.Deg2Rad;
-            float bankRate = Mathf.Min(rollRate, ArcadeBankRate) * Mathf.Deg2Rad;
+            float bankRate = Mathf.Min(rollRate, gs.arcadeBankRate) * Mathf.Deg2Rad;
             float assistRoll = Mathf.Clamp(err * 6f, -bankRate, bankRate) * rollAuth;
             float manualWeight = Mathf.Clamp01(Mathf.Abs(rollIn) / 0.25f);
             rollTargetRight = Mathf.Lerp(assistRoll, rollTargetRight, manualWeight);

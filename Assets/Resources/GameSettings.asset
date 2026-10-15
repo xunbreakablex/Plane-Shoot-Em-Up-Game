@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86659b1e9fd3e384cb304e163c93dc6a, type: 3}
+  m_Name: GameSettings
+  m_EditorClassIdentifier: Assembly-CSharp::GameSettings
+  useSpacePrototype: 0
+  ramDamageMultiplier: 1
+  ramIgnoresShield: 1
+  ramKillGivesScore: 1
+  stageClearHeal: 0.5
+  stageStartInvulnerability: 2.5
+  shopInPauseMenu: 0
+  consumableLimitPerStage: 1
+  autoAimCone: 30
+  autoAimRange: 1100
+  bulletHiddenAfterMuzzle: 0.02
+  arcadeTurnGFraction: 0.85
+  arcadeBankRate: 220
+  space:
+    forwardSpeed: 75
+    strafeSpeed: 45
+    strafeAcceleration: 180
+    bankAngle: 35
+    corridorHalfWidth: 70
+    corridorHalfHeight: 42
+    corridorAltitude: 800
+    meteorsPerSegment: 34
+    segmentLength: 120
+    viewAhead: 1600
+    wallThickness: 80
+    meteorRadius: {x: 5, y: 22}
+    meteorDamage: 2
+    meteorKnockback: 40
+    keepEnemiesInCorridor: 1

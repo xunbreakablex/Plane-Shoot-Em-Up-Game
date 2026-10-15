@@ -191,8 +191,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         if (d < PlayerRadius + 1.5f && Time.time >= nextRamTime)
         {
             nextRamTime = Time.time + 1.2f;
-            PlayerHealth ph = mgr.CurrentPlayerHealth;
-            if (ph != null) ph.TakeHit(ramDamage, target.position);
+            DamagePlayerByRam(target.position);
         }
     }
 
@@ -428,11 +427,21 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
     private void Ram(Vector3 point)
     {
-        PlayerHealth ph = mgr.CurrentPlayerHealth;
-        if (ph != null) ph.TakeHit(ramDamage, point);
+        DamagePlayerByRam(point);
 
-        // Boss carpmadan etkilenmez; digerleri patlar (oldurme sayilir)
-        if (!IsBoss) Die(true);
+        // Boss carpmadan etkilenmez; digerleri patlar. Oldurme sayilip sayilmayacagi GameSettings'te.
+        if (!IsBoss) Die(GameSettings.Current.ramKillGivesScore);
+    }
+
+    // Carpisma bize hasar verir: tur hasari x carpan; varsayilan olarak kalkani atlar (bedava olmasin)
+    private void DamagePlayerByRam(Vector3 point)
+    {
+        PlayerHealth ph = mgr.CurrentPlayerHealth;
+        if (ph == null) return;
+
+        GameSettings gs = GameSettings.Current;
+        int damage = Mathf.Max(1, Mathf.RoundToInt(ramDamage * gs.ramDamageMultiplier));
+        ph.TakeHit(damage, point, gs.ramIgnoresShield);
     }
 
     // -------------------------------------------------------------- ates

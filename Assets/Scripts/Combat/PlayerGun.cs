@@ -288,11 +288,6 @@ public class PlayerGun : MonoBehaviour
         audioSource.PlayOneShot(Sfx.MissileLaunch, 0.45f);
     }
 
-    [Header("Otomatik nisan")]
-    [Tooltip("Otomatik nisan: burundan en fazla bu aci icindeki dusmanlar hedeflenir")]
-    public float autoAimCone = 30f;
-    [Tooltip("Otomatik nisan menzili (m)")] public float autoAimRange = 1100f;
-
     // Otomatik nisan: imlec burnun onunde (ucagin baktigi nokta). Burun konisindeki en yakin dusman
     // hedeflenir ve onde tutma uygulanir; hedef yoksa dumduz ileri ates edilir.
     private void UpdateAutoAim(PlaneController plane, float leadSpeed)
@@ -319,6 +314,10 @@ public class PlayerGun : MonoBehaviour
     private EnemyPlane FindAutoTarget(Transform plane, EnemyPlane current)
     {
         if (CombatManager.Instance == null) return null;
+
+        // Koni ve menzil GameSettings'ten (Inspector'dan ayarlanir)
+        float autoAimRange = GameSettings.Current.autoAimRange;
+        float autoAimCone = GameSettings.Current.autoAimCone;
 
         EnemyPlane best = null;
         float bestDist = autoAimRange;

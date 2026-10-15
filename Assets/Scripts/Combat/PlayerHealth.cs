@@ -78,6 +78,17 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         Health = maxHealth;
     }
 
+    /// <summary>Can ve kalkani dogrudan ayarlar (sinirlar icinde): donanim yeniden uygulanirken durum korunur.</summary>
+    public void SetState(int health, float shield)
+    {
+        Health = Mathf.Clamp(health, 1, maxHealth);
+        Shield = Mathf.Clamp(shield, 0f, maxShield);
+        initialized = true;
+    }
+
+    public float HealthFraction => maxHealth > 0 ? (float)Health / maxHealth : 1f;
+    public float ShieldFraction => maxShield > 0f ? Shield / maxShield : 1f;
+
     public void RechargeShield()
     {
         Shield = maxShield;
@@ -106,9 +117,14 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         plane = GetComponent<PlaneController>();
         renderers = GetComponentsInChildren<Renderer>(true);
 
-        Health = maxHealth;
-        Shield = maxShield;
-        initialized = true;
+        // Bilesen pasif bir ucaga eklendiyse Awake ucak aktiflesince calisir; o arada SetState ile
+        // ayarlanan can (hangar devami) ezilmesin
+        if (!initialized)
+        {
+            Health = maxHealth;
+            Shield = maxShield;
+            initialized = true;
+        }
 
         plane.Crashed += OnCrashed;
         plane.Respawned += OnRespawned;
@@ -164,13 +180,19 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
     public void TakeHit(int damage, Vector3 point)
     {
+        TakeHit(damage, point, false);
+    }
+
+    /// <summary>ignoreShield: hasar kalkani atlayip dogrudan govdeye isler (carpma, meteor).</summary>
+    public void TakeHit(int damage, Vector3 point, bool ignoreShield)
+    {
         if (plane.IsCrashed || Time.time < invulnerableUntil || God) return;
 
         LastHitTime = Time.time;
         float remaining = damage;
         bool hullHit = false;
 
-        if (Shield > 0f)
+        if (Shield > 0f && !ignoreShield)
         {
             float absorbed = Mathf.Min(Shield, remaining);
             Shield -= absorbed;

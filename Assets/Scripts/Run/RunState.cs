@@ -40,6 +40,7 @@ public static class RunState
 
     private static bool pending;
     private static int pendingStage;
+    private static float pendingHealth = 1f;
 
     public static bool Active => Phase == RunPhase.Playing || Phase == RunPhase.BossFight;
     public static bool Ended => Phase == RunPhase.Won || Phase == RunPhase.Lost;
@@ -86,12 +87,17 @@ public static class RunState
         Phase = RunPhase.Playing;
     }
 
-    // Hangardan donunce kampanya kaldigi yerden surer
-    public static void PrepareContinue(int nextStage)
+    // Hangardan donunce kampanya kaldigi yerden surer. Can orani tasinir: hangar yolu "sonraki asama"
+    // yolundan daha fazla onarmasin (ikisinde de ayni asama arasi onarim uygulanir).
+    public static void PrepareContinue(int nextStage, float healthFraction = 1f)
     {
         pending = true;
         pendingStage = nextStage;
+        pendingHealth = Mathf.Clamp01(healthFraction);
     }
+
+    /// <summary>Hangar uzerinden devam edilirken, asamadan cikarkenki can orani.</summary>
+    public static float ContinueHealthFraction => pendingHealth;
 
     public static void CancelPending()
     {

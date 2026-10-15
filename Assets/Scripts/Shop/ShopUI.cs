@@ -160,14 +160,15 @@ public class ShopUI : MonoBehaviour
     private void DrawConsumableRow(Consumable item)
     {
         int cost = RunUpgrades.ConsumableCost(item);
+        int left = RunUpgrades.ConsumablesLeft(item);   // -1 = sinirsiz
 
         GUILayout.BeginHorizontal();
         GUILayout.Label(UpgradeCatalog.ConsumableName(item), label, GUILayout.Width(210f));
-        GUILayout.Label("", GUILayout.Width(80f));
+        GUILayout.Label(left < 0 ? "" : $"Kalan {left}", pips, GUILayout.Width(80f));
         GUILayout.Label(UpgradeCatalog.ConsumableDescription(item), small, GUILayout.Width(450f));
 
-        GUI.enabled = RunUpgrades.Scrap >= cost;
-        if (GUILayout.Button($"AL  {cost}", button, GUILayout.Width(110f), GUILayout.Height(30f)))
+        GUI.enabled = RunUpgrades.Scrap >= cost && left != 0;
+        if (GUILayout.Button(left == 0 ? "BİTTİ" : $"AL  {cost}", button, GUILayout.Width(110f), GUILayout.Height(30f)))
         {
             RunUpgrades.TryBuyConsumable(item, out string msg);
             Say(msg);

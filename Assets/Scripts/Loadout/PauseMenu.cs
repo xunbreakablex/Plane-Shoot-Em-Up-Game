@@ -78,10 +78,18 @@ public class PauseMenu : MonoBehaviour
         if (GUI.Button(new Rect(x, y, w, h), "DEVAM ET   (ESC)", button))
             GameState.SetPaused(false);
 
-        if (shop != null)
+        // Savas ortasinda magaza (sinirsiz onarim) GameSettings.shopInPauseMenu ile acilir; varsayilan:
+        // yalniz asama aralarinda (Asama Tamam ekrani)
+        if (shop != null && GameSettings.Current.shopInPauseMenu)
         {
             if (GUI.Button(new Rect(x, y + (h + gap), w, h), $"MAĞAZA   •   {RunUpgrades.Scrap} hurda", button))
                 shop.Open();
+        }
+        else
+        {
+            GUI.enabled = false;
+            GUI.Button(new Rect(x, y + (h + gap), w, h), "MAĞAZA  (aşama aralarında)", button);
+            GUI.enabled = true;
         }
 
         if (GUI.Button(new Rect(x, y + (h + gap) * 2f, w, h), "HANGARA DÖN", button))

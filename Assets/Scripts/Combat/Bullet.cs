@@ -191,15 +191,14 @@ public class Bullet : MonoBehaviour
     private Renderer tracerRenderer;
     private float tracerThickness, tracerFullLength;
 
-    /// <summary>Oyuncu mermisi namludan ciktiktan sonra bu kadar sure (sn) gorunmez kalir.</summary>
-    public const float HiddenAfterMuzzle = 0.02f;
 
     private void Update()
     {
         float dt = Time.deltaTime;
         age += dt;
 
-        if (tracerRenderer != null && !tracerRenderer.enabled && age >= HiddenAfterMuzzle)
+        // Oyuncu mermisi namludan ciktiktan sonra kisa sure gorunmez (GameSettings.bulletHiddenAfterMuzzle)
+        if (tracerRenderer != null && !tracerRenderer.enabled && age >= GameSettings.Current.bulletHiddenAfterMuzzle)
             tracerRenderer.enabled = true;
 
         if (tracer != null)

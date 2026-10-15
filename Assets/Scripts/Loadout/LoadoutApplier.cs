@@ -12,7 +12,8 @@ public class LoadoutApplier : MonoBehaviour
     {
         // Yeni oyun: hurda, upgrade'ler, skor ve asama sifirlanir. Hangardan "devam"la gelindiyse
         // kampanya (skor, guc, bomba, hurda, upgrade'ler) kaldigi asamadan surer.
-        if (RunState.TryContinue(out int resumeStage))
+        bool resumed = RunState.TryContinue(out int resumeStage);
+        if (resumed)
         {
             RunState.BeginStage(resumeStage);
         }
@@ -38,6 +39,19 @@ public class LoadoutApplier : MonoBehaviour
         RunUpgrades.Changed += Refresh;
         Unlocks.Changed += OnUnlocksChanged;
         Refresh();
+
+        // Devam: asamadan cikarkenki can + asama arasi onarim ("sonraki asama" ile ayni); kalkan dolu
+        if (resumed && flight != null && flight.planes != null)
+        {
+            float heal = GameSettings.Current.stageClearHeal;
+            foreach (var plane in flight.planes)
+            {
+                PlayerHealth h = plane != null ? plane.GetComponent<PlayerHealth>() : null;
+                if (h == null) continue;
+                float frac = Mathf.Min(1f, RunState.ContinueHealthFraction + heal);
+                h.SetState(Mathf.CeilToInt(frac * h.maxHealth), h.maxShield);
+            }
+        }
     }
 
     private void OnDestroy()
@@ -72,12 +86,34 @@ public class LoadoutApplier : MonoBehaviour
         }
     }
 
-    // Savas sirasinda slot acildi / kilitler sifirlandi
+    // Savas sirasinda slot acildi / kilitler sifirlandi. Donanim yeniden uygulanir ama can/kalkan
+    // orani korunur (eskiden Configure cani tamamen dolduruyordu: gizli bedava onarim).
     private void OnUnlocksChanged()
     {
+        int n = flight != null && flight.planes != null ? flight.planes.Length : 0;
+        var healthFrac = new float[n];
+        var shieldFrac = new float[n];
+        var hadShield = new bool[n];
+        for (int i = 0; i < n; i++)
+        {
+            PlayerHealth h = flight.planes[i] != null ? flight.planes[i].GetComponent<PlayerHealth>() : null;
+            healthFrac[i] = h != null ? h.HealthFraction : 1f;
+            shieldFrac[i] = h != null ? h.ShieldFraction : 1f;
+            hadShield[i] = h != null && h.maxShield > 0f;
+        }
+
         LoadoutStore.Resanitize();
         ApplyAll(false);
         Refresh();
+
+        for (int i = 0; i < n; i++)
+        {
+            PlayerHealth h = flight.planes[i] != null ? flight.planes[i].GetComponent<PlayerHealth>() : null;
+            if (h == null) continue;
+            // Yeni acilan kalkan jeneratoru dolu baslar
+            float shield = hadShield[i] ? shieldFrac[i] * h.maxShield : h.maxShield;
+            h.SetState(Mathf.CeilToInt(healthFrac[i] * h.maxHealth), shield);
+        }
     }
 
     // Upgrade veya hurda degisince: kalici etkileri (can/kalkan/itki/yatis) tum ucaklara uygula

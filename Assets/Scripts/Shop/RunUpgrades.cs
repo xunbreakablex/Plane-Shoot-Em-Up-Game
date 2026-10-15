@@ -58,10 +58,32 @@ public static class RunUpgrades
         };
     }
 
+    // Tek seferlik urunler: asama basina alim sayisi (GameSettings.consumableLimitPerStage)
+    private static readonly int[] consumableBought = new int[3];
+    private static int consumableStage = -1;
+
+    private static void SyncConsumableStage()
+    {
+        if (consumableStage == RunState.Stage) return;
+        consumableStage = RunState.Stage;
+        Array.Clear(consumableBought, 0, consumableBought.Length);
+    }
+
+    /// <summary>Bu asamada bu urunden kac tane daha alinabilir (-1 = sinirsiz).</summary>
+    public static int ConsumablesLeft(Consumable c)
+    {
+        int limit = GameSettings.Current.consumableLimitPerStage;
+        if (limit <= 0) return -1;
+        SyncConsumableStage();
+        return Mathf.Max(0, limit - consumableBought[Mathf.Clamp((int)c, 0, consumableBought.Length - 1)]);
+    }
+
     public static void Reset()
     {
         Scrap = 0;
         TotalEarned = 0;
+        consumableStage = -1;
+        Array.Clear(consumableBought, 0, consumableBought.Length);
         Array.Clear(levels, 0, levels.Length);
         Recompute();
         Changed?.Invoke();
@@ -117,20 +139,15 @@ public static class RunUpgrades
         return true;
     }
 
-    // Secim kartindan ucretsiz seviye
-    public static bool AddFree(UpgradeId id)
-    {
-        if (IsMax(id)) return false;
-        levels[(int)id]++;
-        Recompute();
-        Changed?.Invoke();
-        return true;
-    }
-
     public static bool TryBuyConsumable(Consumable c, out string message)
     {
         int cost = ConsumableCost(c);
         if (Scrap < cost) { message = "Yetersiz hurda."; return false; }
+        if (ConsumablesLeft(c) == 0)
+        {
+            message = $"Bu aşamada en fazla {GameSettings.Current.consumableLimitPerStage} kez alınabilir.";
+            return false;
+        }
 
         CombatManager cm = CombatManager.Instance;
         PlayerHealth ph = cm != null ? cm.CurrentPlayerHealth : null;
@@ -153,6 +170,8 @@ public static class RunUpgrades
         }
 
         Scrap -= cost;
+        SyncConsumableStage();
+        consumableBought[Mathf.Clamp((int)c, 0, consumableBought.Length - 1)]++;
         Changed?.Invoke();
         message = UpgradeCatalog.ConsumableName(c) + " alındı.";
         return true;

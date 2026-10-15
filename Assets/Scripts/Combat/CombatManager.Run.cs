@@ -75,13 +75,14 @@ public partial class CombatManager
         RunState.BeginStage(next);
         SetupStage(next);
 
-        // Asamalar arasi: kismen onarim, kalkan ve fuze dolumu
+        // Asamalar arasi: kismen onarim (GameSettings.stageClearHeal), kalkan ve fuze dolumu
+        GameSettings gs = GameSettings.Current;
         PlayerHealth ph = CurrentPlayerHealth;
         if (ph != null)
         {
-            ph.Heal(Mathf.RoundToInt(ph.maxHealth * 0.5f));
+            ph.Heal(Mathf.RoundToInt(ph.maxHealth * gs.stageClearHeal));
             ph.RechargeShield();
-            ph.GrantInvulnerability(2.5f);
+            ph.GrantInvulnerability(gs.stageStartInvulnerability);
         }
         if (gun != null) gun.RefillMissiles();
     }
@@ -155,7 +156,7 @@ public partial class CombatManager
         if (tutorialStage == 0 && t > 3f)
         {
             tutorialStage = 1;
-            Announce("FARE ile nişan al, SOL TIK ile ateş et", Color.white, 4f);
+            Announce(ControlSettings.FireTutorial, Color.white, 4f);
         }
         else if (tutorialStage == 1 && t > 12f)
         {
@@ -443,6 +444,10 @@ public partial class CombatManager
     {
         Streak = 0;
         if (RunState.Ended) return;
+
+        // Asama tamamlandiktan sonra (Asama Tamam ekrani acilmadan) yere carpmak kazanilmis asamayi
+        // kayba cevirmesin: ucak normal sekilde yeniden dogar, oyun devam eder
+        if (RunState.StageIsClear) return;
 
         PlaneController plane = flight != null ? flight.Current : null;
         if (plane == null) return;

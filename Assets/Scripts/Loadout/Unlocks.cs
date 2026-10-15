@@ -50,6 +50,12 @@ public static class Unlocks
             }
             catch { defeatedMask = 0; all = false; }
         }
+
+        // Taban durum yuklemede alinir: oturumun ilk degerlendirmesi (ornegin oyun sonu rekor/zafer)
+        // de yeni acilanlari bulup duyurur ve otomatik takar. Eskiden ilk degerlendirme yalnizca
+        // tabani kaydediyordu ve skor/zafer sartli acilmalar sessizce geciyordu.
+        last = Capture();
+        hasLast = true;
     }
 
     private static void Persist()

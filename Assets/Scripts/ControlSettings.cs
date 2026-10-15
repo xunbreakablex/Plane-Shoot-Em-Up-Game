@@ -57,6 +57,11 @@ public static class ControlSettings
         ? "SPACE / SOL TIK  ateş  •  imleç burnun önünde, öndeki en yakın düşmana nişan alır"
         : "FARE  nişan  •  SOL TIK / SPACE  ateş  •  imleç düşmana yakınsa kilitlenir";
 
+    /// <summary>Ilk oyunlardaki egitim duyurusu: atesin nasil yapildigi (secili nisan moduna gore).</summary>
+    public static string FireTutorial => AutoAim
+        ? "SPACE basılı tut: öndeki en yakın düşmana ateş edersin"
+        : "FARE ile nişan al, SOL TIK ya da SPACE ile ateş et";
+
     /// <summary>Kontrol ipucu satiri (A/D ve Q/E'nin ne yaptigi).</summary>
     public static string SteerHint => Arcade
         ? "A / D  sağa-sola dön     Q / E  yatış (tonoz)"
