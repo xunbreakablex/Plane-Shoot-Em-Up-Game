@@ -102,7 +102,9 @@ public class FollowCamera : MonoBehaviour
         // sinirli hizla duzeltilir (loopta kamera ucakla birlikte asilir, sonra yumusakca dogrulur).
         Vector3 fwd = target.forward;
         Quaternion swung = Quaternion.FromToRotation(rot * Vector3.forward, fwd) * rot;
-        rot = Quaternion.Slerp(rot, swung, 1f - Mathf.Exp(-rotationLag * dt));
+        // FARE semasinda burun fareyle hizli doner; kamera daha siki takip eder ki nisan ekranda kaybolmasin
+        float lag = ControlSettings.MouseSteering ? Mathf.Max(rotationLag, 9f) : rotationLag;
+        rot = Quaternion.Slerp(rot, swung, 1f - Mathf.Exp(-lag * dt));
         LevelCamera(dt);
 
         Quaternion lookRot = Quaternion.Euler(look.y, look.x, 0f);

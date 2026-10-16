@@ -41,11 +41,19 @@ public class GameSettings : ScriptableObject
     [Range(60f, 500f)] public float maxManualRollRate = 200f;
 
     [Header("Fare ile uçuş (FARE şeması)")]
-    [Tooltip("Fare hassasiyeti: büyük = aynı fare hareketiyle daha sert yönelme")]
+    [Tooltip("Açıksa oyun tipi (arcade) uçuş: fare burnu doğrudan çevirir (FPS gibi), hız gaza bağlıdır, stall ve G sınırı yoktur. Kapalıysa fizik modeli (gerçekçi, yavaş).")]
+    public bool mouseArcadeFlight = true;
+    [Tooltip("Fare hassasiyeti: büyük = aynı fare hareketiyle burun daha çok döner")]
     [Range(0.1f, 5f)] public float mouseSensitivity = 1f;
     [Tooltip("Açıksa fare yukarı = burun aşağı (ters). Kapalıyken fare yukarı = burun yukarı.")]
     public bool invertMouseY = false;
-    [Tooltip("Fare durunca yönelmenin sönme hızı (1/sn). Büyük = fare durunca uçak hemen düzleşir; küçük = süzülür.")]
+    [Tooltip("Arcade uçuşta azami dönüş hızı çarpanı (uçağın kendi çevikliği x bu). Büyük = daha hızlı döner.")]
+    [Range(0.5f, 3f)] public float mouseTurnRate = 1.25f;
+    [Tooltip("Arcade uçuşta fare hareketinin uçağa geçme yumuşatması (sn). Küçük = keskin, büyük = akıcı ama gecikmeli.")]
+    [Range(0.01f, 0.3f)] public float mouseSmoothing = 0.06f;
+    [Tooltip("Arcade uçuşta sağa-sola dönerken uçağın görsel yatışı (derece)")]
+    [Range(0f, 80f)] public float mouseVisualBank = 50f;
+    [Tooltip("Yalnız fizik modelinde (arcade kapalı): fare durunca yönelmenin sönme hızı (1/sn)")]
     [Range(1f, 30f)] public float mouseSteerDecay = 8f;
     [Tooltip("FARE şemasında W/S bırakılınca gaz seyir hızına döner (kapalıysa rölantiye iner)")]
     public bool throttleReturnsToCruise = true;

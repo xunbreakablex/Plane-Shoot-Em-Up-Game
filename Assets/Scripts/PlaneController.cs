@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 //  - Hucum acisina (AoA) bagli kaldirma, stall, indüklenmis surtunme, yan kayma
 //  - Kumanda "G komutu" gibi calisir: nötr = ucus yolunu tut, cek = daha fazla G
 //  - Yerde tekerlek surtunmesi, frenleme, pistten kalkis/inis
+// FARE semasinda havada fizik yerine oyun tipi ucus calisir (bkz. ArcadeFlight).
 // Klavye: W/S yunuslama, A/D donus (Arcade) ya da yatis (Klasik), Q/E yatis (Arcade) ya da dumen (Klasik),
 //         Shift/Ctrl gaz, Space fren,
 //         T oto-duzeltme, M fare ile ucus, R havada basla, P pistte basla.
@@ -165,7 +166,10 @@ public class PlaneController : MonoBehaviour
     private bool brake;
     private bool mouseFlight;
     private Vector2 mouseStick;
-    private Vector2 steerStick;      // FARE semasi: fare hareketinden gelen sanal cubuk
+    private Vector2 steerStick;      // FARE semasi (fizik modeli): fare hareketinden gelen sanal cubuk
+    private Vector2 mouseAimPending; // FARE semasi (arcade): henuz uygulanmamis fare donusu (derece; x saga, y burun yukari)
+    private float visualBank;        // FARE semasi (arcade): donuse gore gorsel yatis (derece, saga pozitif)
+    private bool arcadeActive;       // son fizik adiminda arcade ucus mu calisti
 
     private float groundedTimer;
     private bool crashed;
@@ -479,9 +483,11 @@ public class PlaneController : MonoBehaviour
             {
                 // FARE semasinda W/S birakilinca gaz seyir hizina doner (hizlan/yavasla tuslari gibi);
                 // diger semalarda rolantiye iner
+                // (seyre donus hizli: bazi ucaklarin throttleReleaseRate'i 0,22 ve donus ~10 sn suruyordu)
                 bool toCruise = ControlSettings.MouseSteering && GameSettings.Current.throttleReturnsToCruise;
                 float rest = toCruise ? EquilibriumThrottle() : idleThrottle;
-                throttle = Mathf.Lerp(throttle, rest, 1f - Mathf.Exp(-throttleReleaseRate * dt));
+                float rate = toCruise ? Mathf.Max(throttleReleaseRate, 1.5f) : throttleReleaseRate;
+                throttle = Mathf.Lerp(throttle, rest, 1f - Mathf.Exp(-rate * dt));
             }
         }
     }
@@ -540,25 +546,37 @@ public class PlaneController : MonoBehaviour
             if (pad.buttonNorth.wasPressedThisFrame) autoLevel = !autoLevel;
         }
 
-        // FARE semasi: fare hareketi sanal bir cubugu iter, fare durunca cubuk hizla sifira soner
-        // (hareket = donus hizi; Battlefront tarzi). Sag tik basiliyken fare kamerayi cevirir, ucagi degil.
+        // FARE semasi. Sag tik basiliyken fare kamerayi cevirir, ucagi degil.
+        //  Arcade (varsayilan): fare burnu dogrudan cevirir (FPS gibi); birikim ArcadeFlight'ta yumusakca uygulanir.
+        //  Fizik modeli (arcade kapali ya da yerde): fare hareketi sanal bir cubugu iter, fare durunca cubuk soner.
         if (mouseScheme && Mouse.current != null)
         {
             GameSettings gs = GameSettings.Current;
             Vector2 d = Mouse.current.rightButton.isPressed || Cursor.lockState != CursorLockMode.Locked
                 ? Vector2.zero
                 : Mouse.current.delta.ReadValue();
-            float k = 0.008f * gs.mouseSensitivity;
-            steerStick.x = Mathf.Clamp(steerStick.x + d.x * k, -1f, 1f);
-            steerStick.y = Mathf.Clamp(steerStick.y + d.y * k, -1f, 1f);
-            steerStick *= Mathf.Exp(-gs.mouseSteerDecay * Time.deltaTime);
+            if (gs.invertMouseY) d.y = -d.y;   // varsayilan: fare yukari = burun yukari
 
-            pitchRaw += gs.invertMouseY ? -steerStick.y : steerStick.y;   // varsayilan: fare yukari = burun yukari
-            turnRaw += steerStick.x;
+            if (arcadeActive)
+            {
+                mouseAimPending += d * (MouseDegPerPixel * gs.mouseSensitivity);
+                steerStick = Vector2.zero;
+            }
+            else
+            {
+                mouseAimPending = Vector2.zero;
+                float k = 0.008f * gs.mouseSensitivity;
+                steerStick.x = Mathf.Clamp(steerStick.x + d.x * k, -1f, 1f);
+                steerStick.y = Mathf.Clamp(steerStick.y + d.y * k, -1f, 1f);
+                steerStick *= Mathf.Exp(-gs.mouseSteerDecay * Time.deltaTime);
+                pitchRaw += steerStick.y;
+                turnRaw += steerStick.x;
+            }
         }
         else
         {
             steerStick = Vector2.zero;
+            mouseAimPending = Vector2.zero;
         }
 
         if (mouseFlight && !mouseScheme && Mouse.current != null)
@@ -634,6 +652,19 @@ public class PlaneController : MonoBehaviour
         }
 
         float speed = vel.magnitude;
+
+        // FARE semasi havadayken oyun tipi ucus (fizik modeli yalniz yerde / kalkista ya da ayardan kapatilinca)
+        GameSettings gs = GameSettings.Current;
+        bool wasArcade = arcadeActive;
+        arcadeActive = ControlSettings.MouseSteering && gs.mouseArcadeFlight && !grounded && speed > stallSpeed * 0.5f;
+        if (arcadeActive)
+        {
+            if (!wasArcade) visualBank = 0f;
+            ArcadeFlight(dt, speed, gs);
+            return;
+        }
+        visualBank = 0f;
+
         Vector3 velDir = speed > 0.1f ? vel / speed : fwd;
         Vector3 lv = transform.InverseTransformDirection(vel);
 
@@ -670,7 +701,6 @@ public class PlaneController : MonoBehaviour
         // Arcade donusu (A/D): ucak hedef yatisa kendiliginden yatar ve o yatista irtifayi koruyacak kadar
         // G ceker (koordineli donus). Yatis girisle orantili; tam basista ~1/cos = ArcadeTurnG G'lik donus.
         // Donus gucu ve yatis hizi GameSettings'ten (arcadeTurnGFraction, arcadeBankRate)
-        GameSettings gs = GameSettings.Current;
         float turnGMax = Mathf.Max(1.5f, maxG * gs.arcadeTurnGFraction);
         // Yatis, gereken G (1/cos) tavanin %90'inda kalacak kadar: boylece irtifa tutulabilir, ucak donerken alcalmaz
         float maxBankRad = Mathf.Acos(1f / (turnGMax * 0.9f));
@@ -774,6 +804,117 @@ public class PlaneController : MonoBehaviour
         Vector3 target = new Vector3(-pitchTargetUp, yawTargetRight, -rollTargetRight);
         localOmega = Vector3.Lerp(localOmega, target, 1f - Mathf.Exp(-responsiveness * dt));
         rb.angularVelocity = transform.TransformDirection(localOmega);
+    }
+
+    // ------------------------------------------------- FARE semasi: arcade ucus
+    // Fizik yerine dogrudan donus: fare burnu FPS gibi cevirir (yumusatilmis, ucagin donus hiziyla sinirli),
+    // A/D ve gamepad surekli doner, Q/E yatar. Hiz gaza baglidir; stall, hucum acisi ve G siniri yoktur.
+    // Ucagin yatissiz "nisan cercevesi" ile gorsel yatis ayri tutulur: fare hareketi ekranda hep ayni yone
+    // gider (yatis yunuslamayi capraz yapmaz), donuste ucak yalnizca gorunuste yatar.
+
+    private const float MouseDegPerPixel = 0.07f;   // hassasiyet 1'de fare pikseli basina burun donusu (derece)
+    private const float ArcadeYawFraction = 0.85f;  // saga-sola donus hizi = yunuslama hizi x bu
+    private const float ArcadePendingMax = 0.35f;   // fare birikimi en fazla bu kadar saniyelik donus (savurmada uzun sure donmesin)
+    private const float ArcadeLevelGain = 4f;       // ufka donme: yatis hatasi (derece) basina derece/sn
+    private const float ArcadeLevelRate = 150f;     // ufka donme hiz siniri (derece/sn)
+    private const float ArcadeBankResponse = 6f;    // gorsel yatisin hedefe yaklasma hizi (1/sn)
+    private const float ArcadeGrip = 10f;           // hiz yonunun burna hizalanma hizi (1/sn); kucuk = kayar
+    private const float ArcadeSpeedResponse = 1.2f; // hizin gaz hedefine yaklasma hizi (1/sn)
+    private const float ArcadeGravity = 0.5f;       // tirmanista yavaslama / dalista hizlanma (yercekiminin kesri)
+    private const float ArcadeMinSpeed = 0.55f;     // gaz kapaliyken hiz = seyir hizi x bu
+
+    /// <summary>Arcade ucusta azami yunuslama hizi (derece/sn): ucagin G rezervinden ve yatis upgrade'inden.</summary>
+    public float ArcadePitchRate
+    {
+        get
+        {
+            float natural = maxG * G / Mathf.Max(cruiseSpeed, 10f) * Mathf.Rad2Deg;
+            return Mathf.Clamp(natural, 60f, 170f) * GameSettings.Current.mouseTurnRate * Mathf.Sqrt(upgradeRoll);
+        }
+    }
+
+    private void ArcadeFlight(float dt, float speed, GameSettings gs)
+    {
+        float maxPitch = ArcadePitchRate;
+        float maxYaw = maxPitch * ArcadeYawFraction;
+        float pitchCap = maxPitch * dt, yawCap = maxYaw * dt;
+
+        // Fare birikiminin her adimda bir kesri uygulanir (yumusatma); hiz siniri asilmaz
+        mouseAimPending.x = Mathf.Clamp(mouseAimPending.x, -maxYaw * ArcadePendingMax, maxYaw * ArcadePendingMax);
+        mouseAimPending.y = Mathf.Clamp(mouseAimPending.y, -maxPitch * ArcadePendingMax, maxPitch * ArcadePendingMax);
+        float follow = 1f - Mathf.Exp(-dt / Mathf.Max(gs.mouseSmoothing, 0.005f));
+        float mouseYaw = Mathf.Clamp(mouseAimPending.x * follow, -yawCap, yawCap);
+        float mousePitch = Mathf.Clamp(mouseAimPending.y * follow, -pitchCap, pitchCap);
+        mouseAimPending -= new Vector2(mouseYaw, mousePitch);
+
+        // A/D ve gamepad surekli doner
+        float yawStep = Mathf.Clamp(mouseYaw + turnIn * yawCap, -yawCap, yawCap);
+        float pitchStep = Mathf.Clamp(mousePitch + pitchIn * pitchCap, -pitchCap, pitchCap);
+
+        // Nisan cercevesi = gercek donus eksi gorsel yatis
+        Quaternion aim = rb.rotation * Quaternion.Euler(0f, 0f, visualBank);
+        Vector3 r = aim * Vector3.right, u = aim * Vector3.up, f0 = aim * Vector3.forward;
+        // Saga-sola donus FPS gibi dunya dikeyi etrafinda: tirmanirken/dalarken burun acisi korunur.
+        // Dikeye yaklastikca ucagin kendi ust eksenine gecer (orada dunya dikeyi etrafinda donmek yatis olurdu).
+        float flat0 = Mathf.Sqrt(Mathf.Max(0f, 1f - f0.y * f0.y));
+        float worldW = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.3f, 0.7f, flat0));
+        Vector3 yawAxis = Vector3.Lerp(u, u.y >= 0f ? Vector3.up : Vector3.down, worldW).normalized;
+        aim = Quaternion.AngleAxis(yawStep, yawAxis) * Quaternion.AngleAxis(-pitchStep, r) * aim;
+
+        // Q/E elle yatis (tonoz)
+        float manualRollRate = Mathf.Min(rollRate, gs.maxManualRollRate);
+        if (Mathf.Abs(rollIn) > 0.01f)
+            aim = Quaternion.AngleAxis(-rollIn * manualRollRate * dt, aim * Vector3.forward) * aim;
+
+        // Ufka donme: dikeye yakinken ufuk belirsiz oldugundan zayiflar; Q/E basiliyken calismaz.
+        // Ters ucusta cekiliyorsa calismaz (takla bozulmasin); birakilinca ucak kendiliginden duzelir.
+        Vector3 f = aim * Vector3.forward;
+        u = aim * Vector3.up;
+        float flat = Mathf.Sqrt(Mathf.Max(0f, 1f - f.y * f.y));
+        float levelW = autoLevel ? Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.15f, 0.5f, flat)) : 0f;
+        levelW *= 1f - Mathf.Clamp01(Mathf.Abs(rollIn) / 0.25f);
+        if (u.y < 0f) levelW *= 1f - Mathf.Clamp01(Mathf.Abs(pitchStep) / (pitchCap * 0.3f));
+        if (levelW > 0f)
+        {
+            Vector3 levelUp = (Vector3.up - f * f.y).normalized;
+            float err = Vector3.SignedAngle(u, levelUp, f);
+            float maxStep = ArcadeLevelRate * dt;
+            aim = Quaternion.AngleAxis(Mathf.Clamp(err * ArcadeLevelGain * dt, -maxStep, maxStep) * levelW, f) * aim;
+        }
+
+        // Gorsel yatis: saga-sola donus hiziyla orantili
+        float bankTarget = Mathf.Clamp(yawStep / Mathf.Max(yawCap, 1e-5f), -1f, 1f) * gs.mouseVisualBank;
+        visualBank = Mathf.Lerp(visualBank, bankTarget, 1f - Mathf.Exp(-ArcadeBankResponse * dt));
+
+        Quaternion next = aim * Quaternion.Euler(0f, 0f, -visualBank);
+        Quaternion delta = next * Quaternion.Inverse(rb.rotation);
+        delta.ToAngleAxis(out float ang, out Vector3 axis);
+        if (ang > 180f) ang -= 360f;
+        Vector3 omega = Mathf.Abs(ang) > 1e-4f && axis.sqrMagnitude > 0.5f && !float.IsNaN(axis.x)
+            ? axis * (ang * Mathf.Deg2Rad / dt)
+            : Vector3.zero;
+        rb.angularVelocity = omega;
+        localOmega = Quaternion.Inverse(rb.rotation) * omega;
+
+        // Hiz: gaz seyir degerindeyken seyir hizi, tam gazda azami hiz, kapaliyken seyir hizinin ArcadeMinSpeed kati
+        Vector3 nose = next * Vector3.forward;
+        float eq = EquilibriumThrottle();
+        float minSpd = cruiseSpeed * ArcadeMinSpeed;
+        float targetSpd = throttle >= eq
+            ? Mathf.Lerp(cruiseSpeed, maxSpeed, (throttle - eq) / Mathf.Max(1f - eq, 0.01f))
+            : Mathf.Lerp(minSpd, cruiseSpeed, throttle / Mathf.Max(eq, 0.01f));
+        float s = speed + (targetSpd - speed) * (1f - Mathf.Exp(-ArcadeSpeedResponse * dt));
+        s -= G * ArcadeGravity * nose.y * dt;
+        s = Mathf.Clamp(s, minSpd * 0.85f, maxSpeed * 1.25f);
+
+        Vector3 velDir = speed > 0.1f ? rb.linearVelocity / speed : nose;
+        Vector3 dir = Vector3.Slerp(velDir, nose, 1f - Mathf.Exp(-ArcadeGrip * dt));
+        rb.linearVelocity = dir * s;
+
+        // HUD / kamera / iz efekti icin temsili G (gercek degil; donus sertligiyle orantili)
+        float pull = Mathf.Max(Mathf.Abs(pitchStep) / Mathf.Max(pitchCap, 1e-5f), Mathf.Abs(yawStep) / Mathf.Max(yawCap, 1e-5f));
+        gForce = Mathf.Lerp(gForce, 1f + Mathf.Clamp01(pull) * (maxG - 1f) * 0.6f, 8f * dt);
+        aoa = Mathf.Lerp(aoa, 0f, 8f * dt);
     }
 
     // ------------------------------------------------------------ collision
