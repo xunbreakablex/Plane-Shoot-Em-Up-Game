@@ -33,7 +33,7 @@ MonoBehaviour:
   strafeBank: 12
   mouseSteerDecay: 8
   throttleReturnsToCruise: 1
-  aimZoom: 1.35
+  aimZoom: 1.7
   aimZoomTime: 0.18
   autoAimCone: 5
   autoAimStrength: 1

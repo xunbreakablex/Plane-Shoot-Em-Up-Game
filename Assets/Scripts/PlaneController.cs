@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 //  - Kumanda "G komutu" gibi calisir: nötr = ucus yolunu tut, cek = daha fazla G
 //  - Yerde tekerlek surtunmesi, frenleme, pistten kalkis/inis
 // FARE semasinda havada fizik yerine oyun tipi ucus calisir (bkz. ArcadeFlight): fare yonlendirir,
-// A/D sagi-sola, W/S yukari-asagi kaydirir, Shift/Ctrl gaz. Asagidaki tus listesi Arcade/Klasik semalari icindir.
+// W/S gaz, A/D sagi-sola, Space/Ctrl yukari-asagi kaydirir. Asagidaki tus listesi Arcade/Klasik semalari icindir.
 // Klavye: W/S yunuslama, A/D donus (Arcade) ya da yatis (Klasik), Q/E yatis (Arcade) ya da dumen (Klasik),
 //         Shift/Ctrl gaz, Space fren,
 //         T oto-duzeltme, M fare ile ucus, R havada basla, P pistte basla.
@@ -507,8 +507,8 @@ public class PlaneController : MonoBehaviour
         strafeRaw = Vector2.zero;
         brake = false;
 
-        // Fare: fare yonlendirir (yukari-asagi + saga-sola). Havada A/D sagi-sola, W/S yukari-asagi KAYDIRIR
-        //       (burun donmez), gaz Shift/Ctrl; Q/E yok. keysStrafe kapaliysa/yerde: A/D donus, W/S gaz.
+        // Fare: fare yonlendirir (yukari-asagi + saga-sola), W/S gaz (hizlan/yavasla). Havada A/D sagi-sola,
+        //       Space/Ctrl yukari-asagi KAYDIRIR (burun donmez). Shift ve Q/E yok. keysStrafe kapaliysa/yerde: A/D donus.
         // Arcade: A/D (sol cubuk x) otomatik yatisli donus, Q/E (omuz tuslari) yatis, W/S yunuslama.
         // Klasik: A/D (sol cubuk x) yatis, Q/E (omuz tuslari) dumen, W/S yunuslama.
         bool mouseScheme = ControlSettings.MouseSteering;
@@ -529,9 +529,15 @@ public class PlaneController : MonoBehaviour
 
             if (mouseScheme)
             {
-                if (strafeKeys) strafeRaw = new Vector2(side, wsKeys);   // kayma: W yukari, D saga
-                else { throttleRaw += wsKeys; turnRaw += side; }         // eski: W hizlan, A/D donus
-                // Q/E bu semada kullanilmaz
+                throttleRaw += wsKeys;                                   // W hizlan, S yavasla
+                if (strafeKeys)
+                {
+                    // kayma: D saga, Space yukari, Ctrl asagi
+                    float vert = (kb.spaceKey.isPressed ? 1f : 0f) - (kb.leftCtrlKey.isPressed ? 1f : 0f);
+                    strafeRaw = new Vector2(side, vert);
+                }
+                else turnRaw += side;                                    // eski: A/D donus
+                // Q/E ve Shift/Ctrl gazi bu semada kullanilmaz
             }
             else
             {
@@ -542,8 +548,12 @@ public class PlaneController : MonoBehaviour
                 else { rollRaw += side; yawRaw += aux; }
             }
 
-            if (kb.leftShiftKey.isPressed) throttleRaw += 1f;
-            if (kb.leftCtrlKey.isPressed) throttleRaw -= 1f;
+            // Shift/Ctrl gaz yalniz Arcade/Klasik'te (orada W/S yunuslama); FARE semasinda gaz W/S'de
+            if (!mouseScheme)
+            {
+                if (kb.leftShiftKey.isPressed) throttleRaw += 1f;
+                if (kb.leftCtrlKey.isPressed) throttleRaw -= 1f;
+            }
             if (kb.spaceKey.isPressed) brake = true;
 
             if (kb.tKey.wasPressedThisFrame) autoLevel = !autoLevel;

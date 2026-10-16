@@ -4,7 +4,7 @@ public enum ControlScheme
 {
     Arcade,   // A/D = otomatik yatisli donus, Q/E = yatis (roll), W/S = yunuslama
     Classic,  // A/D = yatis, Q/E = dumen (eski duzen), W/S = yunuslama
-    Mouse     // Fare = yonlendirme (yukari-asagi + saga-sola), A/D = saga-sola kay, W/S = yukari-asagi kay, Shift/Ctrl = gaz, Sag tik = zoom
+    Mouse     // Fare = yonlendirme (yukari-asagi + saga-sola), W/S = hizlan/yavasla, A/D = saga-sola kay, Space/Ctrl = yukari/asagi kay, Sag tik = zoom
 }
 
 // Kontrol semasi tercihi (duraklat menusunden degisir, kalici). Her karede PlayerPrefs okunmasin diye onbellekli.
@@ -84,13 +84,21 @@ public static class ControlSettings
 
     public static string AimLabel => MouseSteering ? "OTOMATİK (fareyle uçuş)" : (AutoAim ? "OTOMATİK" : "FARE");
 
+    /// <summary>
+    /// SPACE ates eder mi? FARE semasinda kayma acikken SPACE yukari kaymaya ayrilir (ates yalniz sol tik),
+    /// yoksa yukari kayarken surekli ates edilirdi.
+    /// </summary>
+    public static bool SpaceFires => !(MouseSteering && GameSettings.Current.keysStrafe);
+
     public static string AimHint => EffectiveAutoAim
-        ? "SPACE / SOL TIK  ateş  •  imleç burnun önünde, öndeki en yakın düşmana nişan alır"
+        ? (SpaceFires ? "SPACE / SOL TIK  ateş" : "SOL TIK  ateş") + "  •  imleç burnun önünde, öndeki en yakın düşmana nişan alır"
         : "FARE  nişan  •  SOL TIK / SPACE  ateş  •  imleç düşmana yakınsa kilitlenir";
 
     /// <summary>Ilk oyunlardaki egitim duyurusu: atesin nasil yapildigi (secili semaya gore).</summary>
     public static string FireTutorial => MouseSteering
-        ? "FARE ile yönlendir, A/D W/S ile kay, SOL TIK ya da SPACE ile ateş et"
+        ? (SpaceFires
+            ? "FARE ile yönlendir, W/S ile hızlan-yavaşla, SOL TIK ya da SPACE ile ateş et"
+            : "FARE ile yönlendir, W/S ile hızlan-yavaşla, SOL TIK ile ateş et, SPACE / CTRL ile yukarı-aşağı kay")
         : AutoAim
             ? "SPACE basılı tut: öndeki en yakın düşmana ateş edersin"
             : "FARE ile nişan al, SOL TIK ya da SPACE ile ateş et";
@@ -104,7 +112,7 @@ public static class ControlSettings
             {
                 case ControlScheme.Mouse:
                     return GameSettings.Current.keysStrafe
-                        ? "FARE  yönlendir     A / D  sağa-sola kay     W / S  yukarı-aşağı kay     SAĞ TIK  yakınlaştır     SHIFT / CTRL  hız"
+                        ? "FARE  yönlendir     W / S  hızlan / yavaşla     A / D  sağa-sola kay     SPACE / CTRL  yukarı-aşağı kay     SAĞ TIK  yakınlaştır"
                         : "FARE  yönlendir     W / S  hızlan / yavaşla     A / D  dön     SAĞ TIK  yakınlaştır";
                 case ControlScheme.Arcade: return "A / D  sağa-sola dön     Q / E  yatış (tonoz)     W / S  yunuslama";
                 default: return "A / D  yatış             Q / E  dümen     W / S  yunuslama";

@@ -184,10 +184,13 @@ public class FlightTestManager : MonoBehaviour
 
     // Nisan moduna gore 1. satir (ESC menusunden Otomatik/Fare)
     private const string HelpAimAuto = "SPACE / SOL TIK  ateş (öndeki en yakın düşmana)     F  güdümlü füze";
+    private const string HelpAimAutoClick = "SOL TIK  ateş (öndeki en yakın düşmana)     F  güdümlü füze";
     private const string HelpAimMouse = "FARE  nişan alma        SOL TIK / SPACE  ateş        F  güdümlü füze";
 
     // Kontrol semasina gore 2. satir (ESC menusunden Arcade/Klasik)
-    private const string HelpSteerMouse = "FARE  yönlendir        A / D  sağa-sola kay        W / S  yukarı-aşağı kay";
+    private const string HelpSteerMouse = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  sağa-sola kay";
+    private const string HelpKeysMouse = "SPACE  yukarı kay       CTRL  aşağı kay        C  kamera mesafesi";
+    private const string HelpKeysDefault = "SHIFT / CTRL  gaz       SPACE (yerde)  fren   C  kamera mesafesi";
     private const string HelpSteerMouseClassic = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  dön";
     private const string HelpSteerArcade = "W / S  yunuslama        A / D  sağa-sola dön     Q / E  yatış";
     private const string HelpSteerClassic = "W / S  yunuslama        A / D  yatış        Q / E  dümen";
@@ -199,7 +202,7 @@ public class FlightTestManager : MonoBehaviour
     {
         HelpAimAuto,
         HelpSteerArcade,
-        "SHIFT / CTRL  gaz       SPACE (yerde)  fren   C  kamera mesafesi",
+        HelpKeysDefault,
         "SAĞ TIK  yakınlaştır     1-6 / TAB  uçak değiştir (açık olanlar)",
         HelpAutoOn,
     };
@@ -217,10 +220,12 @@ public class FlightTestManager : MonoBehaviour
         if (!open) return;
 
         // Dizi ve metinler tek sefer kurulur; yalniz kontrol semasi ve oto-duzeltme satirlari degisir
-        helpLines[0] = ControlSettings.EffectiveAutoAim ? HelpAimAuto : HelpAimMouse;
+        bool strafeScheme = ControlSettings.MouseSteering && GameSettings.Current.keysStrafe;
+        helpLines[0] = ControlSettings.EffectiveAutoAim ? (ControlSettings.SpaceFires ? HelpAimAuto : HelpAimAutoClick) : HelpAimMouse;
         helpLines[1] = ControlSettings.MouseSteering
-            ? (GameSettings.Current.keysStrafe ? HelpSteerMouse : HelpSteerMouseClassic)
+            ? (strafeScheme ? HelpSteerMouse : HelpSteerMouseClassic)
             : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);
+        helpLines[2] = strafeScheme ? HelpKeysMouse : HelpKeysDefault;
         helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;
         string[] lines = helpLines;
 

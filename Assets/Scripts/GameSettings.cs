@@ -53,7 +53,7 @@ public class GameSettings : ScriptableObject
     [Range(0.02f, 0.5f)] public float mouseSmoothing = 0.16f;
     [Tooltip("Arcade uçuşta fareyle sağa-sola dönerken uçağın görsel yatışı (derece)")]
     [Range(0f, 80f)] public float mouseVisualBank = 25f;
-    [Tooltip("Açıksa A/D uçağı sağa-sola, W/S yukarı-aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar); gaz Shift/Ctrl ile. Kapalıysa eski düzen: A/D döner, W/S gaz.")]
+    [Tooltip("Açıksa A/D uçağı sağa-sola, Space yukarı, Ctrl aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar) ve Space artık ateş etmez (ateş sol tıkla). W/S her durumda gaz. Kapalıysa A/D döner, Space ateş eder.")]
     public bool keysStrafe = true;
     [Tooltip("Kayma (A/D, W/S) azami yan hızı (m/s). Büyük = daha hızlı sağa-sola/yukarı-aşağı gidilir.")]
     [Range(5f, 120f)] public float strafeSpeed = 42f;
@@ -70,7 +70,7 @@ public class GameSettings : ScriptableObject
 
     [Header("Kamera")]
     [Tooltip("Sağ tık basılıyken yakınlaştırma çarpanı (1 = yakınlaştırma yok, 1,3 = %30 yakın). Nişan alınan bölgeye (ekran ortası) doğru.")]
-    [Range(1f, 3f)] public float aimZoom = 1.35f;
+    [Range(1f, 3f)] public float aimZoom = 1.7f;
     [Tooltip("Yakınlaşma/uzaklaşma süresi (sn)")]
     [Range(0.02f, 1f)] public float aimZoomTime = 0.18f;
 
