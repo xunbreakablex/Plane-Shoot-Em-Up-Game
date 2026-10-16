@@ -293,15 +293,16 @@ public class PlayerGun : MonoBehaviour
     private void UpdateAutoAim(PlaneController plane, float leadSpeed)
     {
         Transform t = plane.transform;
-        Vector3 bore = t.position + t.forward * defaultAimDistance;
+        Vector3 aimFwd = SpaceRail.Active ? SpaceRail.Instance.Forward : t.forward;
+        Vector3 bore = t.position + aimFwd * defaultAimDistance;
         Vector3 sp = cam.WorldToScreenPoint(bore);
         CrosshairScreenPos = sp.z > 0f ? new Vector2(sp.x, sp.y) : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
 
-        LockedEnemy = FindAutoTarget(t, LockedEnemy);
+        LockedEnemy = FindAutoTarget(t, aimFwd, LockedEnemy);
 
         if (LockedEnemy != null)
         {
-            Vector3 muzzleCenter = t.position + t.forward * 1.0f;
+            Vector3 muzzleCenter = t.position + aimFwd * 1.0f;
             float time = Vector3.Distance(muzzleCenter, LockedEnemy.transform.position) / Mathf.Max(leadSpeed, 1f);
             AimPoint = LockedEnemy.transform.position + LockedEnemy.Velocity * time;
             return;
@@ -311,7 +312,7 @@ public class PlayerGun : MonoBehaviour
 
     // Burun konisindeki en yakin dusman. Mevcut hedef hala gecerliyse, yenisi belirgin sekilde (%30)
     // daha yakin olmadikca degistirilmez: hedef iki dusman arasinda titremesin.
-    private EnemyPlane FindAutoTarget(Transform plane, EnemyPlane current)
+    private EnemyPlane FindAutoTarget(Transform plane, Vector3 fwd, EnemyPlane current)
     {
         if (CombatManager.Instance == null) return null;
 
@@ -328,7 +329,7 @@ public class PlayerGun : MonoBehaviour
             if (e == null || e.IsDead) continue;
             Vector3 to = e.transform.position - plane.position;
             float d = to.magnitude;
-            if (d > autoAimRange || Vector3.Angle(plane.forward, to) > autoAimCone) continue;
+            if (d > autoAimRange || Vector3.Angle(fwd, to) > autoAimCone) continue;
 
             if (e == current) currentDist = d;
             if (d < bestDist)

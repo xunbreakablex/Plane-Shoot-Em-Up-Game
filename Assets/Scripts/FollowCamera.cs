@@ -90,11 +90,44 @@ public class FollowCamera : MonoBehaviour
         rot = Quaternion.AngleAxis(step, f) * rot;
     }
 
+    // Uzay prototipi: kamera koridor yonune bakar, gemiyi yanal hareketinin %80'i kadar izler ve bakisini
+    // biraz gemiye cevirir. Boylece gemi duvara yaklassa da ekranda kalir, koridor sabit bir cerceve gibi durur.
+    private static readonly Vector3 RailOffset = new Vector3(0f, 4.5f, -22f);
+
+    private void LateUpdateRail(SpaceRail rail, float dt)
+    {
+        Vector3 shipPos = target.position;
+        Vector3 local = rail.Local(shipPos);
+        Vector3 center = rail.World(0f, 0f, local.z);
+        Vector3 basePos = Vector3.Lerp(center, shipPos, 0.8f);
+
+        Quaternion railRot = Quaternion.LookRotation(rail.Forward, rail.Up);
+        Quaternion lookRot = Quaternion.Euler(look.y, look.x, 0f);
+        float zoom = offsetIndex == 1 ? 1.4f : (offsetIndex == 2 ? 0.7f : 1f);   // C tusu: mesafe
+
+        Vector3 pos = basePos + railRot * lookRot * (RailOffset * zoom);
+        Vector3 lookPoint = Vector3.Lerp(basePos, shipPos, 0.5f) + rail.Forward * 50f;
+        Quaternion finalRot = Quaternion.LookRotation(lookPoint - pos, rail.Up);
+
+        rot = railRot;
+        smoothUp = rail.Up;
+        transform.SetPositionAndRotation(pos, finalRot);
+
+        if (cam != null)
+            cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, baseFov, 3f * dt);
+    }
+
     private void LateUpdate()
     {
         if (target == null) return;
 
         float dt = Time.deltaTime;
+
+        if (SpaceRail.Active)
+        {
+            LateUpdateRail(SpaceRail.Instance, dt);
+            return;
+        }
 
         // Kamera yonu ucagin burnuna "en kisa donusle" (swing) gider. Eskiden her kare
         // LookRotation(forward, Vector3.up) kuruluyordu: tam dikeyde yon bir anda 180 derece donuyor,

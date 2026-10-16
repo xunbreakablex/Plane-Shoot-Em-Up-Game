@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86659b1e9fd3e384cb304e163c93dc6a, type: 3}
   m_Name: GameSettings
   m_EditorClassIdentifier: Assembly-CSharp::GameSettings
-  useSpacePrototype: 0
+  useSpacePrototype: 1
   ramDamageMultiplier: 1
   ramIgnoresShield: 1
   ramKillGivesScore: 1

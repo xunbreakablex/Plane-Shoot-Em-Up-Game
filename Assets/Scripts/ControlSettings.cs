@@ -58,9 +58,11 @@ public static class ControlSettings
         : "FARE  nişan  •  SOL TIK / SPACE  ateş  •  imleç düşmana yakınsa kilitlenir";
 
     /// <summary>Ilk oyunlardaki egitim duyurusu: atesin nasil yapildigi (secili nisan moduna gore).</summary>
-    public static string FireTutorial => AutoAim
-        ? "SPACE basılı tut: öndeki en yakın düşmana ateş edersin"
-        : "FARE ile nişan al, SOL TIK ya da SPACE ile ateş et";
+    public static string FireTutorial => SpaceRail.Active
+        ? "WASD ile hareket et, SPACE basılı tut: öndeki düşmana ateş edersin"
+        : AutoAim
+            ? "SPACE basılı tut: öndeki en yakın düşmana ateş edersin"
+            : "FARE ile nişan al, SOL TIK ya da SPACE ile ateş et";
 
     /// <summary>Kontrol ipucu satiri (A/D ve Q/E'nin ne yaptigi).</summary>
     public static string SteerHint => Arcade

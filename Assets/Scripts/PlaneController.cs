@@ -131,15 +131,15 @@ public class PlaneController : MonoBehaviour
     public event System.Action Crashed;
     public event System.Action Respawned;
 
-    public float Speed => rb != null ? rb.linearVelocity.magnitude : 0f;
-    public Vector3 Velocity => rb != null ? rb.linearVelocity : Vector3.zero;
+    public float Speed => Velocity.magnitude;
+    public Vector3 Velocity => externalControl ? externalVelocity : (rb != null ? rb.linearVelocity : Vector3.zero);
     public float Throttle => throttle;
     public float StallSpeed => stallSpeed;
     public float AoADeg => aoa * Mathf.Rad2Deg;
     public float GForce => gForce;
-    public float VerticalSpeed => rb != null ? rb.linearVelocity.y : 0f;
-    public bool IsGrounded => groundedTimer > 0f;
-    public bool IsStalling => !crashed && groundedTimer <= 0f && (Mathf.Abs(aoa) > stallAoA * Mathf.Deg2Rad || Speed < stallSpeed * 0.95f);
+    public float VerticalSpeed => Velocity.y;
+    public bool IsGrounded => !externalControl && groundedTimer > 0f;
+    public bool IsStalling => !externalControl && !crashed && groundedTimer <= 0f && (Mathf.Abs(aoa) > stallAoA * Mathf.Deg2Rad || Speed < stallSpeed * 0.95f);
     public bool IsCrashed => crashed;
     public bool MouseFlight => mouseFlight;
     public Vector3 SpawnPosition => spawnPosition;
@@ -147,6 +147,23 @@ public class PlaneController : MonoBehaviour
 
     private Rigidbody rb;
     private Propeller propeller;
+
+    // Dis kontrol (uzay prototipi: RailShipController): ucus fizigi, girdi ve carpma mantigi devre disi;
+    // konum/donus disaridan verilir, hiz HUD/nisan/dusman yapay zekasi icin buradan bildirilir.
+    [System.NonSerialized] public bool externalControl;
+    private Vector3 externalVelocity;
+
+    public void SetExternalVelocity(Vector3 v) { externalVelocity = v; }
+
+    private void SetBodyVelocity(Vector3 v)
+    {
+        if (rb != null && !rb.isKinematic) rb.linearVelocity = v;
+    }
+
+    private void SetBodySpin(Vector3 w)
+    {
+        if (rb != null && !rb.isKinematic) rb.angularVelocity = w;
+    }
     private Collider[] colliders;
 
     private const float G = 9.81f;
@@ -244,7 +261,7 @@ public class PlaneController : MonoBehaviour
         ComputeConstants();
         throttle = EquilibriumThrottle();
         launchSpeed = cruiseSpeed;
-        if (rb != null) rb.linearVelocity = transform.forward * cruiseSpeed;
+        if (rb != null) SetBodyVelocity(transform.forward * cruiseSpeed);
     }
 
     public void SetSpawn(Vector3 position, Quaternion rotation)
@@ -277,8 +294,8 @@ public class PlaneController : MonoBehaviour
         rb.position = spawnPosition;
         rb.rotation = spawnRotation;
         Physics.SyncTransforms();
-        rb.linearVelocity = transform.forward * cruiseSpeed;
-        rb.angularVelocity = Vector3.zero;
+        SetBodyVelocity(transform.forward * cruiseSpeed);
+        SetBodySpin(Vector3.zero);
         throttle = EquilibriumThrottle();
         Respawned?.Invoke();
     }
@@ -299,8 +316,8 @@ public class PlaneController : MonoBehaviour
         rb.position = position;
         rb.rotation = rotation;
         Physics.SyncTransforms();
-        rb.linearVelocity = transform.forward * cruiseSpeed;
-        rb.angularVelocity = Vector3.zero;
+        SetBodyVelocity(transform.forward * cruiseSpeed);
+        SetBodySpin(Vector3.zero);
         throttle = EquilibriumThrottle();
         Respawned?.Invoke();
     }
@@ -337,8 +354,8 @@ public class PlaneController : MonoBehaviour
         rb.rotation = transform.rotation;
         Physics.SyncTransforms();
 
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
+        SetBodyVelocity(Vector3.zero);
+        SetBodySpin(Vector3.zero);
         throttle = 0f;
         Respawned?.Invoke();
     }
@@ -378,8 +395,8 @@ public class PlaneController : MonoBehaviour
         localOmega = Vector3.zero;
         if (rb != null)
         {
-            rb.linearVelocity = transform.forward * launchSpeed;
-            rb.angularVelocity = Vector3.zero;
+            SetBodyVelocity(transform.forward * launchSpeed);
+            SetBodySpin(Vector3.zero);
         }
     }
 
@@ -433,6 +450,16 @@ public class PlaneController : MonoBehaviour
     private void Update()
     {
         if (GameState.Paused) return;
+
+        if (externalControl)
+        {
+            // Yalniz gorsel: pervane doner, iz (trail) yok
+            if (propeller != null) propeller.Rpm = Mathf.Lerp(propeller.Rpm, crashed ? 0f : 1800f, 4f * Time.deltaTime);
+            if (trails != null)
+                foreach (var t in trails)
+                    if (t != null) t.emitting = false;
+            return;
+        }
 
         ReadInput();
 
@@ -565,13 +592,15 @@ public class PlaneController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (externalControl) return;
+
         float dt = Time.fixedDeltaTime;
         groundedTimer -= dt;
 
         if (crashed)
         {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            SetBodyVelocity(Vector3.zero);
+            SetBodySpin(Vector3.zero);
             return;
         }
 
@@ -595,7 +624,7 @@ public class PlaneController : MonoBehaviour
             float along = Vector3.Dot(vel, flatFwd);
             float decel = 0.6f + (brake ? 8f : 0f);
             vel -= flatFwd * Mathf.Clamp(along, -decel * dt, decel * dt);
-            rb.linearVelocity = vel;
+            SetBodyVelocity(vel);
         }
 
         float speed = vel.magnitude;
@@ -735,14 +764,14 @@ public class PlaneController : MonoBehaviour
 
         Vector3 target = new Vector3(-pitchTargetUp, yawTargetRight, -rollTargetRight);
         localOmega = Vector3.Lerp(localOmega, target, 1f - Mathf.Exp(-responsiveness * dt));
-        rb.angularVelocity = transform.TransformDirection(localOmega);
+        SetBodySpin(transform.TransformDirection(localOmega));
     }
 
     // ------------------------------------------------------------ collision
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (crashed || PlayerHealth.God) return;
+        if (crashed || PlayerHealth.God || externalControl) return;
 
         // Dusman ucaklarla temas hasari EnemyPlane'de hesaplanir; fiziksel carpisma oldurmez
         if (collision.collider.GetComponentInParent<EnemyPlane>() != null) return;
@@ -770,6 +799,8 @@ public class PlaneController : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
+        if (externalControl) return;
+
         // Yalniz tekerlek/kayak temasi "yerde" sayilir
         for (int i = 0; i < collision.contactCount; i++)
         {

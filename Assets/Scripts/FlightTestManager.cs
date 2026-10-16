@@ -190,6 +190,15 @@ public class FlightTestManager : MonoBehaviour
     private const string HelpSteerArcade = "W / S  yunuslama        A / D  sağa-sola dön     Q / E  yatış";
     private const string HelpSteerClassic = "W / S  yunuslama        A / D  yatış        Q / E  dümen";
 
+    // Uzay prototipi: yalniz WASD hareket
+    private static readonly string[] railHelpLines =
+    {
+        "W / A / S / D  hareket (yukarı / sol / aşağı / sağ)",
+        "SPACE / SOL TIK  ateş (öndeki en yakın düşmana)",
+        "F  güdümlü füze        B  bomba        C  kamera mesafesi",
+        "Meteor duvarlarına değme: hasar verir",
+    };
+
     private const string HelpAutoOn = "R  havada başla         P  pistte başla     T  oto-düzeltme: AÇIK";
     private const string HelpAutoOff = "R  havada başla         P  pistte başla     T  oto-düzeltme: KAPALI";
 
@@ -218,7 +227,7 @@ public class FlightTestManager : MonoBehaviour
         helpLines[0] = ControlSettings.AutoAim ? HelpAimAuto : HelpAimMouse;
         helpLines[1] = ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic;
         helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;
-        string[] lines = helpLines;
+        string[] lines = SpaceRail.Active ? railHelpLines : helpLines;
 
         float w = 520f;
         float h = lines.Length * 19f + 14f;

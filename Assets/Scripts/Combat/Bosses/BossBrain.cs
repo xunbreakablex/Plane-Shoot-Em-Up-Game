@@ -205,6 +205,10 @@ public partial class BossBrain : MonoBehaviour
         float ground = mgr.GroundHeight(pos);
         if (pos.y < ground + 110f) pos.y = ground + 110f;
 
+        // Uzay prototipi: govde merkezi koridorun icinde (buyuk govdelerin uclari duvara taşabilir)
+        if (SpaceRail.Active && GameSettings.Current.space.keepEnemiesInCorridor)
+            pos = SpaceRail.Instance.ClampToCorridor(pos, 12f);
+
         rb.MovePosition(pos);
         rb.MoveRotation(rot);
         enemy.SetVelocity(vel);

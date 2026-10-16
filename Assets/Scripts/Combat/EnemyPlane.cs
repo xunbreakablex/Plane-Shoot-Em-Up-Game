@@ -283,9 +283,11 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         Vector3 toPlayer = target.position - pos;
         float dist = toPlayer.magnitude;
 
-        // Oyuncuyu gecip uzaklastiysa ya da cok uzun suredir ucuyorsa elenir (kacti)
+        // Oyuncuyu gecip uzaklastiysa ya da cok uzun suredir ucuyorsa elenir (kacti).
+        // Koridorda (uzay prototipi) oyuncunun 150 m gerisinde kalan da elenir: geri donemez.
         float along = Vector3.Dot(pos - target.position, heading);
-        if (along > 900f || Time.time - born > StrafeLifetime)
+        bool leftBehind = SpaceRail.Active && SpaceRail.Instance.Local(pos).z < SpaceRail.Instance.Distance - 150f;
+        if (along > 900f || leftBehind || Time.time - born > StrafeLifetime)
         {
             Destroy(gameObject);
             return;
@@ -301,6 +303,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         }
 
         Vector3 newPos = pos + heading * cruiseSpeed * dt;
+        newPos = KeepInCorridor(newPos);
         if (newPos.y < mgr.GroundHeight(newPos) + 2.5f)
         {
             Die(IsBoss);
@@ -402,6 +405,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
         Quaternion newRot = Quaternion.LookRotation(newFwd, Vector3.up) * Quaternion.Euler(0f, 0f, -bank);
         Vector3 newPos = pos + newFwd * speed * dt;
+        newPos = KeepInCorridor(newPos);
 
         // Yere carpti
         if (newPos.y < mgr.GroundHeight(newPos) + 2.5f)
@@ -423,6 +427,13 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         }
 
         TryShoot(newPos, newRot, newFwd, target, dist);
+    }
+
+    // Uzay prototipi: meteor duvarinin icinden gecmesin
+    private Vector3 KeepInCorridor(Vector3 p)
+    {
+        if (!SpaceRail.Active || !GameSettings.Current.space.keepEnemiesInCorridor) return p;
+        return SpaceRail.Instance.ClampToCorridor(p, HitRadius + 1f);
     }
 
     private void Ram(Vector3 point)

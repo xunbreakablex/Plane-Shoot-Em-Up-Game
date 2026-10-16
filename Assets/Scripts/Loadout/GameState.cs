@@ -23,5 +23,9 @@ public static class GameState
 public static class GameScenes
 {
     public const string Hangar = "Hangar";
-    public const string Flight = "SampleScene";
+    public const string ClassicFlight = "SampleScene";
+    public const string SpaceFlight = "SpacePrototype";
+
+    /// <summary>Savas sahnesi: GameSettings.useSpacePrototype acikken uzay prototipi.</summary>
+    public static string Flight => GameSettings.Current.useSpacePrototype ? SpaceFlight : ClassicFlight;
 }

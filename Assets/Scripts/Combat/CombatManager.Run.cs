@@ -302,6 +302,8 @@ public partial class CombatManager
 
         Vector3 pos = pt.position + Quaternion.AngleAxis(Random.Range(-25f, 25f), Vector3.up) * fwd * 640f;
         pos.y = Mathf.Max(GroundHeight(pos) + 170f, pt.position.y + 20f);
+        if (SpaceRail.Active && GameSettings.Current.space.keepEnemiesInCorridor)
+            pos = SpaceRail.Instance.CompressIntoCorridor(pos, 12f);
 
         GameObject go = BossBuilder.Build(bossType, bossLit, bossGlow != null ? bossGlow : bossLit);
         go.transform.SetPositionAndRotation(pos, Quaternion.LookRotation((pt.position - pos).normalized, Vector3.up));
@@ -352,6 +354,22 @@ public partial class CombatManager
         bool strafe = kind == EnemyKind.Swarmer || kind == EnemyKind.Heavy;
 
         Vector3 look = heading.sqrMagnitude > 0.01f ? heading.normalized : Vector3.forward;
+
+        // Uzay prototipi: formasyon koridorun icine sikistirilir (meteor duvarinin icinde dogmasin)
+        if (SpaceRail.Active && GameSettings.Current.space.keepEnemiesInCorridor)
+        {
+            pos = SpaceRail.Instance.CompressIntoCorridor(pos, info.radius + 2f);
+
+            // Yon yeniden: koridor boyunca oyuncuya dogru (yana dogru dogan formasyon duvara yapisip
+            // oyuncunun gerisinde kalmasin)
+            Transform pt = PlayerTransform;
+            if (pt != null)
+            {
+                Vector3 toward = pt.position + PlayerVelocity * 2.5f - pos;
+                if (toward.sqrMagnitude > 1f) look = toward.normalized;
+            }
+        }
+
         GameObject go = Instantiate(modelPrefabs[model], pos, Quaternion.LookRotation(look, Vector3.up));
         go.name = "Enemy_" + kind + "_" + modelPrefabs[model].name;
         go.transform.localScale = Vector3.one * info.scale;
