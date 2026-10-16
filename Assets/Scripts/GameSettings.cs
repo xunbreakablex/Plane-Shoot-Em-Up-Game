@@ -40,6 +40,16 @@ public class GameSettings : ScriptableObject
     [Tooltip("Elle yatışın (Arcade'de Q/E, Klasik'te A/D) azami hızı (derece/sn). Hızlı yatan uçaklar bunun üstüne çıkamaz.")]
     [Range(60f, 500f)] public float maxManualRollRate = 200f;
 
+    [Header("Fare ile uçuş (FARE şeması)")]
+    [Tooltip("Fare hassasiyeti: büyük = aynı fare hareketiyle daha sert yönelme")]
+    [Range(0.1f, 5f)] public float mouseSensitivity = 1f;
+    [Tooltip("Açıksa fare yukarı = burun aşağı (ters). Kapalıyken fare yukarı = burun yukarı.")]
+    public bool invertMouseY = false;
+    [Tooltip("Fare durunca yönelmenin sönme hızı (1/sn). Büyük = fare durunca uçak hemen düzleşir; küçük = süzülür.")]
+    [Range(1f, 30f)] public float mouseSteerDecay = 8f;
+    [Tooltip("FARE şemasında W/S bırakılınca gaz seyir hızına döner (kapalıysa rölantiye iner)")]
+    public bool throttleReturnsToCruise = true;
+
     // ------------------------------------------------------------------- nisan
 
     [Header("Otomatik nişan")]

@@ -99,13 +99,15 @@ public class PauseMenu : MonoBehaviour
             SceneManager.LoadScene(GameScenes.Hangar);
         }
 
-        // Kontrol semasi: Arcade (A/D don, Q/E yatis) / Klasik (A/D yatis, Q/E dumen); tercih kalicidir
+        // Kontrol semasi: Fare -> Arcade -> Klasik (tercih kalicidir)
         if (GUI.Button(new Rect(x, y + (h + gap) * 3f, w, h), $"KONTROL:  {ControlSettings.Label}", button))
-            ControlSettings.Scheme = ControlSettings.Arcade ? ControlScheme.Classic : ControlScheme.Arcade;
+            ControlSettings.Scheme = ControlSettings.Next(ControlSettings.Scheme);
 
-        // Nisan: Otomatik (imlec burun onunde, en yakin dusman) / Fare; tercih kalicidir
+        // Nisan: Otomatik / Fare. FARE semasinda fare ucagi yonettigi icin nisan hep otomatiktir.
+        GUI.enabled = !ControlSettings.MouseSteering;
         if (GUI.Button(new Rect(x, y + (h + gap) * 4f, w, h), $"NİŞAN:  {ControlSettings.AimLabel}", button))
             ControlSettings.AutoAim = !ControlSettings.AutoAim;
+        GUI.enabled = true;
 
         Hud.Text(new Rect(0f, y + (h + gap) * 5f - 4f, W, 22f), ControlSettings.SteerHint,
             new Color(1f, 0.9f, 0.55f), 15, TextAnchor.MiddleCenter);

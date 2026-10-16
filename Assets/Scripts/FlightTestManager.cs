@@ -187,6 +187,7 @@ public class FlightTestManager : MonoBehaviour
     private const string HelpAimMouse = "FARE  nişan alma        SOL TIK / SPACE  ateş        F  güdümlü füze";
 
     // Kontrol semasina gore 2. satir (ESC menusunden Arcade/Klasik)
+    private const string HelpSteerMouse = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  dön        Q / E  yatış";
     private const string HelpSteerArcade = "W / S  yunuslama        A / D  sağa-sola dön     Q / E  yatış";
     private const string HelpSteerClassic = "W / S  yunuslama        A / D  yatış        Q / E  dümen";
 
@@ -215,8 +216,9 @@ public class FlightTestManager : MonoBehaviour
         if (!open) return;
 
         // Dizi ve metinler tek sefer kurulur; yalniz kontrol semasi ve oto-duzeltme satirlari degisir
-        helpLines[0] = ControlSettings.AutoAim ? HelpAimAuto : HelpAimMouse;
-        helpLines[1] = ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic;
+        helpLines[0] = ControlSettings.EffectiveAutoAim ? HelpAimAuto : HelpAimMouse;
+        helpLines[1] = ControlSettings.MouseSteering ? HelpSteerMouse
+            : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);
         helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;
         string[] lines = helpLines;
 

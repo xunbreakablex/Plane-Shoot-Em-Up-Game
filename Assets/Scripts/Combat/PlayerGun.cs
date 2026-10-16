@@ -100,7 +100,7 @@ public class PlayerGun : MonoBehaviour
         float leadSpeed = (count > 0 ? speedSum / count : bulletSpeed)
                           * RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier;
 
-        if (ControlSettings.AutoAim) UpdateAutoAim(plane, leadSpeed);
+        if (ControlSettings.EffectiveAutoAim) UpdateAutoAim(plane, leadSpeed);
         else UpdateAim(plane, leadSpeed);
 
         // Ates: SPACE basili tut (her iki nisan modunda) ya da sol tik. SPACE yerde ayrica frendir.

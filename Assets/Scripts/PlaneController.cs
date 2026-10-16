@@ -165,6 +165,7 @@ public class PlaneController : MonoBehaviour
     private bool brake;
     private bool mouseFlight;
     private Vector2 mouseStick;
+    private Vector2 steerStick;      // FARE semasi: fare hareketinden gelen sanal cubuk
 
     private float groundedTimer;
     private bool crashed;
@@ -475,7 +476,13 @@ public class PlaneController : MonoBehaviour
             if (throttleRaw < -0.01f)
                 throttle = Mathf.Clamp01(throttle + throttleRaw * throttleRiseRate * dt);
             else
-                throttle = Mathf.Lerp(throttle, idleThrottle, 1f - Mathf.Exp(-throttleReleaseRate * dt));
+            {
+                // FARE semasinda W/S birakilinca gaz seyir hizina doner (hizlan/yavasla tuslari gibi);
+                // diger semalarda rolantiye iner
+                bool toCruise = ControlSettings.MouseSteering && GameSettings.Current.throttleReturnsToCruise;
+                float rest = toCruise ? EquilibriumThrottle() : idleThrottle;
+                throttle = Mathf.Lerp(throttle, rest, 1f - Mathf.Exp(-throttleReleaseRate * dt));
+            }
         }
     }
 
@@ -484,19 +491,23 @@ public class PlaneController : MonoBehaviour
         pitchRaw = rollRaw = yawRaw = turnRaw = throttleRaw = 0f;
         brake = false;
 
-        // Arcade: A/D (sol cubuk x) otomatik yatisli donus, Q/E (omuz tuslari) yatis.
-        // Klasik: A/D (sol cubuk x) yatis, Q/E (omuz tuslari) dumen.
-        bool arcade = ControlSettings.Arcade;
+        // Fare: fare yonlendirir (yukari-asagi + saga-sola), W/S hiz, A/D donus, Q/E yatis.
+        // Arcade: A/D (sol cubuk x) otomatik yatisli donus, Q/E (omuz tuslari) yatis, W/S yunuslama.
+        // Klasik: A/D (sol cubuk x) yatis, Q/E (omuz tuslari) dumen, W/S yunuslama.
+        bool mouseScheme = ControlSettings.MouseSteering;
+        bool arcade = ControlSettings.ArcadeSteering;
 
         var kb = Keyboard.current;
         if (kb != null)
         {
-            // +1 = burun yukari / saga. W/S yonu GameSettings.wPitchesUp ile secilir
-            // (varsayilan: W burun yukari, S asagi; ok tuslari da ayni)
-            float pitchKeys = 0f;
-            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) pitchKeys += 1f;
-            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) pitchKeys -= 1f;
-            pitchRaw += GameSettings.Current.wPitchesUp ? pitchKeys : -pitchKeys;
+            // +1 = burun yukari / saga
+            float wsKeys = 0f;
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) wsKeys += 1f;
+            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) wsKeys -= 1f;
+            if (mouseScheme)
+                throttleRaw += wsKeys;                                   // W hizlan, S yavasla
+            else
+                pitchRaw += GameSettings.Current.wPitchesUp ? wsKeys : -wsKeys;   // varsayilan: W burun asagi
 
             float side = 0f, aux = 0f;
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) side += 1f;
@@ -511,7 +522,7 @@ public class PlaneController : MonoBehaviour
             if (kb.spaceKey.isPressed) brake = true;
 
             if (kb.tKey.wasPressedThisFrame) autoLevel = !autoLevel;
-            if (kb.mKey.wasPressedThisFrame) SetMouseFlight(!mouseFlight);
+            if (kb.mKey.wasPressedThisFrame && !mouseScheme) SetMouseFlight(!mouseFlight);
             if (kb.rKey.wasPressedThisFrame) Respawn();
             if (kb.pKey.wasPressedThisFrame) PlaceOnRunway();
         }
@@ -529,7 +540,28 @@ public class PlaneController : MonoBehaviour
             if (pad.buttonNorth.wasPressedThisFrame) autoLevel = !autoLevel;
         }
 
-        if (mouseFlight && Mouse.current != null)
+        // FARE semasi: fare hareketi sanal bir cubugu iter, fare durunca cubuk hizla sifira soner
+        // (hareket = donus hizi; Battlefront tarzi). Sag tik basiliyken fare kamerayi cevirir, ucagi degil.
+        if (mouseScheme && Mouse.current != null)
+        {
+            GameSettings gs = GameSettings.Current;
+            Vector2 d = Mouse.current.rightButton.isPressed || Cursor.lockState != CursorLockMode.Locked
+                ? Vector2.zero
+                : Mouse.current.delta.ReadValue();
+            float k = 0.008f * gs.mouseSensitivity;
+            steerStick.x = Mathf.Clamp(steerStick.x + d.x * k, -1f, 1f);
+            steerStick.y = Mathf.Clamp(steerStick.y + d.y * k, -1f, 1f);
+            steerStick *= Mathf.Exp(-gs.mouseSteerDecay * Time.deltaTime);
+
+            pitchRaw += gs.invertMouseY ? -steerStick.y : steerStick.y;   // varsayilan: fare yukari = burun yukari
+            turnRaw += steerStick.x;
+        }
+        else
+        {
+            steerStick = Vector2.zero;
+        }
+
+        if (mouseFlight && !mouseScheme && Mouse.current != null)
         {
             Vector2 d = Mouse.current.delta.ReadValue();
             mouseStick.x = Mathf.Clamp(mouseStick.x + d.x * 0.004f, -1f, 1f);

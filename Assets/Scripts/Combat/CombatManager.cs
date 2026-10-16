@@ -123,9 +123,11 @@ public partial class CombatManager : MonoBehaviour
 
         if (GameState.Paused) return;
 
-        // Imlec: gorunmez ve pencereye kilitli; nisangah OnGUI'de cizilir
+        // Imlec: gorunmez; nisangah OnGUI'de cizilir. FARE semasinda imlec kilitlenir (fare hareketi
+        // sinirsiz okunur), digerlerinde pencereye hapsedilir.
         Cursor.visible = false;
-        if (Cursor.lockState != CursorLockMode.Locked) Cursor.lockState = CursorLockMode.Confined;
+        if (ControlSettings.MouseSteering) Cursor.lockState = CursorLockMode.Locked;
+        else if (Cursor.lockState != CursorLockMode.Locked) Cursor.lockState = CursorLockMode.Confined;
 
         enemies.RemoveAll(e => e == null);
 
