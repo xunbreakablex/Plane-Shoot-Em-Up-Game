@@ -752,7 +752,7 @@ public partial class CombatManager
         bool locked = gun.LockedEnemy != null;
         Color col = locked ? new Color(1f, 0.45f, 0.4f) : new Color(0.95f, 1f, 0.95f);
 
-        Hud.Disc(p, 4.5f, new Color(0f, 0f, 0f, 0.6f));
-        Hud.Disc(p, 3f, col);
+        Hud.Disc(p, 3.4f, new Color(0f, 0f, 0f, 0.6f));
+        Hud.Disc(p, 2.2f, col);
     }
 }

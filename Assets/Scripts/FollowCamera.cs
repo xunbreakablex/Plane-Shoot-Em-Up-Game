@@ -25,6 +25,8 @@ public class FollowCamera : MonoBehaviour
     private int offsetIndex;
     private Vector2 look;
     private float distanceScale = 1f;
+    private float zoomBlend, zoomVel;   // 0 = normal, 1 = tam yakinlastirma (sag tik)
+    private float smoothedFov;          // hiz artisli FOV (yakinlastirma uygulanmadan)
 
     private void Awake()
     {
@@ -50,10 +52,14 @@ public class FollowCamera : MonoBehaviour
         if (kb != null && kb.cKey.wasPressedThisFrame)
             offsetIndex = (offsetIndex + 1) % Offsets.Length;
 
-        Vector2 lookIn = Vector2.zero;
+        // Sag tik: nisan alinan bolgeye (ekran ortasi) yakinlastirir; GameSettings.aimZoom / aimZoomTime
         var mouse = Mouse.current;
-        if (mouse != null && mouse.rightButton.isPressed)
-            lookIn += mouse.delta.ReadValue() * 0.15f;
+        bool zoomHeld = mouse != null && mouse.rightButton.isPressed && !GameState.UiOpen;
+        float zoomTarget = zoomHeld ? 1f : 0f;
+        zoomBlend = Mathf.SmoothDamp(zoomBlend, zoomTarget, ref zoomVel, GameSettings.Current.aimZoomTime);
+
+        // Etrafa bakma yalniz gamepad sag cubugunda (sag tik artik zoom)
+        Vector2 lookIn = Vector2.zero;
         var pad = Gamepad.current;
         if (pad != null)
             lookIn += pad.rightStick.ReadValue() * 90f * Time.deltaTime;
@@ -155,7 +161,13 @@ public class FollowCamera : MonoBehaviour
         if (cam != null)
         {
             float t = Mathf.Clamp01(speed / maxSpeedForFov);
-            cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, baseFov + t * speedFovBoost, 3f * dt);
+            if (smoothedFov <= 0f) smoothedFov = cam.fieldOfView;
+            smoothedFov = Mathf.Lerp(smoothedFov, baseFov + t * speedFovBoost, 3f * dt);
+
+            // Yakinlastirma gercek buyutme carpani (tan tabanli): 1,35 = nisan bolgesi 1,35 kat buyuk
+            float zoom = Mathf.Lerp(1f, Mathf.Max(GameSettings.Current.aimZoom, 1f), zoomBlend);
+            float halfTan = Mathf.Tan(smoothedFov * 0.5f * Mathf.Deg2Rad) / zoom;
+            cam.fieldOfView = 2f * Mathf.Atan(halfTan) * Mathf.Rad2Deg;
         }
     }
 }

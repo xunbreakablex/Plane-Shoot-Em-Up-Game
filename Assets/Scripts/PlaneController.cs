@@ -5,7 +5,8 @@ using UnityEngine.InputSystem;
 //  - Hucum acisina (AoA) bagli kaldirma, stall, indüklenmis surtunme, yan kayma
 //  - Kumanda "G komutu" gibi calisir: nötr = ucus yolunu tut, cek = daha fazla G
 //  - Yerde tekerlek surtunmesi, frenleme, pistten kalkis/inis
-// FARE semasinda havada fizik yerine oyun tipi ucus calisir (bkz. ArcadeFlight).
+// FARE semasinda havada fizik yerine oyun tipi ucus calisir (bkz. ArcadeFlight): fare yonlendirir,
+// A/D sagi-sola, W/S yukari-asagi kaydirir, Shift/Ctrl gaz. Asagidaki tus listesi Arcade/Klasik semalari icindir.
 // Klavye: W/S yunuslama, A/D donus (Arcade) ya da yatis (Klasik), Q/E yatis (Arcade) ya da dumen (Klasik),
 //         Shift/Ctrl gaz, Space fren,
 //         T oto-duzeltme, M fare ile ucus, R havada basla, P pistte basla.
@@ -169,6 +170,9 @@ public class PlaneController : MonoBehaviour
     private Vector2 steerStick;      // FARE semasi (fizik modeli): fare hareketinden gelen sanal cubuk
     private Vector2 mouseAimPending; // FARE semasi (arcade): henuz uygulanmamis fare donusu (derece; x saga, y burun yukari)
     private Vector2 mouseAimVel;     // FARE semasi (arcade): birikimin SmoothDamp hizi
+    private Vector2 strafeRaw;       // FARE semasi (arcade): A/D (x) ve W/S (y) kayma girisi, -1..1
+    private Vector2 strafeVel;       // FARE semasi (arcade): yan hiz (m/s; x sag, y yukari), kuvvetle yumusak degisir
+    private Vector3 strafeWorld;     // son adimda hizin ustune eklenen kayma hizi (dunya); sonraki adimda cikarilir
     private float visualBank;        // FARE semasi (arcade): donuse gore gorsel yatis (derece, saga pozitif)
     private bool arcadeActive;       // son fizik adiminda arcade ucus mu calisti
 
@@ -279,6 +283,7 @@ public class PlaneController : MonoBehaviour
         CancelInvoke(nameof(Respawn));
         crashed = false;
         localOmega = Vector3.zero;
+        ResetArcadeState();
         transform.SetPositionAndRotation(spawnPosition, spawnRotation);
         rb.position = spawnPosition;
         rb.rotation = spawnRotation;
@@ -301,6 +306,7 @@ public class PlaneController : MonoBehaviour
         CancelInvoke(nameof(Respawn));
         crashed = false;
         localOmega = Vector3.zero;
+        ResetArcadeState();
         transform.SetPositionAndRotation(position, rotation);
         rb.position = position;
         rb.rotation = rotation;
@@ -327,6 +333,7 @@ public class PlaneController : MonoBehaviour
         CancelInvoke(nameof(Respawn));
         crashed = false;
         localOmega = Vector3.zero;
+        ResetArcadeState();
 
         transform.SetPositionAndRotation(runwayPosition, runwayRotation);
         Physics.SyncTransforms();
@@ -382,6 +389,7 @@ public class PlaneController : MonoBehaviour
     {
         pitchIn = rollIn = yawIn = turnIn = 0f;
         localOmega = Vector3.zero;
+        ResetArcadeState();
         if (rb != null)
         {
             rb.linearVelocity = transform.forward * launchSpeed;
@@ -496,13 +504,16 @@ public class PlaneController : MonoBehaviour
     private void ReadInput()
     {
         pitchRaw = rollRaw = yawRaw = turnRaw = throttleRaw = 0f;
+        strafeRaw = Vector2.zero;
         brake = false;
 
-        // Fare: fare yonlendirir (yukari-asagi + saga-sola), W/S hiz, A/D donus, Q/E yatis.
+        // Fare: fare yonlendirir (yukari-asagi + saga-sola). Havada A/D sagi-sola, W/S yukari-asagi KAYDIRIR
+        //       (burun donmez), gaz Shift/Ctrl; Q/E yok. keysStrafe kapaliysa/yerde: A/D donus, W/S gaz.
         // Arcade: A/D (sol cubuk x) otomatik yatisli donus, Q/E (omuz tuslari) yatis, W/S yunuslama.
         // Klasik: A/D (sol cubuk x) yatis, Q/E (omuz tuslari) dumen, W/S yunuslama.
         bool mouseScheme = ControlSettings.MouseSteering;
         bool arcade = ControlSettings.ArcadeSteering;
+        bool strafeKeys = mouseScheme && arcadeActive && GameSettings.Current.keysStrafe;
 
         var kb = Keyboard.current;
         if (kb != null)
@@ -511,18 +522,25 @@ public class PlaneController : MonoBehaviour
             float wsKeys = 0f;
             if (kb.wKey.isPressed || kb.upArrowKey.isPressed) wsKeys += 1f;
             if (kb.sKey.isPressed || kb.downArrowKey.isPressed) wsKeys -= 1f;
-            if (mouseScheme)
-                throttleRaw += wsKeys;                                   // W hizlan, S yavasla
-            else
-                pitchRaw += GameSettings.Current.wPitchesUp ? wsKeys : -wsKeys;   // varsayilan: W burun asagi
 
             float side = 0f, aux = 0f;
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) side += 1f;
             if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) side -= 1f;
-            if (kb.eKey.isPressed) aux += 1f;
-            if (kb.qKey.isPressed) aux -= 1f;
-            if (arcade) { turnRaw += side; rollRaw += aux; }
-            else { rollRaw += side; yawRaw += aux; }
+
+            if (mouseScheme)
+            {
+                if (strafeKeys) strafeRaw = new Vector2(side, wsKeys);   // kayma: W yukari, D saga
+                else { throttleRaw += wsKeys; turnRaw += side; }         // eski: W hizlan, A/D donus
+                // Q/E bu semada kullanilmaz
+            }
+            else
+            {
+                pitchRaw += GameSettings.Current.wPitchesUp ? wsKeys : -wsKeys;   // varsayilan: W burun asagi
+                if (kb.eKey.isPressed) aux += 1f;
+                if (kb.qKey.isPressed) aux -= 1f;
+                if (arcade) { turnRaw += side; rollRaw += aux; }
+                else { rollRaw += side; yawRaw += aux; }
+            }
 
             if (kb.leftShiftKey.isPressed) throttleRaw += 1f;
             if (kb.leftCtrlKey.isPressed) throttleRaw -= 1f;
@@ -547,13 +565,13 @@ public class PlaneController : MonoBehaviour
             if (pad.buttonNorth.wasPressedThisFrame) autoLevel = !autoLevel;
         }
 
-        // FARE semasi. Sag tik basiliyken fare kamerayi cevirir, ucagi degil.
+        // FARE semasi (sag tik kamerayi yakinlastirir, FollowCamera; ucak yonlendirmesi etkilenmez).
         //  Arcade (varsayilan): fare burnu dogrudan cevirir (FPS gibi); birikim ArcadeFlight'ta yumusakca uygulanir.
         //  Fizik modeli (arcade kapali ya da yerde): fare hareketi sanal bir cubugu iter, fare durunca cubuk soner.
         if (mouseScheme && Mouse.current != null)
         {
             GameSettings gs = GameSettings.Current;
-            Vector2 d = Mouse.current.rightButton.isPressed || Cursor.lockState != CursorLockMode.Locked
+            Vector2 d = Cursor.lockState != CursorLockMode.Locked
                 ? Vector2.zero
                 : Mouse.current.delta.ReadValue();
             if (gs.invertMouseY) d.y = -d.y;   // varsayilan: fare yukari = burun yukari
@@ -661,10 +679,19 @@ public class PlaneController : MonoBehaviour
         if (arcadeActive)
         {
             if (!wasArcade) visualBank = 0f;
-            ArcadeFlight(dt, speed, gs);
+            ArcadeFlight(dt, gs);
             return;
         }
         visualBank = 0f;
+        strafeVel = Vector2.zero;
+        if (strafeWorld != Vector3.zero)
+        {
+            // Kayma hizi fizik modeline karismasin
+            vel -= strafeWorld;
+            strafeWorld = Vector3.zero;
+            rb.linearVelocity = vel;
+            speed = vel.magnitude;
+        }
 
         Vector3 velDir = speed > 0.1f ? vel / speed : fwd;
         Vector3 lv = transform.InverseTransformDirection(vel);
@@ -808,10 +835,12 @@ public class PlaneController : MonoBehaviour
     }
 
     // ------------------------------------------------- FARE semasi: arcade ucus
-    // Fizik yerine dogrudan donus: fare burnu FPS gibi cevirir (yumusatilmis, ucagin donus hiziyla sinirli),
-    // A/D ve gamepad surekli doner, Q/E yatar. Hiz gaza baglidir; stall, hucum acisi ve G siniri yoktur.
+    // Fizik yerine dogrudan donus: fare burnu FPS gibi cevirir (yumusatilmis, ucagin donus hiziyla sinirli).
+    // A/D sagi-sola, W/S yukari-asagi KAYDIRIR (keysStrafe): burun donmez, ucak yan hizla kuvvetle hizlanir/durur
+    // ve A/D'de hafifce yatar. Hiz gaza (Shift/Ctrl) baglidir; stall, hucum acisi ve G siniri yoktur.
     // Ucagin yatissiz "nisan cercevesi" ile gorsel yatis ayri tutulur: fare hareketi ekranda hep ayni yone
     // gider (yatis yunuslamayi capraz yapmaz), donuste ucak yalnizca gorunuste yatar.
+    // Kayma hizi (strafeWorld) rb.linearVelocity'nin icinde tasinir; her adimda once cikarilip taban hiz hesaplanir.
 
     private const float MouseDegPerPixel = 0.07f;   // hassasiyet 1'de fare pikseli basina burun donusu (derece)
     private const float ArcadeYawFraction = 0.85f;  // saga-sola donus hizi = yunuslama hizi x bu
@@ -834,8 +863,19 @@ public class PlaneController : MonoBehaviour
         }
     }
 
-    private void ArcadeFlight(float dt, float speed, GameSettings gs)
+    /// <summary>Arcade ucus durumunu sifirlar (yeniden dogus, isinlanma): fare birikimi, kayma, gorsel yatis.</summary>
+    private void ResetArcadeState()
     {
+        mouseAimPending = mouseAimVel = Vector2.zero;
+        strafeVel = Vector2.zero;
+        strafeWorld = Vector3.zero;
+        visualBank = 0f;
+    }
+
+    private void ArcadeFlight(float dt, GameSettings gs)
+    {
+        Vector3 baseVel = rb.linearVelocity - strafeWorld;   // kayma hizi haric taban hiz
+        float speed = baseVel.magnitude;
         float maxPitch = ArcadePitchRate;
         float maxYaw = maxPitch * ArcadeYawFraction;
         float pitchCap = maxPitch * dt, yawCap = maxYaw * dt;
@@ -852,7 +892,7 @@ public class PlaneController : MonoBehaviour
         float mousePitch = mouseAimPending.y - restY;
         mouseAimPending = new Vector2(restX, restY);
 
-        // A/D ve gamepad surekli doner
+        // Gamepad sol cubuk surekli doner (A/D kayma modunda donmez)
         float yawStep = Mathf.Clamp(mouseYaw + turnIn * yawCap, -yawCap, yawCap);
         float pitchStep = Mathf.Clamp(mousePitch + pitchIn * pitchCap, -pitchCap, pitchCap);
 
@@ -866,18 +906,12 @@ public class PlaneController : MonoBehaviour
         Vector3 yawAxis = Vector3.Lerp(u, u.y >= 0f ? Vector3.up : Vector3.down, worldW).normalized;
         aim = Quaternion.AngleAxis(yawStep, yawAxis) * Quaternion.AngleAxis(-pitchStep, r) * aim;
 
-        // Q/E elle yatis (tonoz)
-        float manualRollRate = Mathf.Min(rollRate, gs.maxManualRollRate);
-        if (Mathf.Abs(rollIn) > 0.01f)
-            aim = Quaternion.AngleAxis(-rollIn * manualRollRate * dt, aim * Vector3.forward) * aim;
-
-        // Ufka donme: dikeye yakinken ufuk belirsiz oldugundan zayiflar; Q/E basiliyken calismaz.
+        // Ufka donme: dikeye yakinken ufuk belirsiz oldugundan zayiflar.
         // Ters ucusta cekiliyorsa calismaz (takla bozulmasin); birakilinca ucak kendiliginden duzelir.
         Vector3 f = aim * Vector3.forward;
         u = aim * Vector3.up;
         float flat = Mathf.Sqrt(Mathf.Max(0f, 1f - f.y * f.y));
         float levelW = autoLevel ? Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.15f, 0.5f, flat)) : 0f;
-        levelW *= 1f - Mathf.Clamp01(Mathf.Abs(rollIn) / 0.25f);
         if (u.y < 0f) levelW *= 1f - Mathf.Clamp01(Mathf.Abs(pitchStep) / (pitchCap * 0.3f));
         if (levelW > 0f)
         {
@@ -887,8 +921,16 @@ public class PlaneController : MonoBehaviour
             aim = Quaternion.AngleAxis(Mathf.Clamp(err * ArcadeLevelGain * dt, -maxStep, maxStep) * levelW, f) * aim;
         }
 
-        // Gorsel yatis: saga-sola donus hiziyla orantili
-        float bankTarget = Mathf.Clamp(yawStep / Mathf.Max(yawCap, 1e-5f), -1f, 1f) * gs.mouseVisualBank;
+        // Kayma: A/D (sag) ve W/S (yukari) yan hiz hedefine kuvvetle yaklasir; nisan cercevesinin sag/yukari
+        // eksenlerinde uygulanir (yatis yok sayilir, ekranda sag = sag). Kayarken burun donmez.
+        Vector2 strafeWant = strafeRaw * gs.strafeSpeed;
+        strafeVel = Vector2.Lerp(strafeVel, strafeWant, 1f - Mathf.Exp(-gs.strafeResponse * dt));
+        Vector3 aimRight = aim * Vector3.right, aimUp = aim * Vector3.up;
+        strafeWorld = aimRight * strafeVel.x + aimUp * strafeVel.y;
+
+        // Gorsel yatis: fareyle donus hiziyla orantili + A/D kayarken hafif yatis (W/S'de yatmaz)
+        float bankTarget = Mathf.Clamp(yawStep / Mathf.Max(yawCap, 1e-5f), -1f, 1f) * gs.mouseVisualBank
+                           + Mathf.Clamp(strafeVel.x / Mathf.Max(gs.strafeSpeed, 1f), -1f, 1f) * gs.strafeBank;
         visualBank = Mathf.Lerp(visualBank, bankTarget, 1f - Mathf.Exp(-ArcadeBankResponse * dt));
 
         Quaternion next = aim * Quaternion.Euler(0f, 0f, -visualBank);
@@ -912,9 +954,9 @@ public class PlaneController : MonoBehaviour
         s -= G * ArcadeGravity * nose.y * dt;
         s = Mathf.Clamp(s, minSpd * 0.85f, maxSpeed * 1.25f);
 
-        Vector3 velDir = speed > 0.1f ? rb.linearVelocity / speed : nose;
+        Vector3 velDir = speed > 0.1f ? baseVel / speed : nose;
         Vector3 dir = Vector3.Slerp(velDir, nose, 1f - Mathf.Exp(-ArcadeGrip * dt));
-        rb.linearVelocity = dir * s;
+        rb.linearVelocity = dir * s + strafeWorld;
 
         // HUD / kamera / iz efekti icin temsili G (gercek degil; donus sertligiyle orantili)
         float pull = Mathf.Max(Mathf.Abs(pitchStep) / Mathf.Max(pitchCap, 1e-5f), Mathf.Abs(yawStep) / Mathf.Max(yawCap, 1e-5f));

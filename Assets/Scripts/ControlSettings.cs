@@ -4,7 +4,7 @@ public enum ControlScheme
 {
     Arcade,   // A/D = otomatik yatisli donus, Q/E = yatis (roll), W/S = yunuslama
     Classic,  // A/D = yatis, Q/E = dumen (eski duzen), W/S = yunuslama
-    Mouse     // Fare = yonlendirme (yukari-asagi + saga-sola), W/S = hizlan/yavasla, A/D donus, Q/E yatis
+    Mouse     // Fare = yonlendirme (yukari-asagi + saga-sola), A/D = saga-sola kay, W/S = yukari-asagi kay, Shift/Ctrl = gaz, Sag tik = zoom
 }
 
 // Kontrol semasi tercihi (duraklat menusunden degisir, kalici). Her karede PlayerPrefs okunmasin diye onbellekli.
@@ -90,7 +90,7 @@ public static class ControlSettings
 
     /// <summary>Ilk oyunlardaki egitim duyurusu: atesin nasil yapildigi (secili semaya gore).</summary>
     public static string FireTutorial => MouseSteering
-        ? "FARE ile yönlendir, W/S ile hızlan-yavaşla, SOL TIK ya da SPACE ile ateş et"
+        ? "FARE ile yönlendir, A/D W/S ile kay, SOL TIK ya da SPACE ile ateş et"
         : AutoAim
             ? "SPACE basılı tut: öndeki en yakın düşmana ateş edersin"
             : "FARE ile nişan al, SOL TIK ya da SPACE ile ateş et";
@@ -102,7 +102,10 @@ public static class ControlSettings
         {
             switch (Scheme)
             {
-                case ControlScheme.Mouse: return "FARE  yönlendir     W / S  hızlan / yavaşla     A / D  dön     Q / E  yatış";
+                case ControlScheme.Mouse:
+                    return GameSettings.Current.keysStrafe
+                        ? "FARE  yönlendir     A / D  sağa-sola kay     W / S  yukarı-aşağı kay     SAĞ TIK  yakınlaştır     SHIFT / CTRL  hız"
+                        : "FARE  yönlendir     W / S  hızlan / yavaşla     A / D  dön     SAĞ TIK  yakınlaştır";
                 case ControlScheme.Arcade: return "A / D  sağa-sola dön     Q / E  yatış (tonoz)     W / S  yunuslama";
                 default: return "A / D  yatış             Q / E  dümen     W / S  yunuslama";
             }

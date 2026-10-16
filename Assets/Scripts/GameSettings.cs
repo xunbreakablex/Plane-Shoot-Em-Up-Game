@@ -51,12 +51,28 @@ public class GameSettings : ScriptableObject
     [Range(0.5f, 3f)] public float mouseTurnRate = 1.25f;
     [Tooltip("Arcade uçuşta fare hareketinin uçağa geçme süresi (sn). Dönüş yavaş başlar, hızlanır, yavaşça durur. Küçük = keskin, büyük = yumuşak ama gecikmeli.")]
     [Range(0.02f, 0.5f)] public float mouseSmoothing = 0.16f;
-    [Tooltip("Arcade uçuşta sağa-sola dönerken uçağın görsel yatışı (derece)")]
-    [Range(0f, 80f)] public float mouseVisualBank = 50f;
+    [Tooltip("Arcade uçuşta fareyle sağa-sola dönerken uçağın görsel yatışı (derece)")]
+    [Range(0f, 80f)] public float mouseVisualBank = 25f;
+    [Tooltip("Açıksa A/D uçağı sağa-sola, W/S yukarı-aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar); gaz Shift/Ctrl ile. Kapalıysa eski düzen: A/D döner, W/S gaz.")]
+    public bool keysStrafe = true;
+    [Tooltip("Kayma (A/D, W/S) azami yan hızı (m/s). Büyük = daha hızlı sağa-sola/yukarı-aşağı gidilir.")]
+    [Range(5f, 80f)] public float strafeSpeed = 32f;
+    [Tooltip("Kayma tepkisi (1/sn): büyük = tuşa basınca hemen hızlanır, bırakınca hemen durur; küçük = kuvvet yavaş etki eder, süzülür.")]
+    [Range(1f, 20f)] public float strafeResponse = 5f;
+    [Tooltip("Kayarken uçağın hafif yatışı (derece, yalnız A/D'de). 0 = yatmaz.")]
+    [Range(0f, 45f)] public float strafeBank = 12f;
     [Tooltip("Yalnız fizik modelinde (arcade kapalı): fare durunca yönelmenin sönme hızı (1/sn)")]
     [Range(1f, 30f)] public float mouseSteerDecay = 8f;
     [Tooltip("FARE şemasında W/S bırakılınca gaz seyir hızına döner (kapalıysa rölantiye iner)")]
     public bool throttleReturnsToCruise = true;
+
+    // ------------------------------------------------------------------ kamera
+
+    [Header("Kamera")]
+    [Tooltip("Sağ tık basılıyken yakınlaştırma çarpanı (1 = yakınlaştırma yok, 1,3 = %30 yakın). Nişan alınan bölgeye (ekran ortası) doğru.")]
+    [Range(1f, 3f)] public float aimZoom = 1.35f;
+    [Tooltip("Yakınlaşma/uzaklaşma süresi (sn)")]
+    [Range(0.02f, 1f)] public float aimZoomTime = 0.18f;
 
     // ------------------------------------------------------------------- nisan
 
