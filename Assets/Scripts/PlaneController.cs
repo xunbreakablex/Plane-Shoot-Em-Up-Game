@@ -168,6 +168,7 @@ public class PlaneController : MonoBehaviour
     private Vector2 mouseStick;
     private Vector2 steerStick;      // FARE semasi (fizik modeli): fare hareketinden gelen sanal cubuk
     private Vector2 mouseAimPending; // FARE semasi (arcade): henuz uygulanmamis fare donusu (derece; x saga, y burun yukari)
+    private Vector2 mouseAimVel;     // FARE semasi (arcade): birikimin SmoothDamp hizi
     private float visualBank;        // FARE semasi (arcade): donuse gore gorsel yatis (derece, saga pozitif)
     private bool arcadeActive;       // son fizik adiminda arcade ucus mu calisti
 
@@ -564,7 +565,7 @@ public class PlaneController : MonoBehaviour
             }
             else
             {
-                mouseAimPending = Vector2.zero;
+                mouseAimPending = mouseAimVel = Vector2.zero;
                 float k = 0.008f * gs.mouseSensitivity;
                 steerStick.x = Mathf.Clamp(steerStick.x + d.x * k, -1f, 1f);
                 steerStick.y = Mathf.Clamp(steerStick.y + d.y * k, -1f, 1f);
@@ -576,7 +577,7 @@ public class PlaneController : MonoBehaviour
         else
         {
             steerStick = Vector2.zero;
-            mouseAimPending = Vector2.zero;
+            mouseAimPending = mouseAimVel = Vector2.zero;
         }
 
         if (mouseFlight && !mouseScheme && Mouse.current != null)
@@ -817,7 +818,7 @@ public class PlaneController : MonoBehaviour
     private const float ArcadePendingMax = 0.35f;   // fare birikimi en fazla bu kadar saniyelik donus (savurmada uzun sure donmesin)
     private const float ArcadeLevelGain = 4f;       // ufka donme: yatis hatasi (derece) basina derece/sn
     private const float ArcadeLevelRate = 150f;     // ufka donme hiz siniri (derece/sn)
-    private const float ArcadeBankResponse = 6f;    // gorsel yatisin hedefe yaklasma hizi (1/sn)
+    private const float ArcadeBankResponse = 4f;    // gorsel yatisin hedefe yaklasma hizi (1/sn); kucuk = yumusak
     private const float ArcadeGrip = 10f;           // hiz yonunun burna hizalanma hizi (1/sn); kucuk = kayar
     private const float ArcadeSpeedResponse = 1.2f; // hizin gaz hedefine yaklasma hizi (1/sn)
     private const float ArcadeGravity = 0.5f;       // tirmanista yavaslama / dalista hizlanma (yercekiminin kesri)
@@ -839,13 +840,17 @@ public class PlaneController : MonoBehaviour
         float maxYaw = maxPitch * ArcadeYawFraction;
         float pitchCap = maxPitch * dt, yawCap = maxYaw * dt;
 
-        // Fare birikiminin her adimda bir kesri uygulanir (yumusatma); hiz siniri asilmaz
+        // Fare birikimi kritik sonumlu yayla (SmoothDamp) uygulanir: donus yavas baslar, hizlanir, yavasca
+        // durur (eskiden ustel yumusatma ilk karede en hizli donusu veriyordu, keskin hissettiriyordu).
+        // Donus hizi ucagin sinirini asmaz.
         mouseAimPending.x = Mathf.Clamp(mouseAimPending.x, -maxYaw * ArcadePendingMax, maxYaw * ArcadePendingMax);
         mouseAimPending.y = Mathf.Clamp(mouseAimPending.y, -maxPitch * ArcadePendingMax, maxPitch * ArcadePendingMax);
-        float follow = 1f - Mathf.Exp(-dt / Mathf.Max(gs.mouseSmoothing, 0.005f));
-        float mouseYaw = Mathf.Clamp(mouseAimPending.x * follow, -yawCap, yawCap);
-        float mousePitch = Mathf.Clamp(mouseAimPending.y * follow, -pitchCap, pitchCap);
-        mouseAimPending -= new Vector2(mouseYaw, mousePitch);
+        float smooth = Mathf.Max(gs.mouseSmoothing, 0.01f);
+        float restX = Mathf.SmoothDamp(mouseAimPending.x, 0f, ref mouseAimVel.x, smooth, maxYaw, dt);
+        float restY = Mathf.SmoothDamp(mouseAimPending.y, 0f, ref mouseAimVel.y, smooth, maxPitch, dt);
+        float mouseYaw = mouseAimPending.x - restX;
+        float mousePitch = mouseAimPending.y - restY;
+        mouseAimPending = new Vector2(restX, restY);
 
         // A/D ve gamepad surekli doner
         float yawStep = Mathf.Clamp(mouseYaw + turnIn * yawCap, -yawCap, yawCap);

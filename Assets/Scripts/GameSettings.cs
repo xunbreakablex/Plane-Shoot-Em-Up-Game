@@ -49,8 +49,8 @@ public class GameSettings : ScriptableObject
     public bool invertMouseY = false;
     [Tooltip("Arcade uçuşta azami dönüş hızı çarpanı (uçağın kendi çevikliği x bu). Büyük = daha hızlı döner.")]
     [Range(0.5f, 3f)] public float mouseTurnRate = 1.25f;
-    [Tooltip("Arcade uçuşta fare hareketinin uçağa geçme yumuşatması (sn). Küçük = keskin, büyük = akıcı ama gecikmeli.")]
-    [Range(0.01f, 0.3f)] public float mouseSmoothing = 0.06f;
+    [Tooltip("Arcade uçuşta fare hareketinin uçağa geçme süresi (sn). Dönüş yavaş başlar, hızlanır, yavaşça durur. Küçük = keskin, büyük = yumuşak ama gecikmeli.")]
+    [Range(0.02f, 0.5f)] public float mouseSmoothing = 0.16f;
     [Tooltip("Arcade uçuşta sağa-sola dönerken uçağın görsel yatışı (derece)")]
     [Range(0f, 80f)] public float mouseVisualBank = 50f;
     [Tooltip("Yalnız fizik modelinde (arcade kapalı): fare durunca yönelmenin sönme hızı (1/sn)")]
