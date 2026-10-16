@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 // Oyun ayarlari: denge ve oynanis ozellestirmeleri tek bir ScriptableObject'te.
@@ -7,12 +6,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GameSettings", menuName = "Plane ShootEmUp/Game Settings")]
 public class GameSettings : ScriptableObject
 {
-    // ------------------------------------------------------------------ sahne
-
-    [Header("Sahne")]
-    [Tooltip("Acikken hangardaki SAVASA BASLA uzay prototipini (SpacePrototype sahnesi) acar; kapaliyken klasik savas sahnesi.")]
-    public bool useSpacePrototype = false;
-
     // ------------------------------------------------------- hasar / carpisma
 
     [Header("Çarpışma")]
@@ -61,11 +54,6 @@ public class GameSettings : ScriptableObject
     [Tooltip("A/D ile hedef yatışa geçiş hızı sınırı (derece/sn)")]
     [Range(60f, 500f)] public float arcadeBankRate = 220f;
 
-    // ------------------------------------------------------- uzay prototipi
-
-    [Header("Uzay prototipi")]
-    public SpacePrototypeSettings space = new SpacePrototypeSettings();
-
     // ------------------------------------------------------------------ erisim
 
     private static GameSettings current;
@@ -91,46 +79,4 @@ public class GameSettings : ScriptableObject
             return current;
         }
     }
-}
-
-[Serializable]
-public class SpacePrototypeSettings
-{
-    [Header("Hareket (WASD)")]
-    [Tooltip("Gemi koridor boyunca bu hızla kendiliğinden ilerler (m/s)")]
-    [Min(5f)] public float forwardSpeed = 75f;
-    [Tooltip("WASD ile yana / yukarı-aşağı azami hız (m/s)")]
-    [Min(5f)] public float strafeSpeed = 45f;
-    [Tooltip("Yana hareket ivmesi (m/s²); büyük = daha keskin")]
-    [Min(10f)] public float strafeAcceleration = 180f;
-    [Tooltip("Hareket ederken gemi yatış açısı (derece, görsel)")]
-    [Range(0f, 80f)] public float bankAngle = 35f;
-
-    [Header("Koridor")]
-    [Tooltip("Koridorun yarı genişliği (m): gemi merkezden en fazla bu kadar sağa-sola gidebilir")]
-    [Min(10f)] public float corridorHalfWidth = 70f;
-    [Tooltip("Koridorun yarı yüksekliği (m)")]
-    [Min(10f)] public float corridorHalfHeight = 42f;
-    [Tooltip("Koridorun yerden yüksekliği (m); düşman yapay zekâsının zemin kontrolleriyle karışmasın diye yüksek")]
-    public float corridorAltitude = 800f;
-
-    [Header("Meteor duvarı")]
-    [Tooltip("Her parçada (segmentte) duvara dizilen meteor sayısı")]
-    [Range(4, 120)] public int meteorsPerSegment = 34;
-    [Tooltip("Bir segmentin uzunluğu (m)")]
-    [Min(20f)] public float segmentLength = 120f;
-    [Tooltip("Geminin önünde bu mesafeye kadar meteor üretilir (m)")]
-    [Min(200f)] public float viewAhead = 1600f;
-    [Tooltip("Duvar kalınlığı (m): meteorlar koridor sınırından bu kadar dışarıya kadar dağılır")]
-    [Min(5f)] public float wallThickness = 80f;
-    [Tooltip("Meteor yarıçapı aralığı (m)")]
-    public Vector2 meteorRadius = new Vector2(5f, 22f);
-    [Tooltip("Meteorlara değince alınan hasar (kalkanı atlar)")]
-    [Min(0)] public int meteorDamage = 2;
-    [Tooltip("Meteora değince gemiyi koridor merkezine doğru iten hız (m/s)")]
-    [Min(0f)] public float meteorKnockback = 40f;
-
-    [Header("Düşmanlar")]
-    [Tooltip("Açıksa düşmanlar ve bosslar koridor içinde tutulur (meteor duvarının içinden geçmesinler)")]
-    public bool keepEnemiesInCorridor = true;
 }
