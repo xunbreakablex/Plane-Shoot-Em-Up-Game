@@ -56,7 +56,7 @@ public class GameSettings : ScriptableObject
     [Tooltip("Açıksa A/D uçağı sağa-sola, W/S yukarı-aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar); gaz Shift/Ctrl ile. Kapalıysa eski düzen: A/D döner, W/S gaz.")]
     public bool keysStrafe = true;
     [Tooltip("Kayma (A/D, W/S) azami yan hızı (m/s). Büyük = daha hızlı sağa-sola/yukarı-aşağı gidilir.")]
-    [Range(5f, 80f)] public float strafeSpeed = 32f;
+    [Range(5f, 120f)] public float strafeSpeed = 42f;
     [Tooltip("Kayma tepkisi (1/sn): büyük = tuşa basınca hemen hızlanır, bırakınca hemen durur; küçük = kuvvet yavaş etki eder, süzülür.")]
     [Range(1f, 20f)] public float strafeResponse = 5f;
     [Tooltip("Kayarken uçağın hafif yatışı (derece, yalnız A/D'de). 0 = yatmaz.")]
@@ -93,8 +93,8 @@ public class GameSettings : ScriptableObject
     [Header("Mermi")]
     [Tooltip("Mermi burnun baktığı yönden en fazla bu kadar sapabilir (derece). Küçük = daha düz atış.")]
     [Range(1f, 45f)] public float fireCone = 8f;
-    [Tooltip("Oyuncu mermilerinin (silah ve taret) hız çarpanı")]
-    [Range(1f, 12f)] public float playerBulletSpeedMultiplier = 1.5f;
+    [Tooltip("Oyuncu mermilerinin (silah ve taret) hız çarpanı. 1 = silahın kendi hızı; küçük = yavaş mermi, büyük = hızlı mermi.")]
+    [Range(0.5f, 12f)] public float playerBulletSpeedMultiplier = 1.25f;
     [Tooltip("Oyuncu mermisi namludan çıktıktan sonra bu kadar süre görünmez kalır (sn)")]
     [Range(0f, 0.2f)] public float bulletHiddenAfterMuzzle = 0.02f;
     [Tooltip("Açıksa mermi namludan dümdüz çıkar ve nişan noktasına yumuşakça (ease-in) kıvrılır; kapalıysa doğrudan nişan yönünde çıkar. Düşmanı takip etmez (güdümlü değil).")]

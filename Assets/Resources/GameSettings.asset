@@ -21,15 +21,27 @@ MonoBehaviour:
   consumableLimitPerStage: 1
   wPitchesUp: 0
   maxManualRollRate: 200
+  mouseArcadeFlight: 1
   mouseSensitivity: 1
   invertMouseY: 0
+  mouseTurnRate: 1.25
+  mouseSmoothing: 0.16
+  mouseVisualBank: 25
+  keysStrafe: 1
+  strafeSpeed: 42
+  strafeResponse: 5
+  strafeBank: 12
   mouseSteerDecay: 8
   throttleReturnsToCruise: 1
+  aimZoom: 1.35
+  aimZoomTime: 0.18
   autoAimCone: 5
+  autoAimStrength: 1
   autoAimRange: 1100
   aimAcquireTime: 0.533
+  aimReleaseTime: 0.08
   fireCone: 3.2
-  playerBulletSpeedMultiplier: 1.5
+  playerBulletSpeedMultiplier: 1.25
   bulletHiddenAfterMuzzle: 0.02
   bulletEaseToAim: 1
   bulletEaseTime: 0.03
