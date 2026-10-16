@@ -61,12 +61,16 @@ public class GameSettings : ScriptableObject
     // ------------------------------------------------------------------- nisan
 
     [Header("Otomatik nişan")]
-    [Tooltip("Burundan en fazla bu açı içindeki düşmanlar hedeflenir (derece). Ateş konisinden biraz geniş tutulmalı.")]
-    [Range(2f, 60f)] public float autoAimCone = 12f;
+    [Tooltip("Ekranda imlece en fazla bu açı kadar yakın düşmanlar hedeflenir (derece, kameradan bakışla; 1080p'de 1° ≈ 18 piksel). İmlece en yakın düşman seçilir.")]
+    [Range(0.5f, 30f)] public float autoAimCone = 4f;
+    [Tooltip("Nişan yardımının gücü: 0 = kapalı (mermi hep burnun önüne), 1 = tam. Yardım imlecin dibinde tam, koninin kenarına doğru sıfıra iner.")]
+    [Range(0f, 1f)] public float autoAimStrength = 1f;
     [Tooltip("Otomatik nişan menzili (m)")]
     [Min(100f)] public float autoAimRange = 1100f;
-    [Tooltip("Nişanın yeni hedefe (ya da hedef yokken burnun önüne) dönme süresi (sn). Nişan anında atlamaz, bu sürede yumuşakça yönelir. 0 = anında.")]
+    [Tooltip("Nişanın hedefe yönelme süresi (sn). Nişan anında atlamaz, bu sürede yumuşakça yönelir. 0 = anında.")]
     [Range(0f, 2f)] public float aimAcquireTime = 0.35f;
+    [Tooltip("Hedef imleçten çıkınca nişanın burnun önüne dönme süresi (sn). Küçük = mermiler eski hedefe doğru gitmeye devam etmez.")]
+    [Range(0f, 1f)] public float aimReleaseTime = 0.08f;
 
     // ------------------------------------------------------------------ mermi
 
@@ -74,7 +78,7 @@ public class GameSettings : ScriptableObject
     [Tooltip("Mermi burnun baktığı yönden en fazla bu kadar sapabilir (derece). Küçük = daha düz atış.")]
     [Range(1f, 45f)] public float fireCone = 8f;
     [Tooltip("Oyuncu mermilerinin (silah ve taret) hız çarpanı")]
-    [Range(0.5f, 3f)] public float playerBulletSpeedMultiplier = 1.5f;
+    [Range(1f, 12f)] public float playerBulletSpeedMultiplier = 1.5f;
     [Tooltip("Oyuncu mermisi namludan çıktıktan sonra bu kadar süre görünmez kalır (sn)")]
     [Range(0f, 0.2f)] public float bulletHiddenAfterMuzzle = 0.02f;
     [Tooltip("Açıksa mermi namludan dümdüz çıkar ve nişan noktasına yumuşakça (ease-in) kıvrılır; kapalıysa doğrudan nişan yönünde çıkar. Düşmanı takip etmez (güdümlü değil).")]

@@ -289,33 +289,47 @@ public class PlayerGun : MonoBehaviour
         audioSource.PlayOneShot(Sfx.MissileLaunch, 0.45f);
     }
 
-    // Otomatik nisan: imlec burnun onunde (ucagin baktigi nokta). Burun konisindeki en yakin dusman
+    // Otomatik nisan: imlec burnun onunde (ucagin baktigi nokta). Ekranda imlece en yakin dusman
     // hedeflenir ve onde tutma uygulanir; hedef yoksa dumduz ileri ates edilir.
     private void UpdateAutoAim(PlaneController plane, float leadSpeed)
     {
+        GameSettings gs = GameSettings.Current;
         Transform t = plane.transform;
         Vector3 bore = t.position + t.forward * defaultAimDistance;
         Vector3 sp = cam.WorldToScreenPoint(bore);
         CrosshairScreenPos = sp.z > 0f ? new Vector2(sp.x, sp.y) : new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
 
-        LockedEnemy = FindAutoTarget(t, LockedEnemy);
+        Vector3 camPos = cam.transform.position;
+        float lockAngle = 0f;
+        LockedEnemy = gs.autoAimStrength > 0.001f
+            ? FindAutoTarget(t.position, camPos, bore - camPos, LockedEnemy, out lockAngle)
+            : null;
 
-        // Istenen nisan: kilitli dusmanin onde tutma noktasi, yoksa burnun onu
+        // Istenen nisan: burnun onu, kilitli dusman varsa onde tutma noktasina dogru. Yardim imlecin dibinde
+        // tam, koninin kenarina dogru sifira iner: kenardaki dusman icin mermiler imlecten kivrilip gitmez.
         Vector3 origin = t.position + t.forward * 1.0f;
         Vector3 desiredPoint = bore;
+        bool assisting = false;
         if (LockedEnemy != null)
         {
             float time = Vector3.Distance(origin, LockedEnemy.transform.position) / Mathf.Max(leadSpeed, 1f);
-            desiredPoint = LockedEnemy.transform.position + LockedEnemy.Velocity * time;
+            Vector3 lead = LockedEnemy.transform.position + LockedEnemy.Velocity * time;
+
+            float cone = Mathf.Max(gs.autoAimCone, 0.1f);
+            float w = gs.autoAimStrength * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(cone * 0.35f, cone, lockAngle)));
+            Vector3 toLead = lead - origin;
+            float leadDist = Mathf.Max(20f, toLead.magnitude);
+            desiredPoint = origin + Vector3.Slerp(t.forward, toLead / leadDist, w) * leadDist;
+            assisting = w > 0.001f;
         }
 
-        // Nisan yonu anlik atlamaz: ucaga gore (yerel) yon, GameSettings.aimAcquireTime surede yumusakca
-        // hedefe yonelir. Ucak donerken nisan geride kalmasin diye yumusatma yerel uzayda yapilir.
+        // Nisan yonu anlik atlamaz: ucaga gore (yerel) yon, hedefe aimAcquireTime, hedef birakilinca
+        // aimReleaseTime surede yumusakca doner. Ucak donerken nisan geride kalmasin diye yumusatma yerel uzayda.
         Vector3 toDesired = desiredPoint - origin;
         float desiredDist = Mathf.Max(20f, toDesired.magnitude);
         Vector3 desiredLocal = t.InverseTransformDirection(toDesired / desiredDist);
 
-        float acquire = GameSettings.Current.aimAcquireTime;
+        float acquire = assisting ? gs.aimAcquireTime : gs.aimReleaseTime;
         if (!aimSmoothInit || acquire <= 0.001f)
         {
             aimLocal = desiredLocal;
@@ -337,37 +351,45 @@ public class PlayerGun : MonoBehaviour
     private Vector3 aimLocalVel;
     private bool aimSmoothInit;
 
-    // Burun konisindeki en yakin dusman. Mevcut hedef hala gecerliyse, yenisi belirgin sekilde (%30)
-    // daha yakin olmadikca degistirilmez: hedef iki dusman arasinda titremesin.
-    private EnemyPlane FindAutoTarget(Transform plane, EnemyPlane current)
+    // Ekranda imlece en yakin dusman: aci kameradan, imlecin gosterdigi noktaya gore olculur (oyuncunun
+    // gordugu). Eskiden aci ucagin burnundan olculup koni icindeki mesafece en yakin dusman seciliyordu:
+    // imlecin dibindeki dusman yerine kenardaki yakin dusmana kilitlenip mermiler imlecten uzaga gidiyordu.
+    // Mevcut hedef konideyse, yenisi imlece belirgin sekilde (%40) daha yakin olmadikca degismez (titremesin).
+    private EnemyPlane FindAutoTarget(Vector3 planePos, Vector3 camPos, Vector3 crossDir, EnemyPlane current, out float angle)
     {
+        angle = 0f;
         if (CombatManager.Instance == null) return null;
 
         // Koni ve menzil GameSettings'ten (Inspector'dan ayarlanir)
-        float autoAimRange = GameSettings.Current.autoAimRange;
-        float autoAimCone = GameSettings.Current.autoAimCone;
+        float range = GameSettings.Current.autoAimRange;
+        float cone = GameSettings.Current.autoAimCone;
 
         EnemyPlane best = null;
-        float bestDist = autoAimRange;
-        float currentDist = float.MaxValue;
+        float bestAngle = cone;
+        float currentAngle = float.MaxValue;
 
         foreach (var e in CombatManager.Instance.Enemies)
         {
             if (e == null || e.IsDead) continue;
-            Vector3 to = e.transform.position - plane.position;
-            float d = to.magnitude;
-            if (d > autoAimRange || Vector3.Angle(plane.forward, to) > autoAimCone) continue;
+            Vector3 p = e.transform.position;
+            if ((p - planePos).sqrMagnitude > range * range) continue;
+            float a = Vector3.Angle(crossDir, p - camPos);
+            if (a > cone) continue;
 
-            if (e == current) currentDist = d;
-            if (d < bestDist)
+            if (e == current) currentAngle = a;
+            if (a < bestAngle)
             {
-                bestDist = d;
+                bestAngle = a;
                 best = e;
             }
         }
 
-        if (current != null && currentDist < float.MaxValue && best != current && bestDist > currentDist * 0.7f)
+        if (current != null && currentAngle < float.MaxValue && best != current && bestAngle > currentAngle * 0.6f)
+        {
+            angle = currentAngle;
             return current;
+        }
+        angle = bestAngle;
         return best;
     }
 

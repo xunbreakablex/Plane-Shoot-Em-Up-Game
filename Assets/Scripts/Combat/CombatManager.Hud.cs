@@ -747,21 +747,12 @@ public partial class CombatManager
     {
         if (gun == null) return;
 
+        // Sade nisangah: koyu konturlu kucuk nokta. Hedef imlecin yanindayken hafifce kirmiziya doner.
         Vector2 p = Hud.ToHud(gun.CrosshairScreenPos);
         bool locked = gun.LockedEnemy != null;
-        Color col = locked ? new Color(1f, 0.3f, 0.25f) : new Color(0.92f, 1f, 0.92f);
+        Color col = locked ? new Color(1f, 0.45f, 0.4f) : new Color(0.95f, 1f, 0.95f);
 
-        float gap = 7f, len = 12f, th = 2f;
-        DrawCross(p.x, p.y, gap, len, th + 2f, new Color(0f, 0f, 0f, 0.7f));
-        DrawCross(p.x, p.y, gap, len, th, col);
-        Hud.Fill(new Rect(p.x - 2f, p.y - 2f, 4f, 4f), col);
-    }
-
-    private static void DrawCross(float cx, float cy, float gap, float len, float th, Color col)
-    {
-        Hud.Fill(new Rect(cx - gap - len, cy - th * 0.5f, len, th), col);
-        Hud.Fill(new Rect(cx + gap, cy - th * 0.5f, len, th), col);
-        Hud.Fill(new Rect(cx - th * 0.5f, cy - gap - len, th, len), col);
-        Hud.Fill(new Rect(cx - th * 0.5f, cy + gap, th, len), col);
+        Hud.Disc(p, 4.5f, new Color(0f, 0f, 0f, 0.6f));
+        Hud.Disc(p, 3f, col);
     }
 }
