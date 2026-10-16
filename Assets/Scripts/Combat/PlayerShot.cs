@@ -3,7 +3,7 @@ using UnityEngine;
 // Oyuncu silahlarinin (ana silahlar ve taretler) TEK ates yolu:
 //   1) Mermi namlu ucunun (MuzzleFlash nesnesi) hemen onunden cikar
 //   2) Namlu agiz parlamasi tetiklenir
-//   3) Mermi namludan ciktiktan sonra GameSettings.bulletHiddenAfterMuzzle kadar gorunmez kalir (Bullet yapar)
+//   3) Mermi, kipi namludan cikana kadar gorunmez kalir (Bullet yapar; sure sabit degil, boy / hiz)
 // Yeni bir oyuncu silahi eklenirse namlu ucuna MuzzleFlash.Create ile nokta koyup buradan ates et.
 public static class PlayerShot
 {

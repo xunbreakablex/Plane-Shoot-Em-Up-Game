@@ -149,21 +149,25 @@ public class Bullet : MonoBehaviour
 
         if (fromPlayer)
         {
-            // Iz merminin arkasina uzanir ve namlu ucundan baslar (eskiden merkezliydi: govdenin icinden gecerdi)
+            // Mermi sert bir cubuk: ucu (nesnenin konumu) onde, tam boy iz arkasina uzanir. Yalniz bir kez kurulur.
             if (b.tracer == null)
             {
                 b.tracer = b.transform.Find("Tracer");
                 if (b.tracer != null)
                 {
-                    b.tracerThickness = b.tracer.localScale.x;
                     b.tracerFullLength = b.tracer.localScale.z;
                     b.tracerRenderer = b.tracer.GetComponent<Renderer>();
+                    b.tracer.localPosition = new Vector3(0f, 0f, -b.tracerFullLength * 0.5f);
                 }
             }
 
-            // Namludan cikan mermi ilk birkac milisaniye gorunmez: parlama namluyu orter, iz namlunun
-            // onunde belirir (namlunun icinden/ucak govdesinden cikiyormus gibi gorunmez)
-            if (b.tracerRenderer != null) b.tracerRenderer.enabled = false;
+            // Namludan cikan mermi KIPI namludan cikana kadar gorunmez: ucu namlu ucunun TipClearance onunde
+            // dogar, kipi tam boy gerisindedir; kip namlu ucunu gectiginde (gidilen yol >= boy - TipClearance)
+            // gorunur olur. Gizli kalma suresi bu yuzden merminin hizina gore degisir (hizli mermi daha kisa).
+            // Zaman sabiti yok; mesafe karsilastirmasi yalniz gizliyken yapilir (fizik/trigger gerekmez).
+            b.spawnPos = position;
+            b.rearClearDist = Mathf.Max(0f, b.tracerFullLength - PlayerShot.TipClearance + GameSettings.Current.bulletRearMargin);
+            if (b.tracerRenderer != null) b.tracerRenderer.enabled = b.rearClearDist <= 0f;
         }
         else
         {
@@ -190,7 +194,20 @@ public class Bullet : MonoBehaviour
 
     private Transform tracer;
     private Renderer tracerRenderer;
-    private float tracerThickness, tracerFullLength;
+    private float tracerFullLength;
+    private Vector3 spawnPos;        // dogus noktasi (namlu ucunun TipClearance onu)
+    private float rearClearDist;     // kipin namluyu gecmesi icin gidilmesi gereken yol (m); gorunurluk bu mesafede acilir
+
+    /// <summary>Merminin kipi namluyu gecene kadar gizli kaldigi yol (m). Hiza bolunce gizli kalma suresi.</summary>
+    public float HiddenDistance => rearClearDist;
+
+    // Gizliyken her karede bir kez: gidilen yol esigi gectiyse mermiyi gorunur yapar
+    private void RevealIfRearClear()
+    {
+        if (tracerRenderer == null || tracerRenderer.enabled) return;
+        if ((transform.position - spawnPos).sqrMagnitude >= rearClearDist * rearClearDist)
+            tracerRenderer.enabled = true;
+    }
 
     // ---- Nisan noktasina yumusak kivrilma (ease-in). Hedef SABIT bir noktadir (atis anindaki onde
     // tutma noktasi): mermi dusmani takip etmez, yalnizca namludan dumduz cikip o noktaya yonelir.
@@ -235,17 +252,6 @@ public class Bullet : MonoBehaviour
         float dt = Time.deltaTime;
         age += dt;
 
-        // Oyuncu mermisi namludan ciktiktan sonra kisa sure gorunmez (GameSettings.bulletHiddenAfterMuzzle)
-        if (tracerRenderer != null && !tracerRenderer.enabled && age >= GameSettings.Current.bulletHiddenAfterMuzzle)
-            tracerRenderer.enabled = true;
-
-        if (tracer != null)
-        {
-            // Izin kuyrugu dogdugu noktada sabit: uzunluk gidilen yola esit (en fazla tam boy)
-            float len = Mathf.Clamp(age * velocity.magnitude, 0.3f, tracerFullLength);
-            tracer.localScale = new Vector3(tracerThickness, tracerThickness, len);
-            tracer.localPosition = new Vector3(0f, 0f, -len * 0.5f);
-        }
         if (age > lifetime)
         {
             Despawn();
@@ -292,6 +298,7 @@ public class Bullet : MonoBehaviour
         if (best < 0)
         {
             transform.position = start + delta;
+            RevealIfRearClear();
             return;
         }
 
@@ -310,6 +317,7 @@ public class Bullet : MonoBehaviour
                 pierceLeft--;
                 lastPierced = target;
                 transform.position = start + delta;
+                RevealIfRearClear();
                 return;
             }
         }

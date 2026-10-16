@@ -95,8 +95,8 @@ public class GameSettings : ScriptableObject
     [Range(1f, 45f)] public float fireCone = 8f;
     [Tooltip("Oyuncu mermilerinin (silah ve taret) hız çarpanı. 1 = silahın kendi hızı; küçük = yavaş mermi, büyük = hızlı mermi.")]
     [Range(0.5f, 12f)] public float playerBulletSpeedMultiplier = 1.25f;
-    [Tooltip("Oyuncu mermisi namludan çıktıktan sonra bu kadar süre görünmez kalır (sn)")]
-    [Range(0f, 0.2f)] public float bulletHiddenAfterMuzzle = 0.02f;
+    [Tooltip("Mermi, KIÇI namludan çıkana kadar görünmez kalır (süre sabit değil: merminin boyu ÷ hızı, hızlı mermi daha kısa süre gizlenir). Kıç çıktıktan sonra ek olarak bu kadar metre daha gizli kalır; 0 = kıç çıkar çıkmaz görünür.")]
+    [Range(0f, 5f)] public float bulletRearMargin = 0f;
     [Tooltip("Açıksa mermi namludan dümdüz çıkar ve nişan noktasına yumuşakça (ease-in) kıvrılır; kapalıysa doğrudan nişan yönünde çıkar. Düşmanı takip etmez (güdümlü değil).")]
     public bool bulletEaseToAim = true;
     [Tooltip("Kıvrılmanın tam güce ulaşma süresi (sn). Büyük = daha yumuşak, daha geç kıvrılır.")]
