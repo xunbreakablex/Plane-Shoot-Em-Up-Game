@@ -187,8 +187,8 @@ public class FlightTestManager : MonoBehaviour
     private const string HelpAimMouse = "FARE  nişan alma        SOL TIK / SPACE  ateş        F  güdümlü füze";
 
     // Kontrol semasina gore 2. satir (ESC menusunden Arcade/Klasik)
-    private const string HelpSteerArcade = "W / S  yunuslama        A / D  sağa-sola dön     Q / E  yatış";
-    private const string HelpSteerClassic = "W / S  yunuslama        A / D  yatış        Q / E  dümen";
+    private const string HelpSteerArcade = "W / S  burun yukarı / aşağı     A / D  sağa-sola dön     Q / E  yatış";
+    private const string HelpSteerClassic = "W / S  burun yukarı / aşağı     A / D  yatış        Q / E  dümen";
 
     private const string HelpAutoOn = "R  havada başla         P  pistte başla     T  oto-düzeltme: AÇIK";
     private const string HelpAutoOff = "R  havada başla         P  pistte başla     T  oto-düzeltme: KAPALI";

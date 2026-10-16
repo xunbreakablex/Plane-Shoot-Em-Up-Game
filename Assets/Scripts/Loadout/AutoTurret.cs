@@ -29,7 +29,8 @@ public class AutoTurret : MonoBehaviour
         if (target == null) return;
 
         float dist = Vector3.Distance(head.position, target.transform.position);
-        Vector3 aim = target.transform.position + target.Velocity * (dist / Mathf.Max(def.speed, 1f));
+        float shotSpeed = def.speed * GameSettings.Current.playerBulletSpeedMultiplier;
+        Vector3 aim = target.transform.position + target.Velocity * (dist / Mathf.Max(shotSpeed, 1f));
         Vector3 dir = (aim - head.position).normalized;
 
         head.rotation = Quaternion.Slerp(head.rotation, Quaternion.LookRotation(dir), 1f - Mathf.Exp(-12f * Time.deltaTime));
@@ -42,7 +43,7 @@ public class AutoTurret : MonoBehaviour
             Vector3 shotDir = (dir + Random.insideUnitSphere * Mathf.Tan(def.spread * Mathf.Deg2Rad)).normalized;
             // Standart oyuncu atisi: namlu ucundan mermi + parlama + kisa gorunmezlik
             Vector3 fallback = head.position + head.forward * 0.9f;
-            PlayerShot.Fire(mgr.playerBulletPrefab, muzzle, fallback, shotDir, def.speed, Mathf.RoundToInt(def.damage), owner);
+            PlayerShot.Fire(mgr.playerBulletPrefab, muzzle, fallback, shotDir, shotSpeed, Mathf.RoundToInt(def.damage), owner);
             Sfx.PlayAt(Sfx.Shot, fallback, 0.12f);
         }
     }

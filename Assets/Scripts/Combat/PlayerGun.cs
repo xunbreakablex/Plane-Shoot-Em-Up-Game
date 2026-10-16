@@ -12,7 +12,6 @@ public class PlayerGun : MonoBehaviour
 
     [Tooltip("Onde tutma hesabi icin varsayilan mermi hizi (silah takili degilse)")]
     public float bulletSpeed = 380f;
-    [Tooltip("Ucak burnundan en fazla bu kadar derece sapabilir")] public float maxAimCone = 35f;
     [Tooltip("Imlecin dusmana kilitlenme yaricapi (piksel)")] public float assistRadius = 90f;
     public float defaultAimDistance = 900f;
 
@@ -97,7 +96,9 @@ public class PlayerGun : MonoBehaviour
         foreach (int w in loadout.weapons)
             if (w > 0) { speedSum += PartCatalog.Weapons[w].speed; count++; }
         HasWeapons = count > 0;
-        float leadSpeed = count > 0 ? speedSum / count : bulletSpeed;
+        // Onde tutma, merminin gercek hiziyla (upgrade ve GameSettings carpani dahil) hesaplanir
+        float leadSpeed = (count > 0 ? speedSum / count : bulletSpeed)
+                          * RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier;
 
         if (ControlSettings.AutoAim) UpdateAutoAim(plane, leadSpeed);
         else UpdateAim(plane, leadSpeed);
@@ -456,20 +457,25 @@ public class PlayerGun : MonoBehaviour
             Vector3 muzzle = muzzlePoint != null
                 ? PlayerShot.MuzzlePoint(muzzlePoint)
                 : t.TransformPoint(PlaneBuilder.WeaponOffset(flight.CurrentIndex, i, span) + new Vector3(0f, 0f, PlayerShot.TipClearance));
+            GameSettings gs = GameSettings.Current;
+            float aimDist = Mathf.Max(20f, Vector3.Distance(muzzle, AimPoint));
             Vector3 dir = (AimPoint - muzzle).normalized;
 
-            // Ucagin arkasina ates etmeyi engelle: burun konisi ile sinirla
-            if (Vector3.Angle(t.forward, dir) > maxAimCone)
-                dir = Vector3.RotateTowards(t.forward, dir, maxAimCone * Mathf.Deg2Rad, 0f).normalized;
+            // Mermi burnun baktigi yondan en fazla GameSettings.fireCone kadar sapar (genis koni komik duruyordu)
+            if (Vector3.Angle(t.forward, dir) > gs.fireCone)
+                dir = Vector3.RotateTowards(t.forward, dir, gs.fireCone * Mathf.Deg2Rad, 0f).normalized;
 
             if (def.spread > 0f)
                 dir = (dir + Random.insideUnitSphere * Mathf.Tan(def.spread * Mathf.Deg2Rad)).normalized;
 
             // Kritik: ek +1 hasar
             int dmg = Mathf.RoundToInt(def.damage) + (Random.value < mods.critChance ? 1 : 0);
-            float bulletSpd = def.speed * mods.bulletSpeedMul;
-            // Standart oyuncu atisi: namlu ucundan mermi + parlama + kisa gorunmezlik
-            PlayerShot.Fire(bulletPrefab, muzzlePoint, muzzle, dir, bulletSpd, dmg, t, mods.pierce);
+            float bulletSpd = def.speed * mods.bulletSpeedMul * gs.playerBulletSpeedMultiplier;
+
+            // Standart oyuncu atisi: namlu ucundan mermi + parlama + kisa gorunmezlik. Mermi namlu yonunde
+            // (burun) cikar, nisan noktasina ease-in ile kivrilir: namludan acili cikis goze batmasin.
+            Vector3 aimPoint = muzzle + dir * aimDist;
+            PlayerShot.FireEased(bulletPrefab, muzzlePoint, muzzle, t.forward, aimPoint, bulletSpd, dmg, t, mods.pierce);
 
             // Guc 2+: iki yan mermi; guc 4: daha genis ikinci cift. Yan mermiler her iki atista bir
             // cikar (DPS patlamasin diye).

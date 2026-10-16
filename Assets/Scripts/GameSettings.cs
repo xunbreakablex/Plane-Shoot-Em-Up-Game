@@ -32,19 +32,35 @@ public class GameSettings : ScriptableObject
     [Tooltip("Tek seferlik ürünler (onarım, kalkan, füze) her aşamada en fazla kaç kez alınabilir. 0 = sınırsız")]
     [Min(0)] public int consumableLimitPerStage = 1;
 
+    // ---------------------------------------------------------------- kontrol
+
+    [Header("Kontrol")]
+    [Tooltip("Açıksa W burnu yukarı, S aşağı kaldırır (oyun tarzı). Kapalıysa uçuş simülatörü gibi ters.")]
+    public bool wPitchesUp = true;
+    [Tooltip("Elle yatışın (Arcade'de Q/E, Klasik'te A/D) azami hızı (derece/sn). Hızlı yatan uçaklar bunun üstüne çıkamaz.")]
+    [Range(60f, 500f)] public float maxManualRollRate = 200f;
+
     // ------------------------------------------------------------------- nisan
 
     [Header("Otomatik nişan")]
-    [Tooltip("Burundan en fazla bu açı içindeki düşmanlar hedeflenir (derece)")]
-    [Range(5f, 60f)] public float autoAimCone = 30f;
+    [Tooltip("Burundan en fazla bu açı içindeki düşmanlar hedeflenir (derece). Ateş konisinden biraz geniş tutulmalı.")]
+    [Range(2f, 60f)] public float autoAimCone = 12f;
     [Tooltip("Otomatik nişan menzili (m)")]
     [Min(100f)] public float autoAimRange = 1100f;
 
     // ------------------------------------------------------------------ mermi
 
     [Header("Mermi")]
+    [Tooltip("Mermi burnun baktığı yönden en fazla bu kadar sapabilir (derece). Küçük = daha düz atış.")]
+    [Range(1f, 45f)] public float fireCone = 8f;
+    [Tooltip("Oyuncu mermilerinin (silah ve taret) hız çarpanı")]
+    [Range(0.5f, 3f)] public float playerBulletSpeedMultiplier = 1.5f;
     [Tooltip("Oyuncu mermisi namludan çıktıktan sonra bu kadar süre görünmez kalır (sn)")]
     [Range(0f, 0.2f)] public float bulletHiddenAfterMuzzle = 0.02f;
+    [Tooltip("Açıksa mermi namludan dümdüz çıkar ve nişan noktasına yumuşakça (ease-in) kıvrılır; kapalıysa doğrudan nişan yönünde çıkar. Düşmanı takip etmez (güdümlü değil).")]
+    public bool bulletEaseToAim = true;
+    [Tooltip("Kıvrılmanın tam güce ulaşma süresi (sn). Büyük = daha yumuşak, daha geç kıvrılır.")]
+    [Range(0.03f, 0.6f)] public float bulletEaseTime = 0.18f;
 
     // --------------------------------------------------------------- ucus
 

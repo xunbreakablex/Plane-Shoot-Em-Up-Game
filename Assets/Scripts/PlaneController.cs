@@ -491,9 +491,12 @@ public class PlaneController : MonoBehaviour
         var kb = Keyboard.current;
         if (kb != null)
         {
-            // +1 = burun yukari / saga
-            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) pitchRaw += 1f;
-            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) pitchRaw -= 1f;
+            // +1 = burun yukari / saga. W/S yonu GameSettings.wPitchesUp ile secilir
+            // (varsayilan: W burun yukari, S asagi; ok tuslari da ayni)
+            float pitchKeys = 0f;
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) pitchKeys += 1f;
+            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) pitchKeys -= 1f;
+            pitchRaw += GameSettings.Current.wPitchesUp ? pitchKeys : -pitchKeys;
 
             float side = 0f, aux = 0f;
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) side += 1f;
@@ -703,7 +706,10 @@ public class PlaneController : MonoBehaviour
 
         // Yatis
         float rollAuth = Mathf.Lerp(0.3f, 1f, airAuth);
-        float rollTargetRight = rollIn * rollRate * Mathf.Deg2Rad * rollAuth;
+        // Elle yatis (Arcade'de Q/E) GameSettings.maxManualRollRate ile sinirli: cok hizli yatan
+        // ucaklarda (Kopekbaligi 470, Atmaca 420 derece/sn) donus kontrolden cikmasin
+        float manualRollRate = Mathf.Min(rollRate, GameSettings.Current.maxManualRollRate);
+        float rollTargetRight = rollIn * manualRollRate * Mathf.Deg2Rad * rollAuth;
         if (autoLevel && Mathf.Abs(fwd.y) < 0.85f)
         {
             // Kumanda birakilinca kanatlar duzelir. Gecis kademeli: eskiden esik asilinca yatis hizi tek

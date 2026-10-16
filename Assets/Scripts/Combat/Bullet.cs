@@ -145,6 +145,7 @@ public class Bullet : MonoBehaviour
         b.lastPierced = null;
         b.age = 0f;
         b.lifetime = b.defaultLifetime > 0f ? b.defaultLifetime : b.lifetime;
+        b.easing = false;
 
         if (fromPlayer)
         {
@@ -191,6 +192,43 @@ public class Bullet : MonoBehaviour
     private Renderer tracerRenderer;
     private float tracerThickness, tracerFullLength;
 
+    // ---- Nisan noktasina yumusak kivrilma (ease-in). Hedef SABIT bir noktadir (atis anindaki onde
+    // tutma noktasi): mermi dusmani takip etmez, yalnizca namludan dumduz cikip o noktaya yonelir.
+    private const float EaseMaxTurn = 6f;        // tam gucte donus hizi (rad/sn, ~340 derece/sn)
+    private bool easing;
+    private Vector3 easePoint;
+    private float easeTime;
+
+    /// <summary>Mermi namlu yonunde cikar ve verilen noktaya ease-in ile kivrilir (yalniz oyuncu mermisi).</summary>
+    public void EaseTowards(Vector3 point, float time)
+    {
+        easing = true;
+        easePoint = point;
+        easeTime = Mathf.Max(0.01f, time);
+    }
+
+    private void UpdateEase(float dt)
+    {
+        Vector3 to = easePoint - transform.position;
+        float dist = to.magnitude;
+
+        // Noktaya vardi ya da gecti: duz devam eder
+        if (dist < 3f || Vector3.Dot(to, velocity) <= 0f)
+        {
+            easing = false;
+            return;
+        }
+
+        float k = Mathf.Clamp01(age / easeTime);
+        k *= k;                                                 // ease-in: yavas baslar, hizlanir
+        Vector3 desired = to / dist * velocity.magnitude;
+        velocity = Vector3.RotateTowards(velocity, desired, k * EaseMaxTurn * dt, 0f);
+        transform.rotation = Quaternion.LookRotation(velocity);
+
+        // Tam hizalandiysa kivrilma biter (gereksiz hesap yapilmasin)
+        if (k >= 1f && Vector3.Angle(velocity, to) < 0.2f) easing = false;
+    }
+
 
     private void Update()
     {
@@ -213,6 +251,8 @@ public class Bullet : MonoBehaviour
             Despawn();
             return;
         }
+
+        if (easing) UpdateEase(dt);
 
         Vector3 start = transform.position;
         Vector3 delta = velocity * dt;
