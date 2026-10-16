@@ -19,14 +19,15 @@ MonoBehaviour:
   stageStartInvulnerability: 2.5
   shopInPauseMenu: 0
   consumableLimitPerStage: 1
-  wPitchesUp: 1
+  wPitchesUp: 0
   maxManualRollRate: 200
   autoAimCone: 12
   autoAimRange: 1100
-  fireCone: 8
+  aimAcquireTime: 0.35
+  fireCone: 3.2
   playerBulletSpeedMultiplier: 1.5
   bulletHiddenAfterMuzzle: 0.02
   bulletEaseToAim: 1
-  bulletEaseTime: 0.18
+  bulletEaseTime: 0.03
   arcadeTurnGFraction: 0.85
   arcadeBankRate: 220

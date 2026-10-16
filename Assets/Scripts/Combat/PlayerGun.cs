@@ -300,15 +300,42 @@ public class PlayerGun : MonoBehaviour
 
         LockedEnemy = FindAutoTarget(t, LockedEnemy);
 
+        // Istenen nisan: kilitli dusmanin onde tutma noktasi, yoksa burnun onu
+        Vector3 origin = t.position + t.forward * 1.0f;
+        Vector3 desiredPoint = bore;
         if (LockedEnemy != null)
         {
-            Vector3 muzzleCenter = t.position + t.forward * 1.0f;
-            float time = Vector3.Distance(muzzleCenter, LockedEnemy.transform.position) / Mathf.Max(leadSpeed, 1f);
-            AimPoint = LockedEnemy.transform.position + LockedEnemy.Velocity * time;
-            return;
+            float time = Vector3.Distance(origin, LockedEnemy.transform.position) / Mathf.Max(leadSpeed, 1f);
+            desiredPoint = LockedEnemy.transform.position + LockedEnemy.Velocity * time;
         }
-        AimPoint = bore;
+
+        // Nisan yonu anlik atlamaz: ucaga gore (yerel) yon, GameSettings.aimAcquireTime surede yumusakca
+        // hedefe yonelir. Ucak donerken nisan geride kalmasin diye yumusatma yerel uzayda yapilir.
+        Vector3 toDesired = desiredPoint - origin;
+        float desiredDist = Mathf.Max(20f, toDesired.magnitude);
+        Vector3 desiredLocal = t.InverseTransformDirection(toDesired / desiredDist);
+
+        float acquire = GameSettings.Current.aimAcquireTime;
+        if (!aimSmoothInit || acquire <= 0.001f)
+        {
+            aimLocal = desiredLocal;
+            aimLocalVel = Vector3.zero;
+            aimSmoothInit = true;
+        }
+        else
+        {
+            aimLocal = Vector3.SmoothDamp(aimLocal, desiredLocal, ref aimLocalVel, acquire);
+            if (aimLocal.sqrMagnitude < 1e-6f) aimLocal = desiredLocal;
+            aimLocal.Normalize();
+        }
+
+        AimPoint = origin + t.TransformDirection(aimLocal) * desiredDist;
     }
+
+    // Otomatik nisanin yumusatilmis yonu (ucak yerel uzayinda)
+    private Vector3 aimLocal = Vector3.forward;
+    private Vector3 aimLocalVel;
+    private bool aimSmoothInit;
 
     // Burun konisindeki en yakin dusman. Mevcut hedef hala gecerliyse, yenisi belirgin sekilde (%30)
     // daha yakin olmadikca degistirilmez: hedef iki dusman arasinda titremesin.

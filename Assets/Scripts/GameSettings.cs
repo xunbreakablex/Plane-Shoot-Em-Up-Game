@@ -35,8 +35,8 @@ public class GameSettings : ScriptableObject
     // ---------------------------------------------------------------- kontrol
 
     [Header("Kontrol")]
-    [Tooltip("Açıksa W burnu yukarı, S aşağı kaldırır (oyun tarzı). Kapalıysa uçuş simülatörü gibi ters.")]
-    public bool wPitchesUp = true;
+    [Tooltip("Açıksa W burnu yukarı, S aşağı kaldırır. Kapalıysa (varsayılan) uçuş simülatörü gibi: W burun aşağı, S yukarı.")]
+    public bool wPitchesUp = false;
     [Tooltip("Elle yatışın (Arcade'de Q/E, Klasik'te A/D) azami hızı (derece/sn). Hızlı yatan uçaklar bunun üstüne çıkamaz.")]
     [Range(60f, 500f)] public float maxManualRollRate = 200f;
 
@@ -47,6 +47,8 @@ public class GameSettings : ScriptableObject
     [Range(2f, 60f)] public float autoAimCone = 12f;
     [Tooltip("Otomatik nişan menzili (m)")]
     [Min(100f)] public float autoAimRange = 1100f;
+    [Tooltip("Nişanın yeni hedefe (ya da hedef yokken burnun önüne) dönme süresi (sn). Nişan anında atlamaz, bu sürede yumuşakça yönelir. 0 = anında.")]
+    [Range(0f, 2f)] public float aimAcquireTime = 0.35f;
 
     // ------------------------------------------------------------------ mermi
 
