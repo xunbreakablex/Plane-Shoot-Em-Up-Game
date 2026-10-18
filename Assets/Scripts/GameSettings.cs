@@ -15,6 +15,10 @@ public class GameSettings : ScriptableObject
     public bool ramIgnoresShield = true;
     [Tooltip("Çarparak düşürülen düşman puan, kombo ve hurda verir mi")]
     public bool ramKillGivesScore = true;
+    [Tooltip("Çarpışma menzili: düşmanın çarpma yarıçapı bu çarpanla küçülür (1 = mermi isabet yarıçapı kadar). Küçük = uçaklar birbirine daha çok yaklaşabilir, uzaktan çarpma olmaz.")]
+    [Range(0.2f, 1.5f)] public float ramRangeScale = 0.55f;
+    [Tooltip("Çarpışmada oyuncu uçağının yarıçapı (m)")]
+    [Range(0.5f, 8f)] public float ramPlayerRadius = 2.2f;
 
     // ------------------------------------------------------- asama gecisi
 
@@ -53,13 +57,15 @@ public class GameSettings : ScriptableObject
     [Range(0.02f, 0.5f)] public float mouseSmoothing = 0.16f;
     [Tooltip("Arcade uçuşta fareyle sağa-sola dönerken uçağın görsel yatışı (derece)")]
     [Range(0f, 80f)] public float mouseVisualBank = 25f;
-    [Tooltip("Açıksa kayma düzeni: W ileri, S geri, A/D sağa-sola, Shift yukarı, Ctrl aşağı kayar (burun dönmez, uçak yalnız hafifçe yatar) ve gaz mekaniği yoktur (hız seyirde). Kapalıysa eski düzen: W/S gaz, A/D döner.")]
+    [Tooltip("Açıksa A/D uçağı sağa-sola, Shift yukarı, Ctrl aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar). Kapalıysa A/D döner, Shift/Ctrl bir şey yapmaz.")]
     public bool keysStrafe = true;
+    [Tooltip("Açıksa (ve keysStrafe açıkken) W ileri, S geri KAYAR ve gaz mekaniği yoktur. Kapalıyken (varsayılan, eski düzen) W/S gaz: W hızlanır, S yavaşlar.")]
+    public bool wsForwardStrafe = false;
     [Tooltip("Kayma (A/D sağa-sola, Shift/Ctrl yukarı-aşağı) azami yan hızı (m/s). Büyük = daha hızlı gidilir.")]
     [Range(5f, 120f)] public float strafeSpeed = 42f;
-    [Tooltip("W basılıyken seyir hızına eklenen ileri hız (m/s). Net hız aracın azami hızını geçmez.")]
+    [Tooltip("Yalnız wsForwardStrafe açıkken: W basılıyken seyir hızına eklenen ileri hız (m/s). Net hız aracın azami hızını geçmez.")]
     [Range(0f, 80f)] public float forwardStrafeSpeed = 28f;
-    [Tooltip("S basılıyken seyir hızından düşülen hız (m/s). Net hız stall'in altına inmez, uçak geri gitmez.")]
+    [Tooltip("Yalnız wsForwardStrafe açıkken: S basılıyken seyir hızından düşülen hız (m/s). Net hız stall'in altına inmez, uçak geri gitmez.")]
     [Range(0f, 80f)] public float backStrafeSpeed = 20f;
     [Tooltip("Kayma tepkisi (1/sn): büyük = tuşa basınca hemen hızlanır, bırakınca hemen durur; küçük = kuvvet yavaş etki eder, süzülür.")]
     [Range(1f, 20f)] public float strafeResponse = 5f;
@@ -113,6 +119,30 @@ public class GameSettings : ScriptableObject
     [Range(0.3f, 1f)] public float arcadeTurnGFraction = 0.85f;
     [Tooltip("A/D ile hedef yatışa geçiş hızı sınırı (derece/sn)")]
     [Range(60f, 500f)] public float arcadeBankRate = 220f;
+
+    // ------------------------------------------------------------------- boss
+
+    [Header("Boss")]
+    [Tooltip("Boss mermilerinin hız çarpanı (1 = eski hız). Küçük = daha yavaş mermi, kaçması kolay. Ömürleri de buna göre uzar.")]
+    [Range(0.2f, 1.5f)] public float bossBulletSpeedMultiplier = 0.7f;
+    [Tooltip("Boss lazerinin (köpekbalığı, ahtapot, ejderha) her vuruşta verdiği hasar")]
+    [Range(0, 4)] public int bossBeamDamage = 1;
+    [Tooltip("Lazerin hasar verme aralığı (sn). Büyük = daha az hasar.")]
+    [Range(0.1f, 1.5f)] public float bossBeamTick = 0.4f;
+    [Tooltip("Lazerin isabet yarıçapı (m). Görünen kalınlık 4,5 m; bu değer uçağın yarıçapını da içerir.")]
+    [Range(1f, 8f)] public float bossBeamHitRadius = 4.2f;
+    [Tooltip("Lazerin oyuncuyu izleme hızı (derece/sn). Küçük = kaçmak kolay.")]
+    [Range(2f, 40f)] public float bossBeamTurnRate = 9f;
+
+    // ------------------------------------------------------------ guclendirme
+
+    [Header("Güçlendirme (power-up)")]
+    [Tooltip("Güçlendirmenin uçağa doğru çekilmeye başladığı mesafe (m)")]
+    [Range(20f, 400f)] public float pickupMagnetRange = 150f;
+    [Tooltip("Güçlendirmenin toplandığı mesafe (m)")]
+    [Range(4f, 40f)] public float pickupCollectRadius = 16f;
+    [Tooltip("Güçlendirmenin sahnede kalma süresi (sn)")]
+    [Range(10f, 90f)] public float pickupLifetime = 45f;
 
     // ------------------------------------------------------------------ erisim
 

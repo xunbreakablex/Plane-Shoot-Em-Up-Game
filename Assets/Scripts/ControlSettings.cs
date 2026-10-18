@@ -4,7 +4,7 @@ public enum ControlScheme
 {
     Arcade,   // A/D = otomatik yatisli donus, Q/E = yatis (roll), W/S = yunuslama
     Classic,  // A/D = yatis, Q/E = dumen (eski duzen), W/S = yunuslama
-    Mouse     // Fare = yonlendirme (yukari-asagi + saga-sola), W/S = ileri/geri kay, A/D = saga-sola kay, Shift/Ctrl = yukari/asagi kay, gaz yok, Sag tik = zoom
+    Mouse     // Fare = yonlendirme (yukari-asagi + saga-sola), W/S = hizlan/yavasla (gaz), A/D = saga-sola kay, Shift/Ctrl = yukari/asagi kay, Sag tik = zoom
 }
 
 // Kontrol semasi tercihi (duraklat menusunden degisir, kalici). Her karede PlayerPrefs okunmasin diye onbellekli.
@@ -34,6 +34,9 @@ public static class ControlSettings
 
     /// <summary>A/D otomatik yatisli donus, Q/E yatis mi (Arcade ve Fare semalarinda)?</summary>
     public static bool ArcadeSteering => Scheme != ControlScheme.Classic;
+
+    /// <summary>FARE semasinda W/S ileri-geri KAYAR ve gaz mekanigi yok (GameSettings.wsForwardStrafe; varsayilan kapali).</summary>
+    public static bool WsStrafe => MouseSteering && GameSettings.Current.keysStrafe && GameSettings.Current.wsForwardStrafe;
 
     /// <summary>Duraklat menusunde siradaki sema: Fare -> Arcade -> Klasik -> Fare.</summary>
     public static ControlScheme Next(ControlScheme s)
@@ -90,7 +93,7 @@ public static class ControlSettings
 
     /// <summary>Ilk oyunlardaki egitim duyurusu: atesin nasil yapildigi (secili semaya gore).</summary>
     public static string FireTutorial => MouseSteering
-        ? "FARE ile yönlendir, W/A/S/D ile kay, SOL TIK ya da SPACE ile ateş et"
+        ? "FARE ile yönlendir, W/S ile hızlan-yavaşla, A/D SHIFT CTRL ile kay, SOL TIK ya da SPACE ile ateş et"
         : AutoAim
             ? "SPACE basılı tut: öndeki en yakın düşmana ateş edersin"
             : "FARE ile nişan al, SOL TIK ya da SPACE ile ateş et";
@@ -103,9 +106,10 @@ public static class ControlSettings
             switch (Scheme)
             {
                 case ControlScheme.Mouse:
-                    return GameSettings.Current.keysStrafe
-                        ? "FARE  yönlendir     W / S  ileri / geri     A / D  sağa-sola kay     SHIFT / CTRL  yukarı-aşağı kay     SAĞ TIK  yakınlaştır"
-                        : "FARE  yönlendir     W / S  hızlan / yavaşla     A / D  dön     SAĞ TIK  yakınlaştır";
+                    if (!GameSettings.Current.keysStrafe)
+                        return "FARE  yönlendir     W / S  hızlan / yavaşla     A / D  dön     SAĞ TIK  yakınlaştır";
+                    return (GameSettings.Current.wsForwardStrafe ? "FARE  yönlendir     W / S  ileri / geri" : "FARE  yönlendir     W / S  hızlan / yavaşla")
+                        + "     A / D  sağa-sola kay     SHIFT / CTRL  yukarı-aşağı kay     SAĞ TIK  yakınlaştır";
                 case ControlScheme.Arcade: return "A / D  sağa-sola dön     Q / E  yatış (tonoz)     W / S  yunuslama";
                 default: return "A / D  yatış             Q / E  dümen     W / S  yunuslama";
             }

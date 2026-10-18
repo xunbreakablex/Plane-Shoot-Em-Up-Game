@@ -150,7 +150,7 @@ public class FlightTestManager : MonoBehaviour
         Hud.Text(new Rect(tx, y + 66f, w - 20f, 18f), stallText.Text, state, 13, TextAnchor.UpperLeft, false);
 
         // Gaz (FARE semasinda kayma modunda gaz mekanigi yok: cubuk gosterilmez)
-        if (ControlSettings.MouseSteering && GameSettings.Current.keysStrafe) return;
+        if (ControlSettings.WsStrafe) return;
         Rect bar = new Rect(tx, y + 88f, 200f, 9f);
         Hud.Bar(bar, p.Throttle, Color.Lerp(new Color(0.3f, 0.9f, 0.35f), new Color(1f, 0.6f, 0.15f), p.Throttle));
         int thrI = Mathf.RoundToInt(p.Throttle * 100f);
@@ -189,6 +189,7 @@ public class FlightTestManager : MonoBehaviour
 
     // Kontrol semasina gore 2. satir (ESC menusunden Arcade/Klasik)
     private const string HelpSteerMouse = "FARE  yönlendir        W / S  ileri / geri        A / D  sağa-sola kay";
+    private const string HelpSteerMouseGas = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  sağa-sola kay";
     private const string HelpKeysMouse = "SHIFT  yukarı kay       CTRL  aşağı kay        C  kamera mesafesi";
     private const string HelpKeysDefault = "SHIFT / CTRL  gaz       SPACE (yerde)  fren   C  kamera mesafesi";
     private const string HelpSteerMouseClassic = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  dön";
@@ -223,7 +224,7 @@ public class FlightTestManager : MonoBehaviour
         bool strafeScheme = ControlSettings.MouseSteering && GameSettings.Current.keysStrafe;
         helpLines[0] = ControlSettings.EffectiveAutoAim ? HelpAimAuto : HelpAimMouse;
         helpLines[1] = ControlSettings.MouseSteering
-            ? (strafeScheme ? HelpSteerMouse : HelpSteerMouseClassic)
+            ? (strafeScheme ? (ControlSettings.WsStrafe ? HelpSteerMouse : HelpSteerMouseGas) : HelpSteerMouseClassic)
             : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);
         helpLines[2] = strafeScheme ? HelpKeysMouse : HelpKeysDefault;
         helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;

@@ -26,6 +26,10 @@ public class StageDef
 
     // Asama sonu boss (son dalgadan sonra); son asamada Ejderha oyunu bitirir
     public BossType boss;
+
+    // Savasa girmek icin gereken asgari ates gucu (silah + taret saniyedeki hasar, hangardaki "SILAH /sn" + "TARET /sn").
+    // Altindaki donanimla bu asamaya girilemez (silahsiz / cok zayif ucak olmasin).
+    public float minFirepower = 10f;
 }
 
 // Asama senaryolari. Dalgalarin zamanlari, formasyonlari ve gucelendirme tasiyicilari buradan ayarlanir.
@@ -38,7 +42,7 @@ public static class Stages
             title = "Sabah Devriyesi",
             subtitle = "Düşman devriyesini dağıt, jet gemisini ve mekanik köpekbalığını indir",
             midBoss = BossType.Jet, midBossTime = 62f,
-            boss = BossType.Shark,
+            boss = BossType.Shark, minFirepower = 12f,
             waves = new[]
             {
                 W(2,   EnemyKind.Swarmer, 4,  Formation.Line),
@@ -59,7 +63,7 @@ public static class Stages
             title = "Fırtına Hattı",
             subtitle = "Ağır bombardıman uçakları, zırhlı yengeç ve mekanik ahtapot",
             midBoss = BossType.Crab, midBossTime = 58f,
-            boss = BossType.Octopus,
+            boss = BossType.Octopus, minFirepower = 20f,
             waves = new[]
             {
                 W(2,   EnemyKind.Swarmer, 6,  Formation.V),
@@ -82,7 +86,7 @@ public static class Stages
             title = "Kızıl Hat",
             subtitle = "Son savunma hattı: hava zırhlısı ve Kızıl Ejderha seni bekliyor",
             midBoss = BossType.Zeppelin, midBossTime = 66f,
-            boss = BossType.Dragon,
+            boss = BossType.Dragon, minFirepower = 26f,
             waves = new[]
             {
                 W(2,   EnemyKind.Fighter, 4,  Formation.V),

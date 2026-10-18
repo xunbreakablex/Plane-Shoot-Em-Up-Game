@@ -472,20 +472,23 @@ public partial class BossBrain : MonoBehaviour
         }
         else if (t < beamTelegraph + beamFire)
         {
-            // Ates: yavasca oyuncuya dogru suruklenir
-            beamDir = Vector3.RotateTowards(beamDir, want, 16f * Mathf.Deg2Rad * dt, 0f);
-            SetBeamVisual(o, 5.5f, new Color(1f, 0.25f, 0.2f));
+            // Ates: yavasca oyuncuya dogru suruklenir (GameSettings.bossBeamTurnRate)
+            GameSettings gs = GameSettings.Current;
+            beamDir = Vector3.RotateTowards(beamDir, want, gs.bossBeamTurnRate * Mathf.Deg2Rad * dt, 0f);
+            SetBeamVisual(o, 4.5f, new Color(1f, 0.25f, 0.2f));
 
             Vector3 toP = player.position - o;
             float along = Vector3.Dot(toP, beamDir);
             if (along > 0f && along < BeamLength && Time.time >= beamNextTick)
             {
                 float d = (toP - beamDir * along).magnitude;
-                if (d < 6.5f)
+                // Eskiden isabet yaricapi (6,5 m) gorunen isinin (2,75 m) iki katindan genisti ve vurus basina 2
+                // hasar 0,25 sn'de bir veriyordu: lazer cok guclu hissettiriyordu. Ayarlar GameSettings'te.
+                if (d < gs.bossBeamHitRadius)
                 {
-                    beamNextTick = Time.time + 0.25f;
+                    beamNextTick = Time.time + gs.bossBeamTick;
                     PlayerHealth ph = mgr.CurrentPlayerHealth;
-                    if (ph != null) ph.TakeHit(2, player.position);
+                    if (ph != null) ph.TakeHit(gs.bossBeamDamage, player.position);
                 }
             }
         }

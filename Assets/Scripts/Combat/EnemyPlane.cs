@@ -124,7 +124,16 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private bool canPeel = true;
 
     private const float MinClearance = 90f;
-    private const float PlayerRadius = 4f;
+
+    // Carpma (ram) menzili: mermi isabet yaricapindan (HitRadius) kucuk tutulur; kalkan/carpma "uzaktan" olmasin
+    private float RamRange
+    {
+        get
+        {
+            GameSettings gs = GameSettings.Current;
+            return HitRadius * gs.ramRangeScale + gs.ramPlayerRadius;
+        }
+    }
     private const float StrafeLifetime = 70f;
 
     // Ozel boss govdeleri: hareket ve ates BossBrain'dedir
@@ -179,8 +188,10 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     public Bullet FireBullet(Vector3 pos, Vector3 dir, float speed, int damage, float lifetime = 0f)
     {
         if (mgr == null || mgr.EnemyBulletPrefab == null) return null;
-        Bullet b = Bullet.Spawn(mgr.EnemyBulletPrefab, pos, dir, speed, damage, transform, false);
-        if (b != null && lifetime > 0f) b.lifetime = lifetime;
+        // Boss mermileri yavaslatilir (kacmasi kolay); menzil ayni kalsin diye omur ayni oranda uzar
+        float mul = Mathf.Max(0.05f, GameSettings.Current.bossBulletSpeedMultiplier);
+        Bullet b = Bullet.Spawn(mgr.EnemyBulletPrefab, pos, dir, speed * mul, damage, transform, false);
+        if (b != null) b.lifetime = (lifetime > 0f ? lifetime : b.lifetime) / mul;
         return b;
     }
 
@@ -188,7 +199,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     {
         // Temas: boss parcalarindan herhangi birine yaklasma
         float d = brain != null ? brain.DistanceTo(target.position) : Vector3.Distance(rb.position, target.position);
-        if (d < PlayerRadius + 1.5f && Time.time >= nextRamTime)
+        if (d < GameSettings.Current.ramPlayerRadius + 1f && Time.time >= nextRamTime)
         {
             nextRamTime = Time.time + 1.2f;
             DamagePlayerByRam(target.position);
@@ -314,7 +325,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         rb.MovePosition(newPos);
         rb.MoveRotation(newRot);
 
-        if (dist < HitRadius + PlayerRadius && Time.time >= nextRamTime)
+        if (dist < RamRange && Time.time >= nextRamTime)
         {
             nextRamTime = Time.time + 1.2f;
             Ram(newPos);
@@ -415,7 +426,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         rb.MoveRotation(newRot);
 
         // Temas: oyuncu fizigi dusmanlarla carpismaz (layer); hasar yakinliktan hesaplanir
-        if (dist < HitRadius + PlayerRadius && Time.time >= nextRamTime)
+        if (dist < RamRange && Time.time >= nextRamTime)
         {
             nextRamTime = Time.time + 1.2f;
             Ram(newPos);

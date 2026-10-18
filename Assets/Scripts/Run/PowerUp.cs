@@ -7,9 +7,10 @@ public class PowerUp : MonoBehaviour
 {
     public static readonly List<PowerUp> All = new List<PowerUp>();
 
-    public const float Lifetime = 30f;
-    public const float BaseMagnet = 55f;
-    public const float CollectRadius = 10f;
+    // Omur, mıknatıs menzili ve toplama yaricapi GameSettings'ten (guclendirmeyi yakalamak zordu)
+    private static float Lifetime => GameSettings.Current.pickupLifetime;
+    private static float BaseMagnet => GameSettings.Current.pickupMagnetRange;
+    private static float CollectRadius => GameSettings.Current.pickupCollectRadius;
 
     public Transform core;
     public Transform glow;
@@ -113,9 +114,9 @@ public class PowerUp : MonoBehaviour
             float range = BaseMagnet * RunUpgrades.Mods.magnetMul;
             if (d < range)
             {
-                // Yaklastikca hizlanir; ucagin hizini da asar ki yakalayabilsin
+                // Yaklastikca hizlanir; ucagin hizini da asar ki yakalayabilsin (hizli ucaklar icin hizdan fazla)
                 float k = 1f - d / range;
-                float speed = Mathf.Lerp(30f, 100f, k) + mgr.PlayerSpeed * 0.95f;
+                float speed = Mathf.Lerp(70f, 190f, k) + mgr.PlayerSpeed * 1.15f;
                 transform.position += to / Mathf.Max(d, 0.01f) * Mathf.Min(speed * dt, d);
                 drift = Vector3.zero;
             }

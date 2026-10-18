@@ -22,6 +22,7 @@ public class PlaneController : MonoBehaviour
         public float cruise, maxSpeed, thrust, cruiseAoA, stallAoA, liftSlope, maxG;
         public float roll, yaw, pitchGain, responsiveness;
         public float inputResponse;      // kumanda girisinin tam degere ulasma hizi carpani
+        public float arcadeTurn;         // FARE semasi (oyun tipi ucus) azami donus hizi (derece/sn)
     }
 
     public static PresetData DataOf(PlanePreset preset)
@@ -35,49 +36,55 @@ public class PlaneController : MonoBehaviour
                 // ~70 derece/sn
                 return new PresetData
                 {
-                    name = "Planor", cruise = 30f, maxSpeed = 58f, thrust = 6.5f,
+                    name = "Planor", cruise = 38f, maxSpeed = 72f, thrust = 8f,
                     cruiseAoA = 2.4f, stallAoA = 17f, liftSlope = 5.6f, maxG = 6f,
-                    roll = 95f, yaw = 22f, pitchGain = 6f, responsiveness = 6f, inputResponse = 1.1f
+                    roll = 95f, yaw = 22f, pitchGain = 6f, responsiveness = 6f, inputResponse = 1.1f,
+                    arcadeTurn = 82f
                 };
             case PlanePreset.Fighter:
                 // ~110 derece/sn (eskiden ~28)
                 return new PresetData
                 {
-                    name = "WW2 Avci", cruise = 65f, maxSpeed = 115f, thrust = 15f,
+                    name = "WW2 Avci", cruise = 82f, maxSpeed = 142f, thrust = 19f,
                     cruiseAoA = 1.2f, stallAoA = 16f, liftSlope = 4.8f, maxG = 13f,
-                    roll = 240f, yaw = 30f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.25f
+                    roll = 240f, yaw = 30f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.25f,
+                    arcadeTurn = 112f
                 };
             case PlanePreset.LightJet:
                 // Atmaca: ~125 derece/sn, cok yuksek yatis ve hizli kumanda tepkisi
                 return new PresetData
                 {
-                    name = "Atmaca", cruise = 70f, maxSpeed = 135f, thrust = 22f,
+                    name = "Atmaca", cruise = 108f, maxSpeed = 190f, thrust = 30f,
                     cruiseAoA = 1.5f, stallAoA = 26f, liftSlope = 5.5f, maxG = 16f,
-                    roll = 420f, yaw = 48f, pitchGain = 11f, responsiveness = 14f, inputResponse = 1.7f
+                    roll = 420f, yaw = 48f, pitchGain = 11f, responsiveness = 14f, inputResponse = 1.7f,
+                    arcadeTurn = 138f
                 };
             case PlanePreset.HeavyJet:
                 // Kartal: ~115 derece/sn
                 return new PresetData
                 {
-                    name = "Kartal", cruise = 74f, maxSpeed = 140f, thrust = 22f,
+                    name = "Kartal", cruise = 96f, maxSpeed = 172f, thrust = 28f,
                     cruiseAoA = 1.5f, stallAoA = 24f, liftSlope = 5.2f, maxG = 15f,
-                    roll = 330f, yaw = 40f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.5f
+                    roll = 330f, yaw = 40f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.5f,
+                    arcadeTurn = 124f
                 };
             case PlanePreset.MiniShark:
                 // ~140 derece/sn
                 return new PresetData
                 {
-                    name = "Yavru Kopekbaligi", cruise = 55f, maxSpeed = 105f, thrust = 16f,
+                    name = "Yavru Kopekbaligi", cruise = 74f, maxSpeed = 134f, thrust = 22f,
                     cruiseAoA = 1.9f, stallAoA = 28f, liftSlope = 5.5f, maxG = 14f,
-                    roll = 470f, yaw = 55f, pitchGain = 11f, responsiveness = 15f, inputResponse = 1.9f
+                    roll = 470f, yaw = 55f, pitchGain = 11f, responsiveness = 15f, inputResponse = 1.9f,
+                    arcadeTurn = 150f
                 };
             default:
                 // WW1: ~90 derece/sn
                 return new PresetData
                 {
-                    name = "WW1 Cift Kanat", cruise = 42f, maxSpeed = 68f, thrust = 9f,
+                    name = "WW1 Cift Kanat", cruise = 55f, maxSpeed = 98f, thrust = 12f,
                     cruiseAoA = 2.2f, stallAoA = 16f, liftSlope = 5.2f, maxG = 7f,
-                    roll = 150f, yaw = 38f, pitchGain = 8f, responsiveness = 10f, inputResponse = 1.15f
+                    roll = 150f, yaw = 38f, pitchGain = 8f, responsiveness = 10f, inputResponse = 1.15f,
+                    arcadeTurn = 98f
                 };
         }
     }
@@ -108,6 +115,8 @@ public class PlaneController : MonoBehaviour
     public float responsiveness = 7f;
     [Tooltip("Kumanda girisinin (W/S, A/D, Q/E) tam degere ulasma hizi carpani; jetlerde buyuk")]
     public float inputResponse = 1f;
+    [Tooltip("FARE semasi (oyun tipi ucus): fare ile azami donus hizi (derece/sn). Ucaga gore degisir; GameSettings.mouseTurnRate ile carpilir.")]
+    public float arcadeTurnRate = 100f;
     public float yawStability = 3f;
     public bool autoLevel = true;
     [Range(0f, 1f)] public float turnAssist = 1f;
@@ -194,6 +203,7 @@ public class PlaneController : MonoBehaviour
         cruiseAoA = d.cruiseAoA; stallAoA = d.stallAoA; liftSlope = d.liftSlope; maxG = d.maxG;
         rollRate = d.roll; yawRate = d.yaw; pitchGain = d.pitchGain; responsiveness = d.responsiveness;
         inputResponse = d.inputResponse;
+        arcadeTurnRate = d.arcadeTurn > 0f ? d.arcadeTurn : arcadeTurnRate;
     }
 
     /// <summary>Baska bir ucagin dogus ve pist noktalarini kopyalar (yeni eklenen ucaklar icin).</summary>
@@ -456,8 +466,8 @@ public class PlaneController : MonoBehaviour
         rollIn = Mathf.MoveTowards(rollIn, rollRaw, 6f * resp * dt);
         yawIn = Mathf.MoveTowards(yawIn, yawRaw, 4f * resp * dt);
         turnIn = Mathf.MoveTowards(turnIn, turnRaw, 4f * resp * dt);
-        // FARE semasi + kayma modunda gaz yok: hiz seyirde, W/S ileri-geri kayar (ArcadeFlight motor sesi icin gazi surer)
-        if (!(arcadeActive && GameSettings.Current.keysStrafe)) UpdateThrottle(dt);
+        // FARE semasi + W/S ileri-geri kayma (wsForwardStrafe) acikken gaz yok: ArcadeFlight motor sesi icin gazi surer
+        if (!(arcadeActive && ControlSettings.WsStrafe)) UpdateThrottle(dt);
 
         if (propeller != null)
         {
@@ -477,18 +487,22 @@ public class PlaneController : MonoBehaviour
     // Hicbirine basilmiyorsa gaz ease-out ile (once hizli, sonra yavasca) bosta degerine iner.
     private void UpdateThrottle(float dt)
     {
+        // FARE semasi (oyun tipi ucus): W/S belirgin ve hizli etki eder (eskiden 2,5 sn'de +13 m/s: yavas hissettiriyordu)
+        bool snappy = ControlSettings.MouseSteering;
+        float riseRate = throttleRiseRate * (snappy ? 2.6f : 1f);
+        float easeIn = snappy ? Mathf.Min(throttleEaseInTime, 0.3f) : throttleEaseInTime;
         if (throttleRaw > 0.01f)
         {
             // Ease-in: tus basili kaldikca artis hizi k^2 ile hizlanir (yavas baslar)
-            riseHold = Mathf.Min(riseHold + dt, throttleEaseInTime);
-            float k = Mathf.Clamp01(riseHold / Mathf.Max(throttleEaseInTime, 0.01f));
-            throttle = Mathf.Clamp01(throttle + throttleRaw * throttleRiseRate * k * k * dt);
+            riseHold = Mathf.Min(riseHold + dt, easeIn);
+            float k = Mathf.Clamp01(riseHold / Mathf.Max(easeIn, 0.01f));
+            throttle = Mathf.Clamp01(throttle + throttleRaw * riseRate * k * k * dt);
         }
         else
         {
             riseHold = 0f;
             if (throttleRaw < -0.01f)
-                throttle = Mathf.Clamp01(throttle + throttleRaw * throttleRiseRate * dt);
+                throttle = Mathf.Clamp01(throttle + throttleRaw * riseRate * dt);
             else
             {
                 // FARE semasinda W/S birakilinca gaz seyir hizina doner (hizlan/yavasla tuslari gibi);
@@ -530,12 +544,13 @@ public class PlaneController : MonoBehaviour
 
             if (mouseScheme)
             {
-                if (!strafeKeys) throttleRaw += wsKeys;                  // kayma yokken (yer / eski duzen): W hizlan, S yavasla
+                bool wsStrafe = strafeKeys && GameSettings.Current.wsForwardStrafe;
+                if (!wsStrafe) throttleRaw += wsKeys;                    // varsayilan: W hizlan, S yavasla
                 if (strafeKeys)
                 {
-                    // kayma: D saga, Shift yukari, Ctrl asagi, W ileri, S geri
+                    // kayma: D saga, Shift yukari, Ctrl asagi (W/S ileri-geri yalniz wsForwardStrafe aciksa)
                     float vert = (kb.leftShiftKey.isPressed ? 1f : 0f) - (kb.leftCtrlKey.isPressed ? 1f : 0f);
-                    strafeRaw = new Vector3(side, vert, wsKeys);
+                    strafeRaw = new Vector3(side, vert, wsStrafe ? wsKeys : 0f);
                 }
                 else turnRaw += side;                                    // eski: A/D donus
                 // Q/E ve Shift/Ctrl gazi bu semada kullanilmaz
@@ -860,7 +875,7 @@ public class PlaneController : MonoBehaviour
     private const float ArcadeLevelRate = 150f;     // ufka donme hiz siniri (derece/sn)
     private const float ArcadeBankResponse = 4f;    // gorsel yatisin hedefe yaklasma hizi (1/sn); kucuk = yumusak
     private const float ArcadeGrip = 10f;           // hiz yonunun burna hizalanma hizi (1/sn); kucuk = kayar
-    private const float ArcadeSpeedResponse = 1.2f; // hizin gaz hedefine yaklasma hizi (1/sn)
+    private const float ArcadeSpeedResponse = 2.4f; // hizin gaz hedefine yaklasma hizi (1/sn)
     private const float ArcadeGravity = 0.5f;       // tirmanista yavaslama / dalista hizlanma (yercekiminin kesri)
     private const float ArcadeMinSpeed = 0.55f;     // gaz kapaliyken hiz = seyir hizi x bu
 
@@ -869,8 +884,7 @@ public class PlaneController : MonoBehaviour
     {
         get
         {
-            float natural = maxG * G / Mathf.Max(cruiseSpeed, 10f) * Mathf.Rad2Deg;
-            return Mathf.Clamp(natural, 60f, 170f) * GameSettings.Current.mouseTurnRate * Mathf.Sqrt(upgradeRoll);
+            return arcadeTurnRate * GameSettings.Current.mouseTurnRate * Mathf.Sqrt(upgradeRoll);
         }
     }
 
@@ -966,7 +980,7 @@ public class PlaneController : MonoBehaviour
         // Kayma modunda gaz mekanigi yok: taban hiz hep seyirde, W/S ileri-geri kaymasi ustune biner.
         // Motor sesi/pervane icin gaz, ileri-geri kaymaya gore surulur.
         float targetSpd;
-        if (gs.keysStrafe)
+        if (ControlSettings.WsStrafe)
         {
             targetSpd = cruiseSpeed;
             throttle = strafeVel.z >= 0f

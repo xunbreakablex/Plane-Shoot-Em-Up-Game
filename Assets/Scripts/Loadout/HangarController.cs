@@ -738,7 +738,11 @@ public class HangarController : MonoBehaviour
             ? $"Operasyon devam ediyor: AŞAMA {RunState.PendingStage + 1} sırada  •  skor {RunState.Score:N0}  •  donanımı değiştirip devam et"
             : "HEDEF:  3 aşamayı geç  •  rozetli düşmanı vur, güçlendirmeyi topla  •  B: bomba  •  aşama sonu boss'unu indir";
         bool owned = Unlocks.OwnsAircraft(model);
-        if (owned) Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), goal, resume ? Gold : Dim, 13, TextAnchor.MiddleCenter, false);
+
+        int stageIdx = resume ? Mathf.Clamp(RunState.PendingStage, 0, Stages.All.Length - 1) : 0;
+        float needed = Stages.All[stageIdx].minFirepower;
+        float firepower = cur.weaponDps + cur.turretDps;
+        if (owned && firepower >= needed) Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), goal, resume ? Gold : Dim, 13, TextAnchor.MiddleCenter, false);
 
         float bw = 380f, bh = 56f;
         string startLabel = resume ? $"AŞAMA {RunState.PendingStage + 1}'E DEVAM" : "SAVAŞA BAŞLA";
@@ -751,6 +755,16 @@ public class HangarController : MonoBehaviour
             Hud.Text(startRect, "UÇAK KİLİTLİ", new Color(1f, 0.5f, 0.45f), 22, TextAnchor.MiddleCenter);
             Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), "Açmak için: " + Unlocks.AircraftRequirement(model),
                 new Color(1f, 0.82f, 0.5f), 13, TextAnchor.MiddleCenter, false);
+        }
+        else if (firepower < needed)
+        {
+            // Silahsiz ya da gereken ates gucunun altindaki donanimla savasa girilmez
+            Hud.Fill(startRect, new Color(0.14f, 0.12f, 0.1f, 0.95f));
+            Hud.Text(startRect, "ATEŞ GÜCÜ YETERSİZ", new Color(1f, 0.55f, 0.4f), 22, TextAnchor.MiddleCenter);
+            string why = firepower <= 0.01f
+                ? "Silahsız savaşa çıkılamaz: en az bir silah tak."
+                : $"AŞAMA {stageIdx + 1} için en az {needed:0} ateş gücü (SİLAH + TARET /sn) gerek, şu an {firepower:0}.";
+            Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), why, new Color(1f, 0.82f, 0.5f), 13, TextAnchor.MiddleCenter, false);
         }
         else if (Btn(startRect, startLabel, 26, true, new Color(0.3f, 0.85f, 0.4f)))
         {

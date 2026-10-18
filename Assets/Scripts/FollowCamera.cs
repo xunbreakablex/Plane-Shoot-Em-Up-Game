@@ -28,6 +28,9 @@ public class FollowCamera : MonoBehaviour
     private float zoomBlend, zoomVel;   // 0 = normal, 1 = tam yakinlastirma (sag tik)
     private float smoothedFov;          // hiz artisli FOV (yakinlastirma uygulanmadan)
 
+    // FOV/uzaklasma/titreme ucagin kendi azami hizina gore olceklenir (hizli ucaklar da kademeli hissettirsin)
+    private float RefSpeed => plane != null ? Mathf.Max(plane.maxSpeed * 0.8f, 40f) : maxSpeedForFov;
+
     private void Awake()
     {
         cam = GetComponent<Camera>();
@@ -117,7 +120,7 @@ public class FollowCamera : MonoBehaviour
         float speed = plane != null ? plane.Speed : 0f;
 
         // Hizli giderken kamera biraz uzaklasir
-        float wantScale = 1f + Mathf.Clamp01(speed / maxSpeedForFov) * 0.25f;
+        float wantScale = 1f + Mathf.Clamp01(speed / RefSpeed) * 0.25f;
         distanceScale = Mathf.Lerp(distanceScale, wantScale, 2f * dt);
 
         Vector3 offset = Offsets[offsetIndex];
@@ -143,7 +146,7 @@ public class FollowCamera : MonoBehaviour
         {
             float gThreshold = Mathf.Max(3f, plane.maxG * 0.55f);
             float shake = Mathf.Clamp01((Mathf.Abs(plane.GForce) - gThreshold) / 4f) * 0.07f
-                          + Mathf.Clamp01((speed / maxSpeedForFov) - 0.7f) * 0.03f;
+                          + Mathf.Clamp01((speed / RefSpeed) - 0.7f) * 0.03f;
             if (plane.IsStalling) shake += 0.04f;
             if (shake > 0f)
             {
@@ -160,7 +163,7 @@ public class FollowCamera : MonoBehaviour
 
         if (cam != null)
         {
-            float t = Mathf.Clamp01(speed / maxSpeedForFov);
+            float t = Mathf.Clamp01(speed / RefSpeed);
             if (smoothedFov <= 0f) smoothedFov = cam.fieldOfView;
             smoothedFov = Mathf.Lerp(smoothedFov, baseFov + t * speedFovBoost, 3f * dt);
 
