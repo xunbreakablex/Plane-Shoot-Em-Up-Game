@@ -433,7 +433,13 @@ public partial class CombatManager
         // Ekrani temizle: kalan dusmanlar ve mermiler yok olur
         Bullet.ClearEnemyBullets();
         foreach (var e in new List<EnemyPlane>(enemies))
-            if (e != null && !e.IsDead && e != defeated) e.Vanish();
+        {
+            if (e == null || e.IsDead || e == defeated) continue;
+
+            // Us finali: kalan yer birimleri aninda degil, birkac saniyeye yayilan patlamalarla gider
+            if (e.IsGround) SpawnExplosionBurst(e.transform.position, e.HitRadius, 1, Random.Range(0.1f, 2.4f));
+            e.Vanish();
+        }
 
         bool lastStage = RunState.Stage >= Stages.All.Length - 1;
         RunState.ClearStage();
