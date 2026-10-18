@@ -147,7 +147,14 @@ public partial class CombatManager : MonoBehaviour
     public float GroundHeight(Vector3 p)
     {
         Terrain t = Terrain.activeTerrain;
-        return t != null ? t.SampleHeight(p) + t.transform.position.y : 0f;
+        if (t == null) return 0f;
+
+        // Arazinin disi deniz (ada ussleri orada): SampleHeight kenar yuksekligini dondurmesin
+        Vector3 o = t.transform.position;
+        Vector3 size = t.terrainData.size;
+        if (p.x < o.x || p.x > o.x + size.x || p.z < o.z || p.z > o.z + size.z) return SeaLevel;
+
+        return t.SampleHeight(p) + o.y;
     }
 
     // ---------------------------------------------------------------- events
@@ -168,6 +175,18 @@ public partial class CombatManager : MonoBehaviour
     {
         Vector3 pos = enemy.transform.position;
         SpawnExplosion(pos);
+
+        if (enemy.IsGround)
+        {
+            // Yer birimi: ek patlamalar + enkaz; komuta merkezi yikilinca us susar ve komutan yolu acilir
+            var gu = enemy.GetComponent<GroundUnit>();
+            if (gu != null) gu.OnKilled(this);
+            if (enemy.IsCore)
+            {
+                baseCleared = true;
+                Announce("KOMUTA MERKEZİ YIKILDI!  Uçaksavarlar sustu", new Color(1f, 0.85f, 0.3f), 3.4f, true);
+            }
+        }
 
         if (enemy.IsBoss)
         {

@@ -55,7 +55,8 @@ public class AutoTurret : MonoBehaviour
         foreach (var e in mgr.Enemies)
         {
             if (e == null) continue;
-            float d = Vector3.Distance(head.position, e.transform.position);
+            // Hava dusmani oncelikli: yer birimleri sanki 350 m daha uzaktaymis gibi puanlanir
+            float d = Vector3.Distance(head.position, e.transform.position) + (e.IsGround ? 350f : 0f);
             if (d < bestDist)
             {
                 bestDist = d;

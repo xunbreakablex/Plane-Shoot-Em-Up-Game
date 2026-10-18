@@ -267,6 +267,28 @@ public class PlaneController : MonoBehaviour
         if (rb != null) rb.linearVelocity = transform.forward * cruiseSpeed;
     }
 
+    /// <summary>
+    /// Ucagi verilen noktaya tasir (asama gecisi / deniz gecisi): seyir hiziyla ileri baslar; can ve kalkan korunur
+    /// (Respawn/ReviveAt gibi dolmaz).
+    /// </summary>
+    public void Teleport(Vector3 position, Quaternion rotation)
+    {
+        CancelInvoke(nameof(Respawn));
+        crashed = false;
+        localOmega = Vector3.zero;
+        ResetArcadeState();
+        transform.SetPositionAndRotation(position, rotation);
+        rb.position = position;
+        rb.rotation = rotation;
+        Physics.SyncTransforms();
+        rb.linearVelocity = transform.forward * cruiseSpeed;
+        rb.angularVelocity = Vector3.zero;
+        throttle = EquilibriumThrottle();
+        if (trails != null)
+            foreach (var t in trails)
+                if (t != null) t.Clear();
+    }
+
     public void SetSpawn(Vector3 position, Quaternion rotation)
     {
         spawnPosition = position;

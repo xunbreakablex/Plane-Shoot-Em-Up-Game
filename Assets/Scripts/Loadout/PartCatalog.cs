@@ -34,6 +34,13 @@ public class PartDef
     public float spread = 0.25f;
     public float range = 500f;
 
+    // Lazer (yalniz silahlar): 0 = mermi, 1 = kesintisiz isin, 2 = darbeli isin, 3 = portal lazeri (burnun onunde
+    // acilan portaldan darbeli isin). Isin aninda vurur ve onundeki herkesi deler; rate = ORTALAMA vurus/sn
+    // (darbeli isinda aciklik orani beamOn / (beamOn + beamOff) ile bolunerek aciktaki vurus hizi bulunur).
+    public int beam;
+    public float beamOn = 0.45f;
+    public float beamOff = 0.55f;
+
     // Fuze
     public int ammo;           // rampa basina azami fuze
     public float reload;       // bir fuzeyi yenileme suresi (sn)
@@ -118,6 +125,12 @@ public static class PartCatalog
                       rate = 3f, damage = 2f, speed = 330f, spread = 0.1f, power = 2f, weight = 10f },
         new PartDef { name = "Çift Namlu", description = "Çok hızlı (18/sn), dağınık. Güç 2.",
                       rate = 18f, damage = 1f, speed = 400f, spread = 0.6f, power = 2f, weight = 7f },
+        new PartDef { name = "Lazer Topu", description = "Kesintisiz ışın: anında vurur, önündeki herkesi deler (6 vuruş/sn, 2 hasar). Güç 3.",
+                      rate = 6f, damage = 2f, range = 750f, beam = 1, power = 3f, weight = 9f },
+        new PartDef { name = "Darbeli Lazer", description = "Kısa, güçlü ışın patlamaları (0,45 sn açık / 0,55 sn kapalı, açıkken 10 vuruş/sn, 3 hasar), delici. Güç 3.",
+                      rate = 4.5f, damage = 3f, range = 850f, beam = 2, beamOn = 0.45f, beamOff = 0.55f, power = 3f, weight = 8f },
+        new PartDef { name = "Portal Lazeri", description = "Burnunun önünde bir portal açılır, ışın oradan darbeler halinde çıkar (açık 0,6 / kapalı 0,6 sn), delici. Güç 4.",
+                      rate = 5f, damage = 3f, range = 850f, beam = 3, beamOn = 0.6f, beamOff = 0.6f, power = 4f, weight = 11f },
     };
 
     public static readonly PartDef[] Shields =

@@ -1,7 +1,9 @@
 using UnityEngine;
 
 // MidBoss: asama ortasi mini boss (olmesi asamayi bitirmez). Boss/FinalBoss: asama sonu.
-public enum EnemyKind { Swarmer, Fighter, Heavy, MidBoss, Boss, FinalBoss }
+// GroundTurret / GroundBuilding / GroundCore: yer ustu birimleri (dusman ussu); hareket etmezler.
+// Not: siralama onemli: IsBoss "Kind >= MidBoss"; yer birimleri bossun onunde durmali.
+public enum EnemyKind { Swarmer, Fighter, Heavy, GroundTurret, GroundBuilding, GroundCore, MidBoss, Boss, FinalBoss }
 
 // Chase: oyuncuyu kovalar (dogfight). Strafe: formasyonla duz bir hat uzerinde gecer ve ates eder.
 public enum EnemyBehavior { Chase, Strafe }
@@ -37,6 +39,24 @@ public static class EnemyKinds
                 {
                     title = "Ağır Bombardıman", tint = new Color(0.55f, 0.2f, 0.75f), marker = new Color(0.85f, 0.45f, 1f),
                     scale = 1.7f, speedMul = 0.75f, turnMul = 0.7f, radius = 8f, ramDamage = 4, score = 800
+                };
+            case EnemyKind.GroundTurret:
+                return new EnemyKindInfo
+                {
+                    title = "Uçaksavar", tint = new Color(0.4f, 0.42f, 0.36f), marker = new Color(1f, 0.55f, 0.2f),
+                    scale = 1f, speedMul = 0f, turnMul = 0f, radius = 4f, ramDamage = 0, score = 400
+                };
+            case EnemyKind.GroundBuilding:
+                return new EnemyKindInfo
+                {
+                    title = "Üs Yapısı", tint = new Color(0.5f, 0.5f, 0.46f), marker = new Color(0.95f, 0.8f, 0.4f),
+                    scale = 1f, speedMul = 0f, turnMul = 0f, radius = 12f, ramDamage = 0, score = 600
+                };
+            case EnemyKind.GroundCore:
+                return new EnemyKindInfo
+                {
+                    title = "Komuta Merkezi", tint = new Color(0.6f, 0.15f, 0.12f), marker = new Color(1f, 0.3f, 0.25f),
+                    scale = 1f, speedMul = 0f, turnMul = 0f, radius = 24f, ramDamage = 0, score = 8000
                 };
             case EnemyKind.MidBoss:
                 return new EnemyKindInfo
@@ -79,6 +99,8 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     public float HitRadius { get; private set; } = 4.5f;
     public bool IsBoss => Kind >= EnemyKind.MidBoss;
     public bool IsStageBoss => Kind >= EnemyKind.Boss;
+    public bool IsGround => Kind >= EnemyKind.GroundTurret && Kind <= EnemyKind.GroundCore;
+    public bool IsCore => Kind == EnemyKind.GroundCore;
     public bool IsDead => dead;
     public string Title { get; private set; }
 
@@ -165,6 +187,28 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         brain = GetComponent<BossBrain>();
     }
 
+    /// <summary>Yer ustu birimi (dusman ussu): hareket etmez, carpma hasari vermez; ates GroundUnit'te.</summary>
+    public void InitGround(CombatManager manager, int hits, EnemyKind kind, string title, float radius, int carrierDrop)
+    {
+        mgr = manager;
+        Kind = kind;
+        Behavior = EnemyBehavior.Chase;
+        CarrierDrop = carrierDrop;
+        MaxHits = hits;
+        HitsRemaining = hits;
+        Title = title;
+        HitRadius = radius;
+        ramDamage = 0;
+        scripted = true;
+        born = Time.time;
+
+        rb = GetComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity = false;
+        brain = null;
+        Velocity = Vector3.zero;
+    }
+
     public void SetVelocity(Vector3 v) { Velocity = v; }
 
     /// <summary>
@@ -173,7 +217,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     /// </summary>
     public bool IsAimingAt(Vector3 targetPos)
     {
-        if (dead || IsBoss || !mgr.enemiesShoot) return false;
+        if (dead || IsBoss || IsGround || !mgr.enemiesShoot) return false;
 
         float dist = Vector3.Distance(transform.position, targetPos);
         if (dist > fireRange) return false;
@@ -197,6 +241,8 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
     private void ScriptedStep(Transform target)
     {
+        if (IsGround) return;   // yer birimleri carpmaz (GroundUnit ates eder)
+
         // Temas: boss parcalarindan herhangi birine yaklasma
         float d = brain != null ? brain.DistanceTo(target.position) : Vector3.Distance(rb.position, target.position);
         if (d < GameSettings.Current.ramPlayerRadius + 1f && Time.time >= nextRamTime)
@@ -628,7 +674,8 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     {
         if (dead) return;
         dead = true;
-        if (mgr != null) mgr.SpawnExplosion(transform.position);
+        // Yer birimlerinin hepsi patlarsa kare duser: yalnizca birkacinda efekt
+        if (mgr != null && (!IsGround || Random.value < 0.2f)) mgr.SpawnExplosion(transform.position);
         Destroy(gameObject);
     }
 }

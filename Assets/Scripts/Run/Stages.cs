@@ -14,8 +14,27 @@ public struct WaveDef
     public int drop;                // PickupKind ya da -1; grubun son dusmani tasir ve vurulunca dusurur
 }
 
+// Asamanin dusman ussu (eski shoot 'em up gibi: yer hedefleri). Komuta merkezi yikilmadan asama sonu boss gelmez
+// (dalgalar bittikten sonra GameSettings.baseBossFallbackSeconds kadar beklenir).
+public struct BaseDef
+{
+    public string name;
+    public bool enabled;
+    public bool island;             // true: denizde ada, false: karada beton ped
+    public Vector2 center;          // dunya XZ
+    public float radius;            // ada/ped yaricapi
+    public Color ground;            // ada rengi
+    public bool hasStart;           // true: asama basinda oyuncu buraya isinlanir (deniz gecisi)
+    public Vector2 startXZ;
+    public float startAlt;
+    public string intro;            // asama basi duyurusu
+    public int flak, cannons, hangars, tanks, planes;
+}
+
 public class StageDef
 {
+    public BaseDef bas;
+
     public string title;
     public string subtitle;
     public WaveDef[] waves;
@@ -43,6 +62,12 @@ public static class Stages
             subtitle = "Düşman devriyesini dağıt, jet gemisini ve mekanik köpekbalığını indir",
             midBoss = BossType.Jet, midBossTime = 62f,
             boss = BossType.Shark, minFirepower = 12f,
+            bas = new BaseDef
+            {
+                name = "Kıyı Üssü", enabled = true, island = false, center = new Vector2(-100f, 740f), radius = 330f,
+                intro = "KIYI ÜSSÜ: uçaksavarları, radarı ve komuta merkezini yok et",
+                flak = 7, cannons = 2, hangars = 3, tanks = 3, planes = 4
+            },
             waves = new[]
             {
                 W(2,   EnemyKind.Swarmer, 4,  Formation.Line),
@@ -64,6 +89,13 @@ public static class Stages
             subtitle = "Ağır bombardıman uçakları, zırhlı yengeç ve mekanik ahtapot",
             midBoss = BossType.Crab, midBossTime = 58f,
             boss = BossType.Octopus, minFirepower = 20f,
+            bas = new BaseDef
+            {
+                name = "Ada Üssü", enabled = true, island = true, center = new Vector2(-5200f, 380f), radius = 400f,
+                ground = new Color(0.25f, 0.4f, 0.2f), hasStart = true, startXZ = new Vector2(-3350f, 380f), startAlt = 300f,
+                intro = "DENİZİ GEÇ: ada üssüne saldır, komuta merkezini indir",
+                flak = 9, cannons = 3, hangars = 3, tanks = 4, planes = 5
+            },
             waves = new[]
             {
                 W(2,   EnemyKind.Swarmer, 6,  Formation.V),
@@ -87,6 +119,13 @@ public static class Stages
             subtitle = "Son savunma hattı: hava zırhlısı ve Kızıl Ejderha seni bekliyor",
             midBoss = BossType.Zeppelin, midBossTime = 66f,
             boss = BossType.Dragon, minFirepower = 26f,
+            bas = new BaseDef
+            {
+                name = "Kızıl Kale", enabled = true, island = true, center = new Vector2(5400f, -420f), radius = 440f,
+                ground = new Color(0.32f, 0.17f, 0.14f), hasStart = true, startXZ = new Vector2(3400f, -420f), startAlt = 300f,
+                intro = "DENİZİ GEÇ: Kızıl Kale seni bekliyor",
+                flak = 12, cannons = 4, hangars = 4, tanks = 4, planes = 6
+            },
             waves = new[]
             {
                 W(2,   EnemyKind.Fighter, 4,  Formation.V),

@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 // Mouse ile nisan, sol tik ile ates. Hangarda secilen silahlarin her biri kendi noktasindan,
 // kendi atis hizi/hasariyla ates eder. Imlec bir dusmanin yakinindaysa yardimli nisan
 // (hedefe kilitlenir ve onde tutma/lead uygular).
-public class PlayerGun : MonoBehaviour
+public partial class PlayerGun : MonoBehaviour
 {
     public FlightTestManager flight;
     public Camera cam;
@@ -54,7 +54,7 @@ public class PlayerGun : MonoBehaviour
         {
             if (w <= 0) continue;
             PartDef d = PartCatalog.Weapons[w];
-            float perShot = d.damage + sides * 0.5f;   // yan mermiler her iki atista bir cikar
+            float perShot = d.beam > 0 ? d.damage : d.damage + sides * 0.5f;   // yan mermiler her iki atista bir cikar (isinlarda yok)
             dps += d.rate * rateMul * perShot;
         }
 
@@ -91,13 +91,19 @@ public class PlayerGun : MonoBehaviour
 
         PlaneLoadout loadout = LoadoutStore.Get(flight.CurrentIndex);
 
-        // Onde tutma icin ortalama mermi hizi
-        float speedSum = 0f; int count = 0;
+        // Onde tutma icin ortalama mermi hizi (isinlar aninda vurur: onde tutma gerekmez, hesaba katilmaz)
+        float speedSum = 0f; int count = 0; int any = 0;
         foreach (int w in loadout.weapons)
-            if (w > 0) { speedSum += PartCatalog.Weapons[w].speed; count++; }
-        HasWeapons = count > 0;
+        {
+            if (w <= 0) continue;
+            any++;
+            if (PartCatalog.Weapons[w].beam > 0) continue;
+            speedSum += PartCatalog.Weapons[w].speed;
+            count++;
+        }
+        HasWeapons = any > 0;
         // Onde tutma, merminin gercek hiziyla (upgrade ve GameSettings carpani dahil) hesaplanir
-        float leadSpeed = (count > 0 ? speedSum / count : bulletSpeed)
+        float leadSpeed = (count > 0 ? speedSum / count : (any > 0 ? 1000000f / (RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier) : bulletSpeed))
                           * RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier;
 
         if (ControlSettings.EffectiveAutoAim) UpdateAutoAim(plane, leadSpeed);
@@ -109,6 +115,7 @@ public class PlayerGun : MonoBehaviour
         IsFiring = trigger && !plane.IsCrashed && HasWeapons;
 
         if (IsFiring) FireWeapons(plane, loadout);
+        else StopBeams();
 
         UpdateMissiles(plane, loadout);
     }
@@ -376,10 +383,12 @@ public class PlayerGun : MonoBehaviour
             float a = Vector3.Angle(crossDir, p - camPos);
             if (a > cone) continue;
 
-            if (e == current) currentAngle = a;
-            if (a < bestAngle)
+            // Hava hedefi oncelikli: yer birimi sanki imlecten 1 derece daha uzaktaymis gibi puanlanir
+            float score = a + (e.IsGround ? 1f : 0f);
+            if (e == current) currentAngle = score;
+            if (score < bestAngle)
             {
-                bestAngle = a;
+                bestAngle = score;
                 best = e;
             }
         }
@@ -490,9 +499,17 @@ public class PlayerGun : MonoBehaviour
         for (int i = 0; i < loadout.weapons.Length && i < nextFire.Length; i++)
         {
             int type = loadout.weapons[i];
-            if (type <= 0 || Time.time < nextFire[i]) continue;
+            if (type <= 0) continue;
 
             PartDef def = PartCatalog.Weapons[type];
+            // Lazerler surekli isin olarak islenir (PlayerGun.Beam.cs); atis araligi/mermi yok
+            if (def.beam > 0)
+            {
+                BeamStep(i, def, plane, span);
+                continue;
+            }
+            if (Time.time < nextFire[i]) continue;
+
             UpgradeMods mods = RunUpgrades.Mods;
 
             // Guc seviyesi (P ikonlari): ates hizi, hasar ve yan mermi sayisi artar

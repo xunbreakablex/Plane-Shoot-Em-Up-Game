@@ -36,6 +36,15 @@ public class FollowCamera : MonoBehaviour
         cam = GetComponent<Camera>();
     }
 
+    /// <summary>Kamerayi aninda hedefin arkasina oturtur (isinlanma sonrasi savrulma olmasin).</summary>
+    public void Snap()
+    {
+        if (target == null) return;
+        rot = Quaternion.LookRotation(target.forward, Vector3.up);
+        smoothUp = Vector3.up;
+        look = Vector2.zero;
+    }
+
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;

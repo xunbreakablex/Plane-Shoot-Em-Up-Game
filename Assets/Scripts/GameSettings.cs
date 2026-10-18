@@ -134,6 +134,22 @@ public class GameSettings : ScriptableObject
     [Tooltip("Lazerin oyuncuyu izleme hızı (derece/sn). Küçük = kaçmak kolay.")]
     [Range(2f, 40f)] public float bossBeamTurnRate = 9f;
 
+    // ------------------------------------------------------------------- us
+
+    [Header("Düşman üssü")]
+    [Tooltip("Uçaksavar menzili (m)")]
+    [Range(300f, 1600f)] public float baseFlakRange = 950f;
+    [Tooltip("Uçaksavarın iki salvo arasındaki ortalama bekleme (sn)")]
+    [Range(0.5f, 6f)] public float baseFlakCooldown = 2.2f;
+    [Tooltip("Uçaksavar salvosundaki mermi sayısı")]
+    [Range(1, 6)] public int baseFlakBurst = 3;
+    [Tooltip("Üs mermilerinin hızı (m/s); top bunun %80'i kadar yavaştır. Küçük = kaçması kolay.")]
+    [Range(60f, 400f)] public float baseBulletSpeed = 200f;
+    [Tooltip("Üs yapılarının can çarpanı (1 = varsayılan)")]
+    [Range(0.3f, 3f)] public float baseHpMultiplier = 1f;
+    [Tooltip("Dalgalar bitip üs hâlâ yıkılmadıysa komutanın (boss) yine de geleceği ek bekleme (sn)")]
+    [Range(0f, 300f)] public float baseBossFallbackSeconds = 120f;
+
     // ------------------------------------------------------------ guclendirme
 
     [Header("Güçlendirme (power-up)")]

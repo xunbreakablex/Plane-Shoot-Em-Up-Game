@@ -47,7 +47,8 @@ public partial class CombatManager
             if (e == null || e.IsDead) continue;
             if ((e.transform.position - center).sqrMagnitude > BombRadius * BombRadius) continue;
             // Boss'a yuzde hasar (can ne olursa olsun anlamli ama oldurucu degil)
-            int bombDamage = e.IsBoss ? Mathf.Max(25, Mathf.RoundToInt(e.MaxHits * 0.05f)) : 12;
+            // Yer birimleri bombadan az etkilenir (us tek bombayla bitmesin)
+            int bombDamage = e.IsBoss ? Mathf.Max(25, Mathf.RoundToInt(e.MaxHits * 0.05f)) : (e.IsGround ? 4 : 12);
             e.TakeHit(bombDamage, e.transform.position);
         }
 

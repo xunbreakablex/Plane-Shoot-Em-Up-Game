@@ -66,6 +66,9 @@ public partial class CombatManager
         bannerActive = false;
         Announce($"AŞAMA {index + 1}: {stage.title.ToUpper()}", Color.white, 3.2f, true);
         Announce(stage.subtitle, new Color(0.85f, 0.9f, 1f), 2.6f);
+
+        // Dusman ussu (ve gerekirse deniz gecisi icin isinlanma)
+        PrepareStageWorld(index);
     }
 
     /// <summary>Asama tamam ekranindan "sonraki asama".</summary>
@@ -124,12 +127,14 @@ public partial class CombatManager
             }
         }
 
-        // Dalgalar bitince (ve ortalik sakinlesince ya da sure dolunca) asama sonu boss
+        // Dalgalar bitince (ve ortalik sakinlesince ya da sure dolunca) asama sonu boss. Dusman ussu varsa
+        // komuta merkezi yikilmis olmali (yikilmazsa ek bekleme sonunda komutan yine de gelir).
         if (!bossSpawned && midBossSpawned && !midAlive && waveIndex >= stage.waves.Length)
         {
             float lastTime = stage.waves[stage.waves.Length - 1].time;
-            bool calm = enemies.Count <= 3;
-            if (calm || waveClock > lastTime + bossWaitAfterLastWave)
+            bool calm = AirEnemyCount() <= 3;
+            bool baseDone = baseCleared || waveClock > lastTime + bossWaitAfterLastWave + GameSettings.Current.baseBossFallbackSeconds;
+            if (baseDone && (calm || waveClock > lastTime + bossWaitAfterLastWave))
             {
                 bool final = RunState.Stage >= Stages.All.Length - 1;
                 SpawnBossEncounter(stage.boss, final ? EnemyKind.FinalBoss : EnemyKind.Boss);
@@ -391,7 +396,7 @@ public partial class CombatManager
         }
     }
 
-    private static void Tint(GameObject go, Color tint, bool carrier)
+    public static void Tint(GameObject go, Color tint, bool carrier)
     {
         // Guclendirme tasiyicilari belirgin acik renkte
         Color target = carrier ? Color.Lerp(tint, new Color(1f, 0.9f, 0.4f), 0.45f) : tint;

@@ -202,6 +202,9 @@ public partial class CombatManager
                 bossText.Text = $"{title}   {bar.HitsRemaining} / {bar.MaxHits}";
             Hud.Text(br, bossText.Text, Color.black, 12, TextAnchor.MiddleCenter);
         }
+
+        // Us hedefi (komuta merkezi): boss cubugunun altinda
+        DrawBaseObjective(y + (bar != null ? 22f : 0f));
     }
 
     // ------------------------------------------------------------- sag kolon
@@ -298,7 +301,7 @@ public partial class CombatManager
             RadarPoint(e.transform.position, origin, fwd, right, c, R, true, out Vector2 p, out bool inside);
 
             EnemyKindInfo info = EnemyKinds.Get(e.Kind);
-            float size = e.IsBoss ? 5.5f : (e.Kind == EnemyKind.Heavy ? 4f : 2.8f);
+            float size = e.IsBoss || e.IsCore ? 5.5f : (e.IsGround ? 1.8f : (e.Kind == EnemyKind.Heavy ? 4f : 2.8f));
             Color col = info.marker;
             if (!inside) col.a = 0.55f;
             Hud.Disc(p, size, col);
@@ -373,7 +376,7 @@ public partial class CombatManager
             markerDist.Insert(at, sq);
         }
 
-        int boxes = 0, arrows = 0;
+        int boxes = 0, arrows = 0, groundBoxes = 0;
         arrowMarks.Clear();
 
         PlaneController playerPlane = flight != null ? flight.Current : null;
@@ -388,7 +391,7 @@ public partial class CombatManager
             bool locked = gun != null && gun.LockedEnemy == e;
             bool missileLock = gun != null && gun.MissileTarget == e && gun.HasMissiles;
             bool aiming = e.IsAimingAt(playerPos);
-            bool important = e.IsBoss || locked || missileLock || e.IsCarrier || aiming;
+            bool important = e.IsBoss || e.IsCore || locked || missileLock || e.IsCarrier || aiming;
 
             Color col = locked ? new Color(1f, 0.9f, 0.2f) : EnemyKinds.Get(e.Kind).marker;
             if (aiming && !locked) col = Color.Lerp(col, new Color(1f, 0.1f, 0.1f), 0.5f + 0.5f * blink);
@@ -396,10 +399,18 @@ public partial class CombatManager
             Vector2 hp = Hud.ToHud(sp);
             bool onScreen = sp.z > 0f && hp.x > 0f && hp.x < W && hp.y > 0f && hp.y < H;
 
+            // Yer birimleri: hava dusmanlarinin kutu/ok kotasini yemesin; yalniz yakin ve ekrandaki birkaci isaretlenir
+            bool ground = e.IsGround && !e.IsCore;
+            if (ground && !locked && !missileLock)
+            {
+                if (!onScreen || dist > 700f || groundBoxes >= 6) continue;
+                groundBoxes++;
+            }
+
             if (onScreen)
             {
-                if (!important && (boxes >= 8 || dist > 1300f)) continue;
-                boxes++;
+                if (!important && !ground && (boxes >= 8 || dist > 1300f)) continue;
+                if (!ground) boxes++;
 
                 // Uzaktaki ucak mesafe arttikca kuculmesin: kutu en az 28 px (eskiden 20)
                 float size = Mathf.Clamp(2400f / Mathf.Max(dist, 1f), 28f, 68f);
@@ -463,7 +474,8 @@ public partial class CombatManager
             {
                 if (!important && arrows >= 4) continue;
                 arrows++;
-                AddArrow(c, hp, sp.z < 0f, col, dist, e.IsBoss, e.IsCarrier ? PowerUp.Letters[e.CarrierDrop] + " " : null);
+                AddArrow(c, hp, sp.z < 0f, col, dist, e.IsBoss || e.IsCore,
+                    e.IsCarrier ? PowerUp.Letters[e.CarrierDrop] + " " : (e.IsCore ? "ÜS " : null));
             }
         }
 
