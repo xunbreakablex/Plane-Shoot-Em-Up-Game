@@ -173,6 +173,11 @@ public partial class CombatManager
             tutorialStage = 3;
             Announce("B: bomba — ekranı ve düşman mermilerini temizler", PowerUp.KindColors[3], 4f);
         }
+        else if (tutorialStage == 3 && t > 38f && baseDef.enabled && !baseCleared)
+        {
+            tutorialStage = 4;
+            Announce("Üssü bas: KOMUTA MERKEZİNİ yıkınca uçaksavarlar susar ve komutan gelir", new Color(1f, 0.82f, 0.4f), 5f);
+        }
     }
 
     // ----------------------------------------------------------- dalga dogurma

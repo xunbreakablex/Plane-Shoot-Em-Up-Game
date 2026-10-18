@@ -138,7 +138,7 @@ public class GameSettings : ScriptableObject
 
     [Header("Düşman üssü")]
     [Tooltip("Uçaksavar menzili (m)")]
-    [Range(300f, 1600f)] public float baseFlakRange = 950f;
+    [Range(300f, 1600f)] public float baseFlakRange = 850f;
     [Tooltip("Uçaksavarın iki salvo arasındaki ortalama bekleme (sn)")]
     [Range(0.5f, 6f)] public float baseFlakCooldown = 2.2f;
     [Tooltip("Uçaksavar salvosundaki mermi sayısı")]

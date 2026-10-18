@@ -736,7 +736,7 @@ public class HangarController : MonoBehaviour
         bool resume = RunState.HasPendingCampaign;
         string goal = resume
             ? $"Operasyon devam ediyor: AŞAMA {RunState.PendingStage + 1} sırada  •  skor {RunState.Score:N0}  •  donanımı değiştirip devam et"
-            : "HEDEF:  3 aşamayı geç  •  rozetli düşmanı vur, güçlendirmeyi topla  •  B: bomba  •  aşama sonu boss'unu indir";
+            : "HEDEF:  3 aşamayı geç  •  düşman üssünü bas: komuta merkezini yık  •  rozetli düşmanı vur  •  B: bomba  •  boss'u indir";
         bool owned = Unlocks.OwnsAircraft(model);
 
         int stageIdx = resume ? Mathf.Clamp(RunState.PendingStage, 0, Stages.All.Length - 1) : 0;
@@ -815,7 +815,7 @@ public class HangarController : MonoBehaviour
         string[] heads = { "HEDEF", "KONTROLLER", "GÜÇLENME" };
         string[] body =
         {
-            "3 aşamayı geç. Her aşamada planlanmış düşman dalgaları gelir; ortada bir orta boss (jet gemisi, yengeç, zeplin), sonda ana boss (köpekbalığı, ahtapot, ejderha) seni bekler. Ana boss'u indirince aşama biter. Uçağın düşerse oyun biter.",
+            "3 aşamayı geç. Her aşamada bir düşman üssü var (kıyı üssü, ada üssü, Kızıl Kale): uçaksavarları, radarı, hangarları ve yakıt depolarını vur, KOMUTA MERKEZİNİ yık; yıkılınca uçaksavarlar susar ve ana boss gelir. Aşamalar arasında denizi geçersin. Ortada bir orta boss, sonda ana boss (köpekbalığı, ahtapot, ejderha) seni bekler. Uçağın düşerse oyun biter. Savaşa girmek için donanımının asgari ateş gücüne (silah + taret /sn) sahip olması gerekir.",
             "FARE  yönlendir        SOL TIK / SPACE  ateş        F  güdümlü füze        B  BOMBA\nW/S  ileri / geri        A/D  sağa-sola kay        SHIFT/CTRL  yukarı-aşağı kay        SAĞ TIK  yakınlaştır\nESC  duraklat, mağaza ve kontrol şeması (Fare / Arcade / Klasik)        H  kontrol ipucu",
             "Rozetli (P, S, M, B, +) düşmanı vur: güçlendirme düşürür, üstünden geçerek topla. Bomba ekrandaki mermileri temizler, bosslara yüzde hasar verir. Başlangıçta yalnızca 2 gövde silahın açık; her boss'u ilk kez yenince yeni bir slot (füze, kalkan, taret, kanat silahı) açılır ve otomatik takılır. Hurda ile mağazadan yükseltme alırsın."
         };

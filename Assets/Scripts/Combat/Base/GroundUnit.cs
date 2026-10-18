@@ -117,7 +117,8 @@ public class GroundUnit : MonoBehaviour
                 burstLeft--;
                 nextShot = Time.time + 0.2f;
                 Vector3 dir = (aim + Random.insideUnitSphere * err - from).normalized;
-                Bullet.Spawn(mgr.EnemyBulletPrefab, from, dir, speed, 1, transform, false);
+                Bullet b = Bullet.Spawn(mgr.EnemyBulletPrefab, from, dir, speed, 1, transform, false);
+                if (b != null) b.lifetime = range / speed + 0.3f;   // varsayilan omur (2,8 sn) menzilden kisaydi
                 Sfx.PlayAt(Sfx.Shot, from, 0.28f);
             }
             else if (burstLeft <= 0 && Time.time >= nextBurst && Vector3.Angle(head.forward, want) < 12f)
@@ -137,7 +138,8 @@ public class GroundUnit : MonoBehaviour
                 for (int i = 0; i < n; i++)
                 {
                     float off = -16f + 32f * i / (n - 1);
-                    Bullet.Spawn(mgr.EnemyBulletPrefab, from, Quaternion.AngleAxis(off, Vector3.up) * dir, speed, 2, transform, false);
+                    Bullet b = Bullet.Spawn(mgr.EnemyBulletPrefab, from, Quaternion.AngleAxis(off, Vector3.up) * dir, speed, 2, transform, false);
+                    if (b != null) b.lifetime = range / speed + 0.3f;
                 }
                 Sfx.PlayAt(Sfx.Shot, from, 0.45f);
             }
@@ -152,8 +154,8 @@ public class GroundUnit : MonoBehaviour
         float r = unit != null ? Mathf.Max(unit.HitRadius, 3f) : 5f;
         int extra = role == Role.Core ? 14 : (role == Role.Tank ? 5 : (role == Role.Building ? 3 : 1));
         Vector3 pos = transform.position;
-        for (int i = 0; i < extra; i++)
-            mgr.SpawnExplosion(pos + new Vector3(Random.Range(-r, r), Random.Range(1f, r * 0.7f), Random.Range(-r, r)) * 0.6f);
+        // Ek patlamalar zamana yayilir: hepsi ayni karede cikinca (parcacik sistemleri) belirgin takilma oluyordu
+        mgr.SpawnExplosionBurst(pos, r, extra, role == Role.Core ? 0.09f : 0.07f);
 
         mgr.SpawnRubble(pos, r, role == Role.Core || role == Role.Tank);
 

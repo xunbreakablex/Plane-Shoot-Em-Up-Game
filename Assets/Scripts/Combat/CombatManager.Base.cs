@@ -57,6 +57,10 @@ public partial class CombatManager
     {
         EnsureWater();
 
+        // Onceki asamadan kalan guclendirmeler yeni asamada (ve denizde) isaret olarak gorunmesin
+        foreach (var pu in PowerUp.All.ToArray())
+            if (pu != null) Destroy(pu.gameObject);
+
         if (baseRoot != null) Destroy(baseRoot);
         baseRoot = null;
         baseCore = null;
@@ -110,6 +114,23 @@ public partial class CombatManager
 
         if (!string.IsNullOrEmpty(baseDef.intro))
             Announce(baseDef.intro, new Color(1f, 0.82f, 0.4f), 3.2f);
+    }
+
+    /// <summary>Bir noktada, belirli aralikla birden cok patlama (yikilan buyuk yapi): kareye yayilir.</summary>
+    public void SpawnExplosionBurst(Vector3 pos, float radius, int count, float interval)
+    {
+        if (count <= 0) return;
+        StartCoroutine(ExplosionBurstRoutine(pos, radius, count, interval));
+    }
+
+    private System.Collections.IEnumerator ExplosionBurstRoutine(Vector3 pos, float radius, int count, float interval)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            yield return new WaitForSeconds(interval * Random.Range(0.7f, 1.3f));
+            if (GameState.Paused) continue;
+            SpawnExplosion(pos + new Vector3(Random.Range(-radius, radius), Random.Range(1f, radius * 0.7f), Random.Range(-radius, radius)) * 0.6f);
+        }
     }
 
     /// <summary>Yikilan yapinin yerinde kararmis enkaz (ve duman) birakir.</summary>
