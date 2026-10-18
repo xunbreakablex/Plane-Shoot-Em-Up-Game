@@ -747,6 +747,15 @@ public partial class CombatManager
             }
         }
 
+        // Savas alani disi: geri don (sure dolunca can gider)
+        if (OutsideArena && plane != null && !plane.IsCrashed)
+        {
+            float left = Mathf.Max(0f, GameSettings.Current.arenaGraceSeconds - OutsideSeconds);
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 10f);
+            string text = left > 0f ? $"SAVAŞ ALANINDAN ÇIKIYORSUN — DÖN!  ({left:0})" : "SAVAŞ ALANI DIŞI — CAN GİDİYOR, DÖN!";
+            Hud.Text(new Rect(cx - 320f, Hud.H * 0.34f, 640f, 34f), text, new Color(1f, 0.55f + 0.3f * pulse, 0.2f), 24, TextAnchor.MiddleCenter);
+        }
+
         // Dusuk can
         if (plane != null && ph != null && ph.maxHealth > 0 && (float)ph.Health / ph.maxHealth <= 0.3f && !plane.IsCrashed)
         {

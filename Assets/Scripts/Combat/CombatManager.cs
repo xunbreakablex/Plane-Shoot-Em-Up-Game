@@ -139,6 +139,7 @@ public partial class CombatManager : MonoBehaviour
         if (kb != null && kb.bKey.wasPressedThisFrame) TryBomb();
 
         UpdateDirector();
+        UpdateArena();
         UpdateBombRings();
 
         texts.RemoveAll(t => Time.time - t.born > 2.2f);

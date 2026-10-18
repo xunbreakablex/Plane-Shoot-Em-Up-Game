@@ -16,6 +16,15 @@ public partial class CombatManager
     private static Material rubbleMat;
     private readonly Hud.TextCache baseText = new Hud.TextCache();
 
+    // Savas alani: yumusak sinir. Disina cikinca uyari, GameSettings.arenaGraceSeconds sonra hasar.
+    private Vector2 arenaCenter;
+    private float arenaRadius = 3000f;
+    private float outsideSince = -1f;
+    private float nextArenaHit;
+
+    public bool OutsideArena { get; private set; }
+    public float OutsideSeconds => outsideSince >= 0f ? Time.time - outsideSince : 0f;
+
     /// <summary>Komuta merkezi yikildi mi (ya da bu asamada us yok)? Yikilinca uc aksavarlar susar, boss gelebilir.</summary>
     public bool BaseCleared => baseCleared;
     public EnemyPlane BaseCore => baseCore;
@@ -89,6 +98,13 @@ public partial class CombatManager
         Vector3 approach = center - plane.transform.position;
         approach.y = 0f;
 
+        // Savas alani: baslangic ile us arasinin ortasi, yaricap = mesafenin yarisi + pay
+        Vector2 startXZ = new Vector2(plane.transform.position.x, plane.transform.position.z);
+        arenaCenter = (startXZ + baseDef.center) * 0.5f;
+        arenaRadius = Vector2.Distance(startXZ, baseDef.center) * 0.5f + GameSettings.Current.arenaMargin;
+        outsideSince = -1f;
+        OutsideArena = false;
+
         if (baseDef.island)
         {
             center.y = 10f;
@@ -159,6 +175,38 @@ public partial class CombatManager
         {
             GameObject smoke = Instantiate(smokeTrailPrefab, pos + Vector3.up * 2f, Quaternion.identity);
             Destroy(smoke, 20f);
+        }
+    }
+
+    /// <summary>Her karede: oyuncu savas alaninin disindaysa suresini tutar, sure dolunca periyodik hasar verir.</summary>
+    private void UpdateArena()
+    {
+        PlaneController plane = flight != null ? flight.Current : null;
+        if (plane == null || plane.IsCrashed || !RunState.Active || !baseDef.enabled)
+        {
+            OutsideArena = false;
+            outsideSince = -1f;
+            return;
+        }
+
+        Vector3 p = plane.transform.position;
+        bool outside = Vector2.Distance(new Vector2(p.x, p.z), arenaCenter) > arenaRadius;
+        if (!outside)
+        {
+            OutsideArena = false;
+            outsideSince = -1f;
+            return;
+        }
+
+        OutsideArena = true;
+        if (outsideSince < 0f) outsideSince = Time.time;
+
+        GameSettings gs = GameSettings.Current;
+        if (Time.time - outsideSince >= gs.arenaGraceSeconds && Time.time >= nextArenaHit)
+        {
+            nextArenaHit = Time.time + gs.arenaDamageInterval;
+            PlayerHealth ph = CurrentPlayerHealth;
+            if (ph != null) ph.TakeHit(1, p, true);
         }
     }
 

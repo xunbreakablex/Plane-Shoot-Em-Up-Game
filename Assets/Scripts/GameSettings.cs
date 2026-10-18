@@ -150,6 +150,16 @@ public class GameSettings : ScriptableObject
     [Tooltip("Dalgalar bitip üs hâlâ yıkılmadıysa komutanın (boss) yine de geleceği ek bekleme (sn)")]
     [Range(0f, 300f)] public float baseBossFallbackSeconds = 120f;
 
+    // ------------------------------------------------------------ savas alani
+
+    [Header("Savaş alanı")]
+    [Tooltip("Savaş alanı = başlangıç ile üs arasındaki mesafenin yarısı + bu pay (m). Dışına çıkınca uyarı gelir.")]
+    [Range(800f, 6000f)] public float arenaMargin = 1900f;
+    [Tooltip("Alan dışında hasar başlamadan önceki süre (sn)")]
+    [Range(1f, 20f)] public float arenaGraceSeconds = 6f;
+    [Tooltip("Alan dışında kalınca hasar aralığı (sn); her seferinde 1 gövde hasarı (kalkanı atlar)")]
+    [Range(0.5f, 5f)] public float arenaDamageInterval = 1.5f;
+
     // ------------------------------------------------------------ guclendirme
 
     [Header("Güçlendirme (power-up)")]
