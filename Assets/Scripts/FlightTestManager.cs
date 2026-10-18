@@ -149,7 +149,8 @@ public class FlightTestManager : MonoBehaviour
             stallText.Text = $"Stall hızı {stallI} km/s     {(groundedI == 1 ? "YERDE" : "HAVADA")}";
         Hud.Text(new Rect(tx, y + 66f, w - 20f, 18f), stallText.Text, state, 13, TextAnchor.UpperLeft, false);
 
-        // Gaz
+        // Gaz (FARE semasinda kayma modunda gaz mekanigi yok: cubuk gosterilmez)
+        if (ControlSettings.MouseSteering && GameSettings.Current.keysStrafe) return;
         Rect bar = new Rect(tx, y + 88f, 200f, 9f);
         Hud.Bar(bar, p.Throttle, Color.Lerp(new Color(0.3f, 0.9f, 0.35f), new Color(1f, 0.6f, 0.15f), p.Throttle));
         int thrI = Mathf.RoundToInt(p.Throttle * 100f);
@@ -184,12 +185,11 @@ public class FlightTestManager : MonoBehaviour
 
     // Nisan moduna gore 1. satir (ESC menusunden Otomatik/Fare)
     private const string HelpAimAuto = "SPACE / SOL TIK  ateş (öndeki en yakın düşmana)     F  güdümlü füze";
-    private const string HelpAimAutoClick = "SOL TIK  ateş (öndeki en yakın düşmana)     F  güdümlü füze";
     private const string HelpAimMouse = "FARE  nişan alma        SOL TIK / SPACE  ateş        F  güdümlü füze";
 
     // Kontrol semasina gore 2. satir (ESC menusunden Arcade/Klasik)
-    private const string HelpSteerMouse = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  sağa-sola kay";
-    private const string HelpKeysMouse = "SPACE  yukarı kay       CTRL  aşağı kay        C  kamera mesafesi";
+    private const string HelpSteerMouse = "FARE  yönlendir        W / S  ileri / geri        A / D  sağa-sola kay";
+    private const string HelpKeysMouse = "SHIFT  yukarı kay       CTRL  aşağı kay        C  kamera mesafesi";
     private const string HelpKeysDefault = "SHIFT / CTRL  gaz       SPACE (yerde)  fren   C  kamera mesafesi";
     private const string HelpSteerMouseClassic = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  dön";
     private const string HelpSteerArcade = "W / S  yunuslama        A / D  sağa-sola dön     Q / E  yatış";
@@ -221,7 +221,7 @@ public class FlightTestManager : MonoBehaviour
 
         // Dizi ve metinler tek sefer kurulur; yalniz kontrol semasi ve oto-duzeltme satirlari degisir
         bool strafeScheme = ControlSettings.MouseSteering && GameSettings.Current.keysStrafe;
-        helpLines[0] = ControlSettings.EffectiveAutoAim ? (ControlSettings.SpaceFires ? HelpAimAuto : HelpAimAutoClick) : HelpAimMouse;
+        helpLines[0] = ControlSettings.EffectiveAutoAim ? HelpAimAuto : HelpAimMouse;
         helpLines[1] = ControlSettings.MouseSteering
             ? (strafeScheme ? HelpSteerMouse : HelpSteerMouseClassic)
             : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);

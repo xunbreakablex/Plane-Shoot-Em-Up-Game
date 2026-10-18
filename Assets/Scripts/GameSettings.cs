@@ -53,10 +53,14 @@ public class GameSettings : ScriptableObject
     [Range(0.02f, 0.5f)] public float mouseSmoothing = 0.16f;
     [Tooltip("Arcade uçuşta fareyle sağa-sola dönerken uçağın görsel yatışı (derece)")]
     [Range(0f, 80f)] public float mouseVisualBank = 25f;
-    [Tooltip("Açıksa A/D uçağı sağa-sola, Space yukarı, Ctrl aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar) ve Space artık ateş etmez (ateş sol tıkla). W/S her durumda gaz. Kapalıysa A/D döner, Space ateş eder.")]
+    [Tooltip("Açıksa kayma düzeni: W ileri, S geri, A/D sağa-sola, Shift yukarı, Ctrl aşağı kayar (burun dönmez, uçak yalnız hafifçe yatar) ve gaz mekaniği yoktur (hız seyirde). Kapalıysa eski düzen: W/S gaz, A/D döner.")]
     public bool keysStrafe = true;
-    [Tooltip("Kayma (A/D, W/S) azami yan hızı (m/s). Büyük = daha hızlı sağa-sola/yukarı-aşağı gidilir.")]
+    [Tooltip("Kayma (A/D sağa-sola, Shift/Ctrl yukarı-aşağı) azami yan hızı (m/s). Büyük = daha hızlı gidilir.")]
     [Range(5f, 120f)] public float strafeSpeed = 42f;
+    [Tooltip("W basılıyken seyir hızına eklenen ileri hız (m/s). Net hız aracın azami hızını geçmez.")]
+    [Range(0f, 80f)] public float forwardStrafeSpeed = 28f;
+    [Tooltip("S basılıyken seyir hızından düşülen hız (m/s). Net hız stall'in altına inmez, uçak geri gitmez.")]
+    [Range(0f, 80f)] public float backStrafeSpeed = 20f;
     [Tooltip("Kayma tepkisi (1/sn): büyük = tuşa basınca hemen hızlanır, bırakınca hemen durur; küçük = kuvvet yavaş etki eder, süzülür.")]
     [Range(1f, 20f)] public float strafeResponse = 5f;
     [Tooltip("Kayarken uçağın hafif yatışı (derece, yalnız A/D'de). 0 = yatmaz.")]

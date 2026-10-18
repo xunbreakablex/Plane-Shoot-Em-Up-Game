@@ -103,10 +103,9 @@ public class PlayerGun : MonoBehaviour
         if (ControlSettings.EffectiveAutoAim) UpdateAutoAim(plane, leadSpeed);
         else UpdateAim(plane, leadSpeed);
 
-        // Ates: sol tik ya da SPACE basili tut (her iki nisan modunda); FARE semasinda kayma acikken SPACE
-        // yukari kayma oldugundan yalniz sol tik. SPACE yerde ayrica frendir.
+        // Ates: SPACE basili tut (her iki nisan modunda) ya da sol tik. SPACE yerde ayrica frendir.
         bool trigger = (Mouse.current != null && Mouse.current.leftButton.isPressed)
-                       || (ControlSettings.SpaceFires && Keyboard.current != null && Keyboard.current.spaceKey.isPressed);
+                       || (Keyboard.current != null && Keyboard.current.spaceKey.isPressed);
         IsFiring = trigger && !plane.IsCrashed && HasWeapons;
 
         if (IsFiring) FireWeapons(plane, loadout);

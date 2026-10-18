@@ -802,7 +802,7 @@ public class HangarController : MonoBehaviour
         string[] body =
         {
             "3 aşamayı geç. Her aşamada planlanmış düşman dalgaları gelir; ortada bir orta boss (jet gemisi, yengeç, zeplin), sonda ana boss (köpekbalığı, ahtapot, ejderha) seni bekler. Ana boss'u indirince aşama biter. Uçağın düşerse oyun biter.",
-            "FARE  yönlendir        SOL TIK  ateş        F  güdümlü füze        B  BOMBA\nW/S  hızlan / yavaşla        A/D  sağa-sola kay        SPACE/CTRL  yukarı-aşağı kay        SAĞ TIK  yakınlaştır\nESC  duraklat, mağaza ve kontrol şeması (Fare / Arcade / Klasik)        H  kontrol ipucu",
+            "FARE  yönlendir        SOL TIK / SPACE  ateş        F  güdümlü füze        B  BOMBA\nW/S  ileri / geri        A/D  sağa-sola kay        SHIFT/CTRL  yukarı-aşağı kay        SAĞ TIK  yakınlaştır\nESC  duraklat, mağaza ve kontrol şeması (Fare / Arcade / Klasik)        H  kontrol ipucu",
             "Rozetli (P, S, M, B, +) düşmanı vur: güçlendirme düşürür, üstünden geçerek topla. Bomba ekrandaki mermileri temizler, bosslara yüzde hasar verir. Başlangıçta yalnızca 2 gövde silahın açık; her boss'u ilk kez yenince yeni bir slot (füze, kalkan, taret, kanat silahı) açılır ve otomatik takılır. Hurda ile mağazadan yükseltme alırsın."
         };
 

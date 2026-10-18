@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 //  - Kumanda "G komutu" gibi calisir: nötr = ucus yolunu tut, cek = daha fazla G
 //  - Yerde tekerlek surtunmesi, frenleme, pistten kalkis/inis
 // FARE semasinda havada fizik yerine oyun tipi ucus calisir (bkz. ArcadeFlight): fare yonlendirir,
-// W/S gaz, A/D sagi-sola, Space/Ctrl yukari-asagi kaydirir. Asagidaki tus listesi Arcade/Klasik semalari icindir.
+// W/S ileri-geri, A/D sagi-sola, Shift/Ctrl yukari-asagi kaydirir (gaz yok). Asagidaki tus listesi Arcade/Klasik semalari icindir.
 // Klavye: W/S yunuslama, A/D donus (Arcade) ya da yatis (Klasik), Q/E yatis (Arcade) ya da dumen (Klasik),
 //         Shift/Ctrl gaz, Space fren,
 //         T oto-duzeltme, M fare ile ucus, R havada basla, P pistte basla.
@@ -170,8 +170,8 @@ public class PlaneController : MonoBehaviour
     private Vector2 steerStick;      // FARE semasi (fizik modeli): fare hareketinden gelen sanal cubuk
     private Vector2 mouseAimPending; // FARE semasi (arcade): henuz uygulanmamis fare donusu (derece; x saga, y burun yukari)
     private Vector2 mouseAimVel;     // FARE semasi (arcade): birikimin SmoothDamp hizi
-    private Vector2 strafeRaw;       // FARE semasi (arcade): A/D (x) ve W/S (y) kayma girisi, -1..1
-    private Vector2 strafeVel;       // FARE semasi (arcade): yan hiz (m/s; x sag, y yukari), kuvvetle yumusak degisir
+    private Vector3 strafeRaw;       // FARE semasi (arcade): kayma girisi -1..1 (x A/D sag, y Shift/Ctrl yukari, z W/S ileri)
+    private Vector3 strafeVel;       // FARE semasi (arcade): kayma hizi (m/s; x sag, y yukari, z ileri), kuvvetle yumusak degisir
     private Vector3 strafeWorld;     // son adimda hizin ustune eklenen kayma hizi (dunya); sonraki adimda cikarilir
     private float visualBank;        // FARE semasi (arcade): donuse gore gorsel yatis (derece, saga pozitif)
     private bool arcadeActive;       // son fizik adiminda arcade ucus mu calisti
@@ -456,7 +456,8 @@ public class PlaneController : MonoBehaviour
         rollIn = Mathf.MoveTowards(rollIn, rollRaw, 6f * resp * dt);
         yawIn = Mathf.MoveTowards(yawIn, yawRaw, 4f * resp * dt);
         turnIn = Mathf.MoveTowards(turnIn, turnRaw, 4f * resp * dt);
-        UpdateThrottle(dt);
+        // FARE semasi + kayma modunda gaz yok: hiz seyirde, W/S ileri-geri kayar (ArcadeFlight motor sesi icin gazi surer)
+        if (!(arcadeActive && GameSettings.Current.keysStrafe)) UpdateThrottle(dt);
 
         if (propeller != null)
         {
@@ -504,11 +505,11 @@ public class PlaneController : MonoBehaviour
     private void ReadInput()
     {
         pitchRaw = rollRaw = yawRaw = turnRaw = throttleRaw = 0f;
-        strafeRaw = Vector2.zero;
+        strafeRaw = Vector3.zero;
         brake = false;
 
-        // Fare: fare yonlendirir (yukari-asagi + saga-sola), W/S gaz (hizlan/yavasla). Havada A/D sagi-sola,
-        //       Space/Ctrl yukari-asagi KAYDIRIR (burun donmez). Shift ve Q/E yok. keysStrafe kapaliysa/yerde: A/D donus.
+        // Fare: fare yonlendirir (yukari-asagi + saga-sola). Havada W/S ileri-geri, A/D sagi-sola, Shift/Ctrl
+        //       yukari-asagi KAYDIRIR (burun donmez); gaz mekanigi ve Q/E yok. keysStrafe kapaliysa/yerde: W/S gaz, A/D donus.
         // Arcade: A/D (sol cubuk x) otomatik yatisli donus, Q/E (omuz tuslari) yatis, W/S yunuslama.
         // Klasik: A/D (sol cubuk x) yatis, Q/E (omuz tuslari) dumen, W/S yunuslama.
         bool mouseScheme = ControlSettings.MouseSteering;
@@ -529,12 +530,12 @@ public class PlaneController : MonoBehaviour
 
             if (mouseScheme)
             {
-                throttleRaw += wsKeys;                                   // W hizlan, S yavasla
+                if (!strafeKeys) throttleRaw += wsKeys;                  // kayma yokken (yer / eski duzen): W hizlan, S yavasla
                 if (strafeKeys)
                 {
-                    // kayma: D saga, Space yukari, Ctrl asagi
-                    float vert = (kb.spaceKey.isPressed ? 1f : 0f) - (kb.leftCtrlKey.isPressed ? 1f : 0f);
-                    strafeRaw = new Vector2(side, vert);
+                    // kayma: D saga, Shift yukari, Ctrl asagi, W ileri, S geri
+                    float vert = (kb.leftShiftKey.isPressed ? 1f : 0f) - (kb.leftCtrlKey.isPressed ? 1f : 0f);
+                    strafeRaw = new Vector3(side, vert, wsKeys);
                 }
                 else turnRaw += side;                                    // eski: A/D donus
                 // Q/E ve Shift/Ctrl gazi bu semada kullanilmaz
@@ -693,7 +694,7 @@ public class PlaneController : MonoBehaviour
             return;
         }
         visualBank = 0f;
-        strafeVel = Vector2.zero;
+        strafeVel = Vector3.zero;
         if (strafeWorld != Vector3.zero)
         {
             // Kayma hizi fizik modeline karismasin
@@ -877,7 +878,7 @@ public class PlaneController : MonoBehaviour
     private void ResetArcadeState()
     {
         mouseAimPending = mouseAimVel = Vector2.zero;
-        strafeVel = Vector2.zero;
+        strafeVel = Vector3.zero;
         strafeWorld = Vector3.zero;
         visualBank = 0f;
     }
@@ -933,10 +934,15 @@ public class PlaneController : MonoBehaviour
 
         // Kayma: A/D (sag) ve W/S (yukari) yan hiz hedefine kuvvetle yaklasir; nisan cercevesinin sag/yukari
         // eksenlerinde uygulanir (yatis yok sayilir, ekranda sag = sag). Kayarken burun donmez.
-        Vector2 strafeWant = strafeRaw * gs.strafeSpeed;
-        strafeVel = Vector2.Lerp(strafeVel, strafeWant, 1f - Mathf.Exp(-gs.strafeResponse * dt));
-        Vector3 aimRight = aim * Vector3.right, aimUp = aim * Vector3.up;
-        strafeWorld = aimRight * strafeVel.x + aimUp * strafeVel.y;
+        Vector3 strafeWant = new Vector3(strafeRaw.x * gs.strafeSpeed, strafeRaw.y * gs.strafeSpeed,
+            strafeRaw.z > 0f ? strafeRaw.z * gs.forwardStrafeSpeed : strafeRaw.z * gs.backStrafeSpeed);
+        // Ileri-geri: net hiz (taban + kayma) stall'in uzerinde kalir ve azami hizi asmaz
+        float minNet = Mathf.Max(cruiseSpeed * 0.45f, stallSpeed * 0.7f);
+        float maxNet = Mathf.Max(maxSpeed, cruiseSpeed * 1.1f);
+        strafeWant.z = Mathf.Clamp(strafeWant.z, minNet - speed, maxNet - speed);
+        strafeVel = Vector3.Lerp(strafeVel, strafeWant, 1f - Mathf.Exp(-gs.strafeResponse * dt));
+        Vector3 aimRight = aim * Vector3.right, aimUp = aim * Vector3.up, aimFwd = aim * Vector3.forward;
+        strafeWorld = aimRight * strafeVel.x + aimUp * strafeVel.y + aimFwd * strafeVel.z;
 
         // Gorsel yatis: fareyle donus hiziyla orantili + A/D kayarken hafif yatis (W/S'de yatmaz)
         float bankTarget = Mathf.Clamp(yawStep / Mathf.Max(yawCap, 1e-5f), -1f, 1f) * gs.mouseVisualBank
@@ -957,9 +963,22 @@ public class PlaneController : MonoBehaviour
         Vector3 nose = next * Vector3.forward;
         float eq = EquilibriumThrottle();
         float minSpd = cruiseSpeed * ArcadeMinSpeed;
-        float targetSpd = throttle >= eq
-            ? Mathf.Lerp(cruiseSpeed, maxSpeed, (throttle - eq) / Mathf.Max(1f - eq, 0.01f))
-            : Mathf.Lerp(minSpd, cruiseSpeed, throttle / Mathf.Max(eq, 0.01f));
+        // Kayma modunda gaz mekanigi yok: taban hiz hep seyirde, W/S ileri-geri kaymasi ustune biner.
+        // Motor sesi/pervane icin gaz, ileri-geri kaymaya gore surulur.
+        float targetSpd;
+        if (gs.keysStrafe)
+        {
+            targetSpd = cruiseSpeed;
+            throttle = strafeVel.z >= 0f
+                ? Mathf.Lerp(eq, 1f, Mathf.Clamp01(strafeVel.z / Mathf.Max(gs.forwardStrafeSpeed, 1f)))
+                : Mathf.Lerp(eq, 0.1f, Mathf.Clamp01(-strafeVel.z / Mathf.Max(gs.backStrafeSpeed, 1f)));
+        }
+        else
+        {
+            targetSpd = throttle >= eq
+                ? Mathf.Lerp(cruiseSpeed, maxSpeed, (throttle - eq) / Mathf.Max(1f - eq, 0.01f))
+                : Mathf.Lerp(minSpd, cruiseSpeed, throttle / Mathf.Max(eq, 0.01f));
+        }
         float s = speed + (targetSpd - speed) * (1f - Mathf.Exp(-ArcadeSpeedResponse * dt));
         s -= G * ArcadeGravity * nose.y * dt;
         s = Mathf.Clamp(s, minSpd * 0.85f, maxSpeed * 1.25f);
