@@ -833,7 +833,7 @@ public class HangarController : MonoBehaviour
     {
         Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.8f));
 
-        float pw = 760f, ph = 470f;
+        float pw = 760f, ph = 520f;
         Rect p = new Rect((W - pw) * 0.5f, (H - ph) * 0.5f, pw, ph);
         Hud.Fill(p, new Color(0.06f, 0.09f, 0.14f, 0.98f));
         Hud.Fill(new Rect(p.x, p.y, pw, 5f), Gold);
@@ -845,11 +845,11 @@ public class HangarController : MonoBehaviour
         {
             Stages.All.Length + " aşamayı geç. Her aşamada bir düşman üssü var (kıyı, ada, kale ve tapınak üsleri): uçaksavarları, radarı, hangarları ve yakıt depolarını vur, KOMUTA MERKEZİNİ yık; yıkılınca uçaksavarlar susar ve ana boss gelir. Aşamalar arasında denizi geçersin. Ortada bir orta boss, sonda ana boss seni bekler (köpekbalığı, ahtapot, ejderha, ki savaşçısı, yıldız büyücüsü...). Uçağın düşerse oyun biter. Savaşa girmek için donanımının asgari ateş gücüne (silah + taret /sn) sahip olması gerekir.",
             "FARE  yönlendir        SOL TIK / SPACE  ateş        F  güdümlü füze        B  BOMBA\nW/S  ileri / geri        A/D  sağa-sola kay        SHIFT/CTRL  yukarı-aşağı kay        SAĞ TIK  yakınlaştır\nESC  duraklat, mağaza ve kontrol şeması (Fare / Arcade / Klasik)        H  kontrol ipucu",
-            "Rozetli (P, S, M, B, +) düşmanı vur: güçlendirme düşürür, üstünden geçerek topla. Bomba ekrandaki mermileri temizler, bosslara yüzde hasar verir. Başlangıçta yalnızca 2 gövde silahın açık; her boss'u ilk kez yenince yeni bir slot (füze, kalkan, taret, kanat silahı) açılır ve otomatik takılır. Hurda ile mağazadan yükseltme alırsın."
+            "Rozetli (P, S, M, B, +, O aşırı yük, W yardımcı İHA, $ hurda) düşmanı vur: güçlendirme düşürür, üstünden geçerek topla. Bomba ekrandaki mermileri temizler, bosslara yüzde hasar verir. Başlangıçta yalnızca 2 gövde silahın açık; her boss'u ilk kez yenince yeni bir slot (füze, kalkan, taret, kanat silahı) açılır ve otomatik takılır. Hurda ile mağazadan yükseltme alırsın. Kampanyayı bitirince Sonsuz Savaş açılır; MOD düğmesiyle yalnızca bosslardan oluşan Boss Rush'ı da seçebilirsin. Zorluğu AYARLAR'dan değiştir."
         };
 
         float y = p.y + 66f;
-        float[] hs = { 76f, 82f, 100f };
+        float[] hs = { 76f, 82f, 112f };
         var wrap = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = true };
         wrap.normal.textColor = new Color(0.9f, 0.93f, 0.97f);
 
