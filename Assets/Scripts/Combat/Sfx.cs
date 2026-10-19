@@ -129,7 +129,7 @@ public static class Sfx
     }
 
     // ---- Lazer, boss, uyari, arayuz sesleri
-    private static AudioClip beamHum, beamCharge, warning, victory, bossRoar, click, bossAttack, killDing;
+    private static AudioClip beamHum, beamCharge, warning, victory, bossRoar, click, bossAttack, killDing, shotgun, plasma, rail;
 
     public static AudioClip BeamHum => beamHum != null ? beamHum : (beamHum = MakeBeamHum());
     public static AudioClip BeamCharge => beamCharge != null ? beamCharge : (beamCharge = MakeBeamCharge());
@@ -137,7 +137,10 @@ public static class Sfx
     public static AudioClip Victory => victory != null ? victory : (victory = MakeVictory());
     public static AudioClip BossRoar => bossRoar != null ? bossRoar : (bossRoar = MakeBossRoar());
     public static AudioClip Click => click != null ? click : (click = MakeClick());
-    public static AudioClip KillDing => killDing != null ? killDing : (killDing = MakeKillDing());
+    public static AudioClip Shotgun => shotgun != null ? shotgun : (shotgun = MakeShotgun());
+    public static AudioClip Plasma => plasma != null ? plasma : (plasma = MakePlasma());
+    public static AudioClip Rail => rail != null ? rail : (rail = MakeRail());
+    public static AudioClip KillDing = killDing != null ? killDing : (killDing = MakeKillDing());
     public static AudioClip BossAttack => bossAttack != null ? bossAttack : (bossAttack = MakeBossAttack());
 
     // Lazer uguldamasi: 0,5 sn dikisiz dongu (frekanslar tam periyot icin 100 Hz'in katlari)
@@ -244,6 +247,54 @@ public static class Sfx
             d[i] = (a * 0.5f + b * 0.55f) * 0.6f;
         }
         return Create("killDing", d);
+    }
+
+    // Saçma: kalin, alcak patlama
+    private static AudioClip MakeShotgun()
+    {
+        int n = (int)(Rate * 0.22f);
+        var d = new float[n];
+        var rng = new System.Random(51);
+        float y = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            y += ((float)rng.NextDouble() * 2f - 1f - y) * 0.25f;
+            d[i] = (y * 0.9f + Mathf.Sin(2f * Mathf.PI * 90f * t) * 0.7f) * Mathf.Exp(-t * 20f);
+        }
+        return Create("shotgun", d);
+    }
+
+    // Plazma: yukselen-dusen "bwoop"
+    private static AudioClip MakePlasma()
+    {
+        int n = (int)(Rate * 0.2f);
+        var d = new float[n];
+        float phase = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float f = Mathf.Lerp(900f, 220f, t / 0.2f);
+            phase += 2f * Mathf.PI * f / Rate;
+            d[i] = (Mathf.Sin(phase) * 0.5f + Mathf.Sign(Mathf.Sin(phase * 0.5f)) * 0.15f) * Mathf.Exp(-t * 11f);
+        }
+        return Create("plasma", d);
+    }
+
+    // Ray tufegi: keskin "zap" + alcak vurus
+    private static AudioClip MakeRail()
+    {
+        int n = (int)(Rate * 0.3f);
+        var d = new float[n];
+        float phase = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float f = Mathf.Lerp(3200f, 400f, Mathf.Clamp01(t / 0.12f));
+            phase += 2f * Mathf.PI * f / Rate;
+            d[i] = (Mathf.Sin(phase) * 0.45f * Mathf.Exp(-t * 14f) + Mathf.Sin(2f * Mathf.PI * 70f * t) * 0.6f * Mathf.Exp(-t * 9f));
+        }
+        return Create("rail", d);
     }
 
     private static AudioClip MakeClick()

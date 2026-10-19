@@ -576,7 +576,7 @@ public partial class PlayerGun : MonoBehaviour
 
             if (!played)
             {
-                audioSource.PlayOneShot(Sfx.Shot, 0.2f);
+                audioSource.PlayOneShot(def.pellets > 1 ? Sfx.Shotgun : (def.splash > 0f ? Sfx.Plasma : (def.pierce >= 3 ? Sfx.Rail : Sfx.Shot)), def.pellets > 1 || def.pierce >= 3 ? 0.35f : 0.2f);
                 played = true;
             }
         }
