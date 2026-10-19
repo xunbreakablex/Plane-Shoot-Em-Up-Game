@@ -32,25 +32,25 @@ public static class EnemyKinds
                 return new EnemyKindInfo
                 {
                     title = "Sürü Avcısı", tint = new Color(1f, 0.72f, 0.1f), marker = new Color(1f, 0.78f, 0.2f),
-                    scale = 0.8f, speedMul = 1.2f, turnMul = 1.25f, radius = 3.4f, ramDamage = 1, score = 100
+                    scale = 1.5f, speedMul = 1.2f, turnMul = 1.25f, radius = 5f, ramDamage = 1, score = 100
                 };
             case EnemyKind.Heavy:
                 return new EnemyKindInfo
                 {
                     title = "Ağır Bombardıman", tint = new Color(0.55f, 0.2f, 0.75f), marker = new Color(0.85f, 0.45f, 1f),
-                    scale = 1.7f, speedMul = 0.75f, turnMul = 0.7f, radius = 8f, ramDamage = 4, score = 800
+                    scale = 2.6f, speedMul = 0.75f, turnMul = 0.7f, radius = 11f, ramDamage = 4, score = 800
                 };
             case EnemyKind.Kamikaze:
                 return new EnemyKindInfo
                 {
                     title = "Kamikaze", tint = new Color(1f, 0.38f, 0.08f), marker = new Color(1f, 0.45f, 0.12f),
-                    scale = 0.85f, speedMul = 1.45f, turnMul = 1.4f, radius = 3.6f, ramDamage = 3, score = 250
+                    scale = 1.5f, speedMul = 1.45f, turnMul = 1.4f, radius = 5f, ramDamage = 3, score = 250
                 };
             case EnemyKind.Sniper:
                 return new EnemyKindInfo
                 {
                     title = "Nişancı", tint = new Color(0.2f, 0.78f, 0.85f), marker = new Color(0.3f, 0.92f, 1f),
-                    scale = 1.15f, speedMul = 0.9f, turnMul = 1.1f, radius = 4.8f, ramDamage = 2, score = 650
+                    scale = 1.9f, speedMul = 0.9f, turnMul = 1.1f, radius = 6.5f, ramDamage = 2, score = 650
                 };
             case EnemyKind.GroundTurret:
                 return new EnemyKindInfo
@@ -92,7 +92,7 @@ public static class EnemyKinds
                 return new EnemyKindInfo
                 {
                     title = "Avcı", tint = new Color(0.9f, 0.15f, 0.12f), marker = new Color(1f, 0.3f, 0.25f),
-                    scale = 1f, speedMul = 1f, turnMul = 1f, radius = 4.5f, ramDamage = 2, score = 300
+                    scale = 1.8f, speedMul = 1f, turnMul = 1f, radius = 6f, ramDamage = 2, score = 300
                 };
         }
     }
@@ -544,7 +544,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         }
 
         // Carpisma onleme: cok yakinda ve oyuncuya dogru uciyorsa yana/yukari kirilir (peel-off)
-        float peelDist = 80f * transform.localScale.x;
+        float peelDist = 80f + 25f * transform.localScale.x;
         if (Time.time < breakUntil)
         {
             desired = breakDir;

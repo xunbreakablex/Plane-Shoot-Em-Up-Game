@@ -424,17 +424,23 @@ public partial class CombatManager
                 if (!important && !ground && (boxes >= 5 || dist > 1300f)) continue;
                 if (!ground) boxes++;
 
-                // Uzaktaki ucak mesafe arttikca kuculmesin: kutu en az 28 px (eskiden 20)
-                float size = Mathf.Clamp(2400f / Mathf.Max(dist, 1f), 28f, 68f);
-                if (e.Kind == EnemyKind.Swarmer) size *= 0.8f;
+                // Kutu hedefin GERCEK ekran boyutunu cevreler (yakindaki ucagi ortmesin); uzakta en az 28 px.
+                // Hedef ekranda buyukse tam kutu yerine kose isaretleri: ucak ve vurus efektleri gorunur kalir.
+                float fovTan = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+                float projected = (e.HitRadius * 2.4f) / (2f * Mathf.Max(dist, 1f) * fovTan) * H;
+                float size = Mathf.Clamp(projected * 1.15f, 28f, e.IsBoss ? 600f : 360f);
                 if (e.IsBoss) size = Mathf.Max(size, 44f);
 
                 Rect box = new Rect(hp.x - size * 0.5f, hp.y - size * 0.5f, size, size);
                 float thick = e.IsBoss ? 3f : 2f;
-                // Koyu alt kontur: yesil zemin ve gokyuzunde de secilsin
-                Hud.Outline(new Rect(box.x - 1f, box.y - 1f, box.width + 2f, box.height + 2f),
-                    new Color(0f, 0f, 0f, 0.7f), thick + 2f);
-                Hud.Outline(box, col, thick);
+                if (size < 70f)
+                {
+                    // Koyu alt kontur: yesil zemin ve gokyuzunde de secilsin
+                    Hud.Outline(new Rect(box.x - 1f, box.y - 1f, box.width + 2f, box.height + 2f),
+                        new Color(0f, 0f, 0f, 0.7f), thick + 2f);
+                    Hud.Outline(box, col, thick);
+                }
+                else DrawCorners(box, col, thick, Mathf.Min(size * 0.22f, 26f));
 
                 // Ates etmek uzere: kirmizi yanip sonen uyari
                 if (aiming)
@@ -774,6 +780,25 @@ public partial class CombatManager
         {
             float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 8f);
             Hud.Text(new Rect(cx - 200f, y + 4f, 400f, 24f), "CAN DÜŞÜK", new Color(1f, 0.25f, 0.2f, 0.6f + 0.4f * pulse), 18, TextAnchor.MiddleCenter);
+        }
+    }
+
+    // Kose isaretleri (koyu konturlu): buyuk hedefte tam kutu yerine
+    private static void DrawCorners(Rect b, Color c, float t, float len)
+    {
+        Color dark = new Color(0f, 0f, 0f, 0.7f);
+        for (int pass = 0; pass < 2; pass++)
+        {
+            Color col = pass == 0 ? dark : c;
+            float o = pass == 0 ? 1f : 0f, tt = pass == 0 ? t + 2f : t;
+            Hud.Fill(new Rect(b.x - o, b.y - o, len + 2f * o, tt), col);
+            Hud.Fill(new Rect(b.x - o, b.y - o, tt, len + 2f * o), col);
+            Hud.Fill(new Rect(b.xMax - len - o, b.y - o, len + 2f * o, tt), col);
+            Hud.Fill(new Rect(b.xMax - tt + o, b.y - o, tt, len + 2f * o), col);
+            Hud.Fill(new Rect(b.x - o, b.yMax - tt + o, len + 2f * o, tt), col);
+            Hud.Fill(new Rect(b.x - o, b.yMax - len - o, tt, len + 2f * o), col);
+            Hud.Fill(new Rect(b.xMax - len - o, b.yMax - tt + o, len + 2f * o, tt), col);
+            Hud.Fill(new Rect(b.xMax - tt + o, b.yMax - len - o, tt, len + 2f * o), col);
         }
     }
 

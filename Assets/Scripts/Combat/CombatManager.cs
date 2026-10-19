@@ -206,14 +206,22 @@ public partial class CombatManager : MonoBehaviour
 
     public void OnEnemyHit(EnemyPlane enemy, Vector3 point)
     {
-        SpawnHitSpark(point);
+        // Kivilcim uzakta da gorunsun: mesafeyle buyur (300 m'de ~2,5 kat)
+        float dist = cam != null ? Vector3.Distance(cam.transform.position, point) : 100f;
+        SpawnHitSpark(point, Mathf.Clamp(dist / 120f, 1f, 4f));
         hitMarkerTime = Time.unscaledTime;
 
-        // Yogun savasta ses yigilmasin
-        if (Time.time - lastHitSound > 0.04f)
+        // Yogun savasta ses yigilmasin. Vurus sesi oyuncunun kulaginda (2D): uzaktaki isabet de duyulur
+        if (Time.time - lastHitSound > 0.05f)
         {
             lastHitSound = Time.time;
-            Sfx.PlayAt(Sfx.Hit, point, 0.45f);
+            if (uiAudio != null && !enemy.IsGround)
+            {
+                uiAudio.pitch = Random.Range(0.95f, 1.15f);
+                uiAudio.PlayOneShot(Sfx.Hit, 0.22f);
+                uiAudio.pitch = 1f;
+            }
+            else Sfx.PlayAt(Sfx.Hit, point, 0.45f);
         }
     }
 
@@ -225,7 +233,17 @@ public partial class CombatManager : MonoBehaviour
 
         // Uzuv kopmasi: ucak hala havada, buyuk patlama yere carpinca gelir; simdilik kucuk bir alev
         bool partKill = cause != EnemyPlane.HitZone.Body && !enemy.IsGround && !enemy.IsBoss;
-        SpawnExplosion(pos, partKill ? 0.4f : 1f);
+        // Patlama uzakta da okunsun: mesafeyle buyur; oyuncunun indirdigi hava hedefinde 2D gumbur
+        float camDist = cam != null ? Vector3.Distance(cam.transform.position, pos) : 100f;
+        float distScale = enemy.IsGround ? 1f : Mathf.Clamp(camDist / 220f, 1f, 2.6f);
+        SpawnExplosion(pos, (partKill ? 0.6f : 1f) * distScale);
+        if (byPlayer && !enemy.IsGround && uiAudio != null)
+        {
+            uiAudio.pitch = Random.Range(0.85f, 1.05f);
+            uiAudio.PlayOneShot(Sfx.Explosion, 0.35f);
+            uiAudio.pitch = 1f;
+            FollowCamera.AddShake(0.25f, 0.18f);
+        }
 
         // Yakin mesafede uzuv koparma: cok kisa bir donma (hit-stop) vurusu "oturtur"
         if (partKill && byPlayer && PlayerTransform != null && Vector3.Distance(PlayerTransform.position, pos) < 320f)
@@ -504,14 +522,29 @@ public partial class CombatManager : MonoBehaviour
         if (explosionPrefab != null)
         {
             var go = Instantiate(explosionPrefab, pos, Quaternion.identity);
-            if (scale < 0.999f) go.transform.localScale = Vector3.one * scale;
+            if (Mathf.Abs(scale - 1f) > 0.001f) ScaleEffect(go, scale);
         }
         Sfx.PlayAt(Sfx.Explosion, pos, Mathf.Lerp(0.45f, 1f, scale));
     }
 
-    public void SpawnHitSpark(Vector3 pos)
+    public void SpawnHitSpark(Vector3 pos) { SpawnHitSpark(pos, 1f); }
+
+    public void SpawnHitSpark(Vector3 pos, float scale)
     {
-        if (hitSparkPrefab != null) Instantiate(hitSparkPrefab, pos, Quaternion.identity);
+        if (hitSparkPrefab == null) return;
+        var go = Instantiate(hitSparkPrefab, pos, Quaternion.identity);
+        if (scale > 1.001f) ScaleEffect(go, scale);
+    }
+
+    // Parcacik sistemleri "Local" olcekte: kok olcegi alt sistemlere gecsin diye Hierarchy'ye alinir
+    private static void ScaleEffect(GameObject go, float scale)
+    {
+        go.transform.localScale = Vector3.one * scale;
+        foreach (var ps in go.GetComponentsInChildren<ParticleSystem>())
+        {
+            var main = ps.main;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+        }
     }
 
     /// <summary>Mermi kalkan yuzeyinde parcalanir; carpma noktasinda renkli bir alan belirir.</summary>
