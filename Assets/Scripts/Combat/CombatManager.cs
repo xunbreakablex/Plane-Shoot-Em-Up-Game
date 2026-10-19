@@ -481,8 +481,15 @@ public partial class CombatManager : MonoBehaviour
         }
     }
 
+    // Hasar yonu gostergesi: vurulan yonu ekran merkezinin cevresinde kirmizi yay olarak gosterir
+    private struct DamageArc { public Vector3 from; public float born; public bool hull; }
+    private readonly List<DamageArc> damageArcs = new List<DamageArc>();
+
     public void OnPlayerHit(Vector3 point, bool hullDamaged)
     {
+        // Darbenin geldigi yon: carpma noktasindan oyuncuya degil, oyuncudan carpma noktasina (disariya) dogru
+        if (damageArcs.Count > 6) damageArcs.RemoveAt(0);
+        damageArcs.Add(new DamageArc { from = point, born = Time.unscaledTime, hull = hullDamaged });
         FollowCamera.AddShake(hullDamaged ? 0.9f : 0.3f, hullDamaged ? 0.4f : 0.2f);
         // Kalkan emdiyse ekran kirmizilasmaz; sadece govde hasarinda uyari
         if (hullDamaged)

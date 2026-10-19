@@ -55,6 +55,7 @@ public partial class CombatManager
         DrawBanner();
         DrawBottomWarnings();
         DrawCrosshair();
+        DrawDamageArcs();
         Hud.End();
     }
 
@@ -804,6 +805,40 @@ public partial class CombatManager
             Hud.Fill(new Rect(b.x - o, b.yMax - len - o, tt, len + 2f * o), col);
             Hud.Fill(new Rect(b.xMax - len - o, b.yMax - tt + o, len + 2f * o, tt), col);
             Hud.Fill(new Rect(b.xMax - tt + o, b.yMax - len - o, tt, len + 2f * o), col);
+        }
+    }
+
+    // Hasar yonu: her darbe icin ekran merkezi cevresinde, darbenin geldigi yonde kirmizi yay (1 sn)
+    private void DrawDamageArcs()
+    {
+        if (damageArcs.Count == 0 || cam == null) return;
+        Vector2 center = new Vector2(Hud.W * 0.5f, Hud.H * 0.5f);
+        Transform ct = cam.transform;
+        for (int i = damageArcs.Count - 1; i >= 0; i--)
+        {
+            DamageArc a = damageArcs[i];
+            float age = Time.unscaledTime - a.born;
+            if (age > 1.1f) { damageArcs.RemoveAt(i); continue; }
+
+            // Darbe yonu: ucak merkezinden carpma noktasina (kalkan/govde yuzeyi darbenin geldigi tarafa bakar),
+            // kamera eksenlerinde. Arkadan gelen darbe ekranin altinda, onden gelen ustunde gorunur.
+            Transform pt = PlayerTransform;
+            if (pt == null) continue;
+            Vector3 d = ct.InverseTransformDirection(a.from - pt.position);
+            float ang = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg;   // pusula: ust = on, alt = arka, yanlar = yanlar
+
+            float alpha = Mathf.Clamp01(1f - age / 1.1f) * (a.hull ? 0.95f : 0.6f);
+            Color col = a.hull ? new Color(1f, 0.15f, 0.1f, alpha) : new Color(0.4f, 0.8f, 1f, alpha);   // kalkan darbesi mavi
+            float radius = 150f;
+            Hud.RotateAround(ang, center);
+            for (int k = -3; k <= 3; k++)
+            {
+                // Yay: 7 parca, ortasi kalin
+                float w = 34f - Mathf.Abs(k) * 4f, h = 7f - Mathf.Abs(k) * 0.6f;
+                Hud.RotateAround(ang + k * 6f, center);
+                Hud.Fill(new Rect(center.x - w * 0.5f, center.y - radius - h, w, h), col);
+            }
+            Hud.ClearRotation();
         }
     }
 
