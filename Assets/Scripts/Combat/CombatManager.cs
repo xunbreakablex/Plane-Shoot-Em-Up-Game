@@ -271,7 +271,7 @@ public partial class CombatManager : MonoBehaviour
 
         // Puan: tur puani x kombo carpani
         EnemyKindInfo info = EnemyKinds.Get(enemy.Kind);
-        int points = Mathf.RoundToInt(info.score * ComboMultiplier * Difficulty.ScoreMul);
+        int points = Mathf.RoundToInt(info.score * ComboMultiplier);
         RunState.AddScore(points);
 
         // Hurda odulu: dusman cani x seri carpani x upgrade carpani (bossta sinirli)

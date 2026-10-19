@@ -153,7 +153,7 @@ public static class RunState
     public static void AddScore(int amount)
     {
         if (amount <= 0 || Ended) return;
-        Score += amount;
+        Score += Mathf.Max(1, Mathf.RoundToInt(amount * Difficulty.ScoreMul));
     }
 
     public static void RegisterSpawn(int count) { StageSpawned += count; }
@@ -209,7 +209,7 @@ public static class RunState
         float ratio = StageSpawned > 0 ? Mathf.Clamp01((float)StageKills / StageSpawned) : 1f;
         ClearBonusAccuracy = Mathf.RoundToInt(ratio * 5000f);
         ClearBonusNoDamage = StageHullHits == 0 ? 3000 : 0;
-        Score += ClearBonusAccuracy + ClearBonusNoDamage;
+        Score += Mathf.RoundToInt((ClearBonusAccuracy + ClearBonusNoDamage) * Difficulty.ScoreMul);
 
         Phase = RunPhase.StageClear;
         EndedAt = Time.unscaledTime;

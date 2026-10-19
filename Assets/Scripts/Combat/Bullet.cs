@@ -135,6 +135,7 @@ public class Bullet : MonoBehaviour
     public float splash;
     private static readonly Collider[] SplashHits = new Collider[24];
     private static float lastSplashFx;
+    private static readonly System.Collections.Generic.HashSet<EnemyPlane> SplashDone = new System.Collections.Generic.HashSet<EnemyPlane>();
 
     private void Splash(Vector3 point, IDamageable direct)
     {
@@ -142,7 +143,8 @@ public class Bullet : MonoBehaviour
         if (mgr != null && Time.time - lastSplashFx > 0.12f) { lastSplashFx = Time.time; mgr.SpawnExplosion(point); }   // efekt seyreltilir
         int n = Physics.OverlapSphereNonAlloc(point, splash, SplashHits, ~0, QueryTriggerInteraction.Ignore);
         int dmg = Mathf.Max(1, Mathf.RoundToInt(damage * 0.6f));
-        var done = new System.Collections.Generic.HashSet<EnemyPlane>();
+        SplashDone.Clear();
+        var done = SplashDone;
         for (int i = 0; i < n; i++)
         {
             var e = SplashHits[i].GetComponentInParent<EnemyPlane>();
