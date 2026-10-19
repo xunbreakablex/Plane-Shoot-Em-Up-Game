@@ -558,7 +558,12 @@ public partial class PlayerGun : MonoBehaviour
             else
             {
                 Vector3 aimPoint = muzzle + dir * aimDist;
-                PlayerShot.FireEased(bulletPrefab, muzzlePoint, muzzle, t.forward, aimPoint, bulletSpd, dmg, t, pierce);
+                Bullet shot = PlayerShot.FireEased(bulletPrefab, muzzlePoint, muzzle, t.forward, aimPoint, bulletSpd, dmg, t, pierce);
+                if (shot != null)
+                {
+                    shot.splash = def.splash;
+                    if (def.splash > 0f) shot.lifetime = def.range / Mathf.Max(bulletSpd, 1f);
+                }
             }
 
             // Guc 2+: iki yan mermi; guc 4: daha genis ikinci cift. Yan mermiler her iki atista bir

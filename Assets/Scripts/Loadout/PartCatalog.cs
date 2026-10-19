@@ -35,6 +35,7 @@ public class PartDef
     public float range = 500f;
     public int pellets = 1;    // tek atista cikan mermi sayisi (saçma); her biri 'damage' vurur
     public int pierce;         // delinen dusman sayisi (ray tufegi)
+    public float splash;       // mermi carpinca patlama yaricapi (m): civardaki dusmanlara hasarin %60'i (plazma)
 
     /// <summary>Atis basina beklenen hasar: saçma peletlerinin ~%70'i isabet eder (DPS gostergesi ve hangar kapisi).</summary>
     public float ShotDamage => pellets > 1 ? damage * pellets * 0.7f : damage;
@@ -142,6 +143,8 @@ public static class PartCatalog
                       rate = 5f, damage = 3f, range = 850f, beam = 3, beamOn = 0.6f, beamOff = 0.6f, power = 4f, weight = 11f },
         new PartDef { name = "Saçma Topu", description = "Yakın mesafe canavarı: her atışta 7 saçma (1,8 atış/sn), 350 m menzil. Güç 2.",
                       rate = 1.8f, damage = 1f, speed = 330f, spread = 5f, range = 350f, pellets = 7, power = 2f, weight = 9f },
+        new PartDef { name = "Plazma Topu", description = "Çarptığı yerde patlar: 14 m çevresindeki herkese hasar verir (2,2 atış/sn, 3 hasar). Kalabalığa karşı ideal. Güç 3.",
+                      rate = 2.2f, damage = 3f, speed = 300f, spread = 0.3f, range = 700f, splash = 14f, power = 3f, weight = 10f },
         new PartDef { name = "Ray Tüfeği", description = "Yavaş ama devasa: mermi başına 6 hasar, hızlı mermi, 3 düşmanı delip geçer (1,2 atış/sn). Güç 4.",
                       rate = 1.2f, damage = 6f, speed = 900f, spread = 0f, range = 1500f, pierce = 3, power = 4f, weight = 12f },
     };

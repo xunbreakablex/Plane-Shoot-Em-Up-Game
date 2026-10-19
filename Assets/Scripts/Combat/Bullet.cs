@@ -131,6 +131,26 @@ public class Bullet : MonoBehaviour
     private int pierceLeft;
     private IDamageable lastPierced;
 
+    /// <summary>Plazma: carpinca bu yaricapta (m) patlar ve civardaki dusmanlara hasarin %60'ini verir. 0 = patlamaz.</summary>
+    public float splash;
+    private static readonly Collider[] SplashHits = new Collider[24];
+    private static float lastSplashFx;
+
+    private void Splash(Vector3 point, IDamageable direct)
+    {
+        CombatManager mgr = CombatManager.Instance;
+        if (mgr != null && Time.time - lastSplashFx > 0.12f) { lastSplashFx = Time.time; mgr.SpawnExplosion(point); }   // efekt seyreltilir
+        int n = Physics.OverlapSphereNonAlloc(point, splash, SplashHits, ~0, QueryTriggerInteraction.Ignore);
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(damage * 0.6f));
+        var done = new System.Collections.Generic.HashSet<EnemyPlane>();
+        for (int i = 0; i < n; i++)
+        {
+            var e = SplashHits[i].GetComponentInParent<EnemyPlane>();
+            if (e == null || ReferenceEquals(e, direct) || !done.Add(e)) continue;
+            e.TakeHit(dmg, point);
+        }
+    }
+
     public static Bullet Spawn(Bullet prefab, Vector3 position, Vector3 direction, float speed, int damage,
         Transform owner, bool fromPlayer, int pierce = 0)
     {
@@ -142,6 +162,7 @@ public class Bullet : MonoBehaviour
         b.owner = owner;
         b.fromPlayer = fromPlayer;
         b.pierceLeft = pierce;
+        b.splash = 0f;
         b.lastPierced = null;
         b.age = 0f;
         b.lifetime = b.defaultLifetime > 0f ? b.defaultLifetime : b.lifetime;
@@ -307,6 +328,7 @@ public class Bullet : MonoBehaviour
         Vector3 point = hit.distance <= 0f ? start : hit.point;
 
         var target = hit.collider.GetComponentInParent<IDamageable>();
+        if (splash > 0f && fromPlayer) Splash(point, target);
         if (target != null)
         {
             target.TakeHit(damage, point);
