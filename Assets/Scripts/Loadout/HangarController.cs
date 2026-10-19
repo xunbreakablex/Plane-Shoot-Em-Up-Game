@@ -866,7 +866,7 @@ public class HangarController : MonoBehaviour
     {
         Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.8f));
 
-        float pw = 760f, ph = 520f;
+        float pw = 760f, ph = 590f;
         Rect p = new Rect((W - pw) * 0.5f, (H - ph) * 0.5f, pw, ph);
         Hud.Fill(p, new Color(0.06f, 0.09f, 0.14f, 0.98f));
         Hud.Fill(new Rect(p.x, p.y, pw, 5f), Gold);
@@ -882,7 +882,7 @@ public class HangarController : MonoBehaviour
         };
 
         float y = p.y + 66f;
-        float[] hs = { 76f, 82f, 112f };
+        float[] hs = { 124f, 82f, 134f };
         var wrap = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = true };
         wrap.normal.textColor = new Color(0.9f, 0.93f, 0.97f);
 

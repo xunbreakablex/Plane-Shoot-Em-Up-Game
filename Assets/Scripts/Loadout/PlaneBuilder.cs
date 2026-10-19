@@ -7,28 +7,28 @@ public static class PlaneBuilder
     public const string Prefix = "Cust_";
 
     // Modele gore sabitler: 0 = WW1 cift kanat, 1 = WW2 avci, 2 = planor, 3 = Atmaca, 4 = Kartal, 5 = Yavru Kopekbaligi
-    private const int Models = 8;
-    private static readonly float[] WingHalfSpan = { 3.2f, 4.0f, 3.5f, 2.7f, 3.3f, 2.5f, 2.8f, 1.9f };
-    private static readonly float[] WingY = { -0.35f, -0.15f, 0.1f, -0.05f, 0f, -0.15f, -0.05f, -0.1f };
-    private static readonly float[] PropRadius = { 0.85f, 1.05f, 0.7f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+    private const int Models = 9;
+    private static readonly float[] WingHalfSpan = { 3.2f, 4.0f, 3.5f, 2.7f, 3.3f, 2.5f, 2.8f, 1.9f, 3.6f };
+    private static readonly float[] WingY = { -0.35f, -0.15f, 0.1f, -0.05f, 0f, -0.15f, -0.05f, -0.1f, -0.05f };
+    private static readonly float[] PropRadius = { 0.85f, 1.05f, 0.7f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
     // Ic silah x'i: jetlerde hava girisi / govde disinda (govde yaricapi 0,4-0,5; giris 0,7'ye kadar)
-    private static readonly float[] InnerGunX = { 1.1f, 1.1f, 1.1f, 0.95f, 0.85f, 0.75f, 0.8f, 0.7f };
+    private static readonly float[] InnerGunX = { 1.1f, 1.1f, 1.1f, 0.95f, 0.85f, 0.75f, 0.8f, 0.7f, 0.9f };
     private static readonly Vector3[] DorsalMount =
     {
         new Vector3(0f, 0.42f, -0.95f), new Vector3(0f, 0.42f, -0.95f), new Vector3(0f, 0.32f, -0.7f),
         new Vector3(0f, 0.5f, -0.9f), new Vector3(0f, 0.52f, -1.0f), new Vector3(0f, 0.62f, -0.35f),
-        new Vector3(0f, 0.5f, -0.9f), new Vector3(0f, 0.75f, -1.0f)
+        new Vector3(0f, 0.5f, -0.9f), new Vector3(0f, 0.75f, -1.0f), new Vector3(0f, 0.38f, -0.6f)
     };
     private static readonly Vector3[] VentralMount =
     {
         new Vector3(0f, -0.34f, 0.35f), new Vector3(0f, -0.4f, 0.35f), new Vector3(0f, -0.28f, 0.25f),
         new Vector3(0f, -0.3f, 0.3f), new Vector3(0f, -0.36f, 0.3f), new Vector3(0f, -0.4f, 0.2f),
-        new Vector3(0f, -0.3f, 0.3f), new Vector3(0f, -0.6f, 0.3f)
+        new Vector3(0f, -0.3f, 0.3f), new Vector3(0f, -0.6f, 0.3f), new Vector3(0f, -0.3f, 0.2f)
     };
 
     // Namlu ucunun (mermi cikis noktasi) z konumu; her ucagin kanat/hava girisi on kenarinin onunde.
-    private static readonly float[] InnerTipZ = { 1.7f, 1.7f, 1.7f, 2.2f, 2.3f, 1.9f, 2.4f, 3.0f };
-    private static readonly float[] OuterTipZ = { 1.25f, 1.25f, 1.25f, 1.2f, 1.4f, 1.5f, 1.3f, 1.0f };
+    private static readonly float[] InnerTipZ = { 1.7f, 1.7f, 1.7f, 2.2f, 2.3f, 1.9f, 2.4f, 3.0f, 1.6f };
+    private static readonly float[] OuterTipZ = { 1.25f, 1.25f, 1.25f, 1.2f, 1.4f, 1.5f, 1.3f, 1.0f, 0.4f };
     private const float BarrelLength = 1f;
     private const float TurretTipZ = 0.8f;     // taret namlusunun ucu (kafa ekseninde)
 
@@ -148,6 +148,7 @@ public static class PlaneBuilder
                     case "Shark_Body":
                     case "SpaceJet_Body":
                     case "Rocket_Body":
+                    case "Stealth_Body":
                         mats[i].color = scheme.primary;
                         changed = true;
                         break;
@@ -158,6 +159,7 @@ public static class PlaneBuilder
                     case "Shark_Belly":
                     case "SpaceJet_Belly":
                     case "Rocket_Belly":
+                    case "Stealth_Belly":
                         mats[i].color = scheme.secondary;
                         changed = true;
                         break;
@@ -169,6 +171,7 @@ public static class PlaneBuilder
                     case "Shark_Accent":
                     case "SpaceJet_Accent":
                     case "Rocket_Accent":
+                    case "Stealth_Accent":
                         mats[i].color = scheme.accent;
                         changed = true;
                         break;

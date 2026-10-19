@@ -10,8 +10,8 @@ public static class CreateAircraft
 {
     private const string PrefabFolder = "Assets/Prefabs";
 
-    private static readonly string[] Names = { "Atmaca", "Kartal", "YavruKopekbaligi", "UzayJeti", "Roket" };
-    private static readonly int[] ModelIndex = { 3, 4, 5, 6, 7 };
+    private static readonly string[] Names = { "Atmaca", "Kartal", "YavruKopekbaligi", "UzayJeti", "Roket", "Hayalet" };
+    private static readonly int[] ModelIndex = { 3, 4, 5, 6, 7, 8 };
 
     [MenuItem("Tools/Create New Aircraft")]
     public static void CreateAll()
@@ -24,6 +24,7 @@ public static class CreateAircraft
         BuildShark();
         BuildSpaceJet();
         BuildRocket();
+        BuildStealth();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
@@ -240,6 +241,42 @@ public static class CreateAircraft
         Part(root, PrimitiveType.Cube, "BellySkid", V(0, -0.58f, 0.3f), V(0.2f, 0.1f, 1.8f), dark);
 
         Finish(root, "Roket", 1.4f, -2.3f, 0f);
+    }
+
+    private static void BuildStealth()
+    {
+        Material body = CreateGliderPlane.GetMaterial("Stealth_Body", new Color(0.2f, 0.21f, 0.24f));
+        Material belly = CreateGliderPlane.GetMaterial("Stealth_Belly", new Color(0.12f, 0.12f, 0.14f));
+        Material accent = CreateGliderPlane.GetMaterial("Stealth_Accent", new Color(0.55f, 0.15f, 0.65f));
+        Material dark = CreateGliderPlane.GetMaterial("Plane_Dark", new Color(0.12f, 0.12f, 0.12f));
+        Material glass = CreateGliderPlane.GetMaterial("Plane_Glass", new Color(0.35f, 0.65f, 0.95f));
+        Material flame = Unlit("Stealth_Flame", new Color(0.7f, 0.4f, 1f));
+
+        var root = new GameObject("Hayalet");
+
+        // Ucan kanat: genis, yassi govde + suprulmus kanat uclari
+        Part(root, PrimitiveType.Capsule, "Fuselage", V(0, 0, 0), V(1.1f, 2.1f, 0.65f), body, V(90, 0, 0));
+        Part(root, PrimitiveType.Sphere, "Nose", V(0, -0.02f, 2.2f), V(0.7f, 0.4f, 1.8f), body);
+        Part(root, PrimitiveType.Sphere, "Canopy", V(0, 0.28f, 0.9f), V(0.5f, 0.32f, 1.3f), glass);
+        Part(root, PrimitiveType.Cube, "WingL", V(-1.85f, -0.05f, -0.9f), V(3.4f, 0.1f, 2.6f), body, V(0, -32, 0));
+        Part(root, PrimitiveType.Cube, "WingR", V(1.85f, -0.05f, -0.9f), V(3.4f, 0.1f, 2.6f), body, V(0, 32, 0));
+        Part(root, PrimitiveType.Cube, "WingEdgeL", V(-1.2f, -0.04f, 0.45f), V(2.2f, 0.07f, 0.35f), accent, V(0, -32, 0));
+        Part(root, PrimitiveType.Cube, "WingEdgeR", V(1.2f, -0.04f, 0.45f), V(2.2f, 0.07f, 0.35f), accent, V(0, 32, 0));
+        Part(root, PrimitiveType.Cube, "TailPlane", V(-0.55f, 0.0f, -2.35f), V(1.0f, 0.06f, 0.9f), belly, V(0, 18, 0));
+        Part(root, PrimitiveType.Cube, "TailPlane", V(0.55f, 0.0f, -2.35f), V(1.0f, 0.06f, 0.9f), belly, V(0, -18, 0));
+
+        // Motorlar govdeye gomulu: arka lule
+        for (int s = -1; s <= 1; s += 2)
+        {
+            Part(root, PrimitiveType.Cylinder, "Nozzle", V(0.5f * s, 0, -2.0f), V(0.45f, 0.25f, 0.45f), dark, V(90, 0, 0));
+            Part(root, PrimitiveType.Sphere, "Flame", V(0.5f * s, 0, -2.45f), V(0.3f, 0.3f, 0.9f), flame);
+        }
+
+        Part(root, PrimitiveType.Cylinder, "Wheel", V(0, -0.5f, 0.9f), V(0.28f, 0.04f, 0.28f), dark, V(0, 0, 90));
+        Part(root, PrimitiveType.Cylinder, "Wheel", V(-0.7f, -0.45f, -0.7f), V(0.3f, 0.04f, 0.3f), dark, V(0, 0, 90));
+        Part(root, PrimitiveType.Cylinder, "Wheel", V(0.7f, -0.45f, -0.7f), V(0.3f, 0.04f, 0.3f), dark, V(0, 0, 90));
+
+        Finish(root, "Hayalet", 3.1f, -2.3f, 0f);
     }
 
     // ================================================================== yardimcilar

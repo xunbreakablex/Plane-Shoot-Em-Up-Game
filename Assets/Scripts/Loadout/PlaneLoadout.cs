@@ -189,7 +189,7 @@ public static class LoadoutMath
 public static class LoadoutStore
 {
     private const string Key = "PlaneShootEmUp.Loadouts.v1";
-    public const int ModelCount = 8;   // AircraftCatalog.Count ile ayni olmali
+    public const int ModelCount = 9;   // AircraftCatalog.Count ile ayni olmali
 
     [Serializable]
     private class SaveData

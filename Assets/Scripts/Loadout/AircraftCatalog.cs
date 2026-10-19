@@ -90,7 +90,7 @@ public class AircraftDef
 // Yeni ucak eklerken: buraya satir + PlaneBuilder dizilerine hardpoint + sahneye prefab (Tools/Create New Aircraft).
 public static class AircraftCatalog
 {
-    public const int Count = 8;
+    public const int Count = 9;
 
     // Ilk uc model (WW1, WW2, planor) eski global kurallari kullanir
     private static SlotRule[] ClassicRules()
@@ -204,6 +204,20 @@ public static class AircraftCatalog
                 new SlotRule(SlotKind.Missile, 1, Requirement.Boss(BossType.MagicalGirl)),
                 new SlotRule(SlotKind.Shield,  1, Requirement.Wins(1)),
                 new SlotRule(SlotKind.Turret,  0, Requirement.Boss(BossType.MagicalGirl)),
+            }
+        },
+        new AircraftDef
+        {
+            name = "Hayalet", tagline = "Uçan kanat: sessiz, kararlı ve dayanıklı; geniş silah yuvası.",
+            preset = PlaneController.PlanePreset.Stealth,
+            weapons = 4, missiles = 2, shields = 2, turrets = 1, hpMul = 1.15f,
+            unlock = Requirement.Score(60000),
+            rules = new[]
+            {
+                new SlotRule(SlotKind.Weapon,  3, Requirement.Boss(BossType.Dragon)),
+                new SlotRule(SlotKind.Missile, 1, Requirement.Boss(BossType.Demon)),
+                new SlotRule(SlotKind.Shield,  1, Requirement.Boss(BossType.Angel)),
+                new SlotRule(SlotKind.Turret,  0, Requirement.Wins(1)),
             }
         },
     };

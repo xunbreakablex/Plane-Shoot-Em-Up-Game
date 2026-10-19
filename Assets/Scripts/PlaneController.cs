@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 public class PlaneController : MonoBehaviour
 {
-    public enum PlanePreset { Glider, Fighter, Biplane, LightJet, HeavyJet, MiniShark, SpaceJet, Rocket }
+    public enum PlanePreset { Glider, Fighter, Biplane, LightJet, HeavyJet, MiniShark, SpaceJet, Rocket, Stealth }
 
     /// <summary>Ucus ozellikleri paketi: ApplyPreset bunu uygular, hangar puanlari da buradan okur.</summary>
     public struct PresetData
@@ -94,6 +94,15 @@ public class PlaneController : MonoBehaviour
                     cruiseAoA = 1.6f, stallAoA = 22f, liftSlope = 5.0f, maxG = 14f,
                     roll = 260f, yaw = 38f, pitchGain = 10f, responsiveness = 12f, inputResponse = 1.4f,
                     arcadeTurn = 100f
+                };
+            case PlanePreset.Stealth:
+                // Hayalet: ucan kanat, kararli ve hizli; orta ceviklik
+                return new PresetData
+                {
+                    name = "Hayalet", cruise = 104f, maxSpeed = 196f, thrust = 30f,
+                    cruiseAoA = 1.6f, stallAoA = 26f, liftSlope = 5.4f, maxG = 13f,
+                    roll = 330f, yaw = 40f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.5f,
+                    arcadeTurn = 120f
                 };
             default:
                 // WW1: ~90 derece/sn
