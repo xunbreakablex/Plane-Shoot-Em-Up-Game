@@ -233,6 +233,7 @@ public static class BaseBuilder
     private static void FinishUnit(EnemyPlane e)
     {
         SetLayer(e.gameObject, CombatManager.EnemyLayer);
+        e.CollectRenderers();
     }
 
     // ------------------------------------------------------------------ zemin

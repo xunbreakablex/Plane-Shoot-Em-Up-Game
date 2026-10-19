@@ -116,9 +116,15 @@ public class GroundUnit : MonoBehaviour
             {
                 burstLeft--;
                 nextShot = Time.time + 0.2f;
-                Vector3 dir = (aim + Random.insideUnitSphere * err - from).normalized;
+                Vector3 target = aim + Random.insideUnitSphere * err;
+                Vector3 dir = (target - from).normalized;
                 Bullet b = Bullet.Spawn(mgr.EnemyBulletPrefab, from, dir, speed, 1, transform, false);
-                if (b != null) b.lifetime = range / speed + 0.3f;   // varsayilan omur (2,8 sn) menzilden kisaydi
+                if (b != null)
+                {
+                    // Flak: hedef noktaya varinca havada patlar (yakininda patlamasi da hasar verir)
+                    b.lifetime = Vector3.Distance(from, target) / speed + Random.Range(-0.08f, 0.08f);
+                    b.flakBurst = true;
+                }
                 Sfx.PlayAt(Sfx.Shot, from, 0.28f);
             }
             else if (burstLeft <= 0 && Time.time >= nextBurst && Vector3.Angle(head.forward, want) < 12f)

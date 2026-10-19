@@ -542,6 +542,35 @@ public partial class CombatManager : MonoBehaviour
         Sfx.PlayAt(Sfx.Explosion, pos, Mathf.Lerp(0.45f, 1f, scale));
     }
 
+    /// <summary>Ucaksavar patlamasi: kucuk koyu bulut + kisa gumbur (yakindaysa hafif sarsinti).</summary>
+    public void SpawnFlakPuff(Vector3 pos)
+    {
+        if (smokeTrailPrefab != null)
+        {
+            var go = Instantiate(smokeTrailPrefab, pos, Quaternion.identity);
+            foreach (var ps in go.GetComponentsInChildren<ParticleSystem>())
+            {
+                var main = ps.main;
+                main.loop = false;
+                main.startSizeMultiplier *= 2.2f;
+                main.startColor = new Color(0.08f, 0.08f, 0.08f, 0.9f);
+                var em = ps.emission;
+                em.rateOverTime = 0f;
+                em.SetBursts(new[] { new ParticleSystem.Burst(0f, 8) });
+                ps.Play();
+            }
+            Destroy(go, 4f);
+        }
+        if (explosionPrefab != null) ScaleEffect(Instantiate(explosionPrefab, pos, Quaternion.identity), 0.3f);
+        Transform pt = PlayerTransform;
+        if (pt != null)
+        {
+            float d = Vector3.Distance(pt.position, pos);
+            if (d < 60f) FollowCamera.AddShake(0.25f * (1f - d / 60f), 0.15f);
+            if (d < 250f) Sfx.PlayAt(Sfx.Explosion, pos, 0.35f);
+        }
+    }
+
     public void SpawnHitSpark(Vector3 pos) { SpawnHitSpark(pos, 1f); }
 
     public void SpawnHitSpark(Vector3 pos, float scale)

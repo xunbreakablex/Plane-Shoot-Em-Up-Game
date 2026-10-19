@@ -261,6 +261,12 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         Velocity = Vector3.zero;
     }
 
+    /// <summary>Yer birimi parcalari kurulduktan sonra (BaseBuilder) vurus flasi icin renderer'lari toplar.</summary>
+    public void CollectRenderers()
+    {
+        rends = GetComponentsInChildren<Renderer>();
+    }
+
     public void SetVelocity(Vector3 v) { Velocity = v; }
 
     /// <summary>

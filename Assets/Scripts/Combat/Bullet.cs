@@ -131,6 +131,24 @@ public class Bullet : MonoBehaviour
     private int pierceLeft;
     private IDamageable lastPierced;
 
+    /// <summary>Ucaksavar atimi: omru bitince havada patlar; oyuncu yakindaysa hasar verir (tam isabet gerekmez).</summary>
+    public bool flakBurst;
+    private const float FlakRadius = 8f;
+    private static float lastFlakFx;
+
+    private void FlakBurst()
+    {
+        CombatManager mgr = CombatManager.Instance;
+        if (mgr == null) return;
+        Vector3 p = transform.position;
+        // Kucuk, koyu patlama bulutu (cok sik patlamasin diye seyrek efekt)
+        if (Time.time - lastFlakFx > 0.05f) { lastFlakFx = Time.time; mgr.SpawnFlakPuff(p); }
+        Transform pt = mgr.PlayerTransform;
+        PlayerHealth ph = mgr.CurrentPlayerHealth;
+        if (pt != null && ph != null && (pt.position - p).sqrMagnitude < FlakRadius * FlakRadius)
+            ph.TakeHit(damage, p);
+    }
+
     /// <summary>Plazma: carpinca bu yaricapta (m) patlar ve civardaki dusmanlara hasarin %60'ini verir. 0 = patlamaz.</summary>
     public float splash;
     private static readonly Collider[] SplashHits = new Collider[24];
@@ -169,6 +187,7 @@ public class Bullet : MonoBehaviour
         b.age = 0f;
         b.lifetime = b.defaultLifetime > 0f ? b.defaultLifetime : b.lifetime;
         b.easing = false;
+        b.flakBurst = false;
 
         if (fromPlayer)
         {
@@ -277,6 +296,7 @@ public class Bullet : MonoBehaviour
 
         if (age > lifetime)
         {
+            if (flakBurst) FlakBurst();
             Despawn();
             return;
         }
