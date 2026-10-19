@@ -102,6 +102,56 @@ public static class BaseBuilder
         return res;
     }
 
+    /// <summary>
+    /// Savas gemisi (deniz gecisi): govde + kopru + baca + ileri top kulesi + iki uçaksavar. Yerel +Z = pruva.
+    /// pos: gemi kokunun dunya konumu (su cizgisi), heading: yatay yol yonu. units[0] gemi govdesidir (hedef).
+    /// </summary>
+    public static Result BuildShip(CombatManager manager, Material litBase, Material glowBase, Vector3 pos, Vector3 heading, int stage)
+    {
+        mgr = manager;
+        lit = litBase;
+        glow = glowBase != null ? glowBase : litBase;
+        cache.Clear();
+        stageIdx = stage;
+        hpMul = GameSettings.Current.baseHpMultiplier;
+        res = new Result();
+
+        heading.y = 0f;
+        if (heading.sqrMagnitude < 0.01f) heading = Vector3.forward;
+        var rootGo = new GameObject("Warship");
+        Transform root = rootGo.transform;
+        root.SetPositionAndRotation(pos, Quaternion.LookRotation(heading.normalized, Vector3.up));
+        res.root = rootGo;
+
+        // Kok y = su cizgisi: govde 3 m suyun altinda, 5 m ustunde
+        EnemyPlane hull = NewUnit(root, "Hull", V(0f, 1f, 0f), 0f, EnemyKind.GroundBuilding, "Savaş Gemisi", Hits(30), 30f, (int)PickupKind.Missile);
+        Transform t = hull.transform;
+        Color steel = C(0.36f, 0.4f, 0.45f), dark = C(0.15f, 0.17f, 0.2f), red = C(0.6f, 0.1f, 0.08f), pale = C(0.62f, 0.66f, 0.7f);
+
+        Part(t, PrimitiveType.Cube, "Hull", V(0f, 0f, 0f), V(16f, 8f, 86f), steel);
+        Part(t, PrimitiveType.Cube, "Bow", V(0f, 0f, 47f), V(10f, 8f, 12f), steel);
+        Part(t, PrimitiveType.Cube, "BowTip", V(0f, 0.5f, 55f), V(4f, 7f, 6f), steel);
+        Part(t, PrimitiveType.Cube, "Deck", V(0f, 4.2f, 0f), V(14f, 0.6f, 80f), dark);
+        Part(t, PrimitiveType.Cube, "Stripe", V(0f, -1.5f, 0f), V(16.2f, 1.2f, 86.2f), red, default, false, false);
+        Part(t, PrimitiveType.Cube, "Bridge", V(0f, 10f, -10f), V(9f, 11f, 16f), pale);
+        Part(t, PrimitiveType.Cylinder, "Funnel", V(0f, 18f, -20f), V(4.5f, 4f, 4.5f), red);
+        Part(t, PrimitiveType.Cylinder, "Mast", V(0f, 22f, -8f), V(0.8f, 6f, 0.8f), dark);
+
+        // Ileri top kulesi (agir top davranisi)
+        Transform head = Pivot(t, "Head", V(0f, 6.2f, 24f));
+        Part(head, PrimitiveType.Cube, "Body", V(0f, 0.8f, 0f), V(7f, 3.4f, 8f), steel);
+        Part(head, PrimitiveType.Cylinder, "BarrelL", V(-1.4f, 1f, 8f), V(1.1f, 4.5f, 1.1f), dark, V(90f, 0f, 0f));
+        Part(head, PrimitiveType.Cylinder, "BarrelR", V(1.4f, 1f, 8f), V(1.1f, 4.5f, 1.1f), dark, V(90f, 0f, 0f));
+        Transform muzzle = Pivot(head, "Muzzle", V(0f, 1f, 13.2f));
+        hull.gameObject.AddComponent<GroundUnit>().Setup(GroundUnit.Role.Cannon, head, muzzle);
+        FinishUnit(hull);
+
+        // Iki uçaksavar: kopru onunde ve kiciga yakin, guverte ustunde (kok yerel y: guverte ~ 1 + 4.5)
+        Flak(root, new Vector2(0f, -32f), 5.5f);
+        Flak(root, new Vector2(0f, 8f), 5.5f);
+        return res;
+    }
+
     // ------------------------------------------------------------ yardimcilar
 
     private static Color C(float r, float g, float b) { return new Color(r, g, b, 1f); }
@@ -224,9 +274,9 @@ public static class BaseBuilder
 
     // --------------------------------------------------------------- yapilar
 
-    private static void Flak(Transform root, Vector2 p)
+    private static void Flak(Transform root, Vector2 p, float y = 0f)
     {
-        EnemyPlane e = NewUnit(root, "Flak", V(p.x, 0f, p.y), 0f, EnemyKind.GroundTurret, "Uçaksavar", Hits(3), 5f, -1);
+        EnemyPlane e = NewUnit(root, "Flak", V(p.x, y, p.y), 0f, EnemyKind.GroundTurret, "Uçaksavar", Hits(3), 5f, -1);
         Transform t = e.transform;
         Color olive = C(0.27f, 0.31f, 0.22f), dark = C(0.12f, 0.13f, 0.14f), metal = C(0.5f, 0.52f, 0.55f);
 

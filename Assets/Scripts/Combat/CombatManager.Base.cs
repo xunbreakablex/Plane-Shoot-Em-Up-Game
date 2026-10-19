@@ -73,6 +73,8 @@ public partial class CombatManager
         if (baseRoot != null) Destroy(baseRoot);
         baseRoot = null;
         baseCore = null;
+        foreach (var ship in shipRoots) if (ship != null) Destroy(ship);
+        shipRoots.Clear();
 
         baseDef = stage.bas;
         baseCleared = !baseDef.enabled;
@@ -128,8 +130,45 @@ public partial class CombatManager
             RunState.RegisterSpawn(1);
         }
 
+        // Deniz gecisinde rotanin uzerinde yavasca giden savas gemileri
+        if (baseDef.hasStart)
+            SpawnShips(index, new Vector3(baseDef.startXZ.x, 0f, baseDef.startXZ.y), center);
+
         if (!string.IsNullOrEmpty(baseDef.intro))
             Announce(baseDef.intro, new Color(1f, 0.82f, 0.4f), 3.2f);
+    }
+
+    private readonly List<GameObject> shipRoots = new List<GameObject>();
+
+    /// <summary>Deniz gecisi: baslangic ile us arasindaki rotaya, rotaya dik yonde yavasca giden savas gemileri koyar.</summary>
+    private void SpawnShips(int index, Vector3 start, Vector3 center)
+    {
+        Vector3 route = center - start;
+        route.y = 0f;
+        float len = route.magnitude;
+        if (len < 800f) return;
+        Vector3 rd = route / len;
+        Vector3 side = Vector3.Cross(Vector3.up, rd);
+
+        int count = Mathf.Clamp(2 + index / 2, 2, 5);
+        for (int i = 0; i < count; i++)
+        {
+            float t = Mathf.Lerp(0.22f, 0.78f, (i + 0.5f) / count);
+            float lateral = (i % 2 == 0 ? 1f : -1f) * Random.Range(80f, 260f);
+            Vector3 pos = start + rd * (len * t) + side * lateral;
+            pos.y = SeaLevel - 3f;
+
+            // Rotayi kesecek sekilde yanlamasina gider (yarisi bir yone, yarisi diger yone)
+            Vector3 heading = side * (i % 2 == 0 ? -1f : 1f);
+            BaseBuilder.Result built = BaseBuilder.BuildShip(this, bossLit, bossGlow, pos, heading, Mathf.Min(index, 7));
+            built.root.AddComponent<Warship>().Setup(heading, Random.Range(5f, 8f), built.units[0]);
+            shipRoots.Add(built.root);
+            foreach (var u in built.units)
+            {
+                enemies.Add(u);
+                RunState.RegisterSpawn(1);
+            }
+        }
     }
 
     /// <summary>Bir noktada, belirli aralikla birden cok patlama (yikilan buyuk yapi): kareye yayilir.</summary>
