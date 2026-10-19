@@ -3,7 +3,7 @@ using UnityEngine;
 // MidBoss: asama ortasi mini boss (olmesi asamayi bitirmez). Boss/FinalBoss: asama sonu.
 // GroundTurret / GroundBuilding / GroundCore: yer ustu birimleri (dusman ussu); hareket etmezler.
 // Not: siralama onemli: IsBoss "Kind >= MidBoss"; yer birimleri bossun onunde durmali.
-public enum EnemyKind { Swarmer, Fighter, Heavy, GroundTurret, GroundBuilding, GroundCore, MidBoss, Boss, FinalBoss }
+public enum EnemyKind { Swarmer, Fighter, Heavy, Kamikaze, Sniper, GroundTurret, GroundBuilding, GroundCore, MidBoss, Boss, FinalBoss }
 
 // Chase: oyuncuyu kovalar (dogfight). Strafe: formasyonla duz bir hat uzerinde gecer ve ates eder.
 public enum EnemyBehavior { Chase, Strafe }
@@ -39,6 +39,18 @@ public static class EnemyKinds
                 {
                     title = "Ağır Bombardıman", tint = new Color(0.55f, 0.2f, 0.75f), marker = new Color(0.85f, 0.45f, 1f),
                     scale = 1.7f, speedMul = 0.75f, turnMul = 0.7f, radius = 8f, ramDamage = 4, score = 800
+                };
+            case EnemyKind.Kamikaze:
+                return new EnemyKindInfo
+                {
+                    title = "Kamikaze", tint = new Color(1f, 0.38f, 0.08f), marker = new Color(1f, 0.45f, 0.12f),
+                    scale = 0.85f, speedMul = 1.45f, turnMul = 1.4f, radius = 3.6f, ramDamage = 3, score = 250
+                };
+            case EnemyKind.Sniper:
+                return new EnemyKindInfo
+                {
+                    title = "Nişancı", tint = new Color(0.2f, 0.78f, 0.85f), marker = new Color(0.3f, 0.92f, 1f),
+                    scale = 1.15f, speedMul = 0.9f, turnMul = 1.1f, radius = 4.8f, ramDamage = 2, score = 650
                 };
             case EnemyKind.GroundTurret:
                 return new EnemyKindInfo
@@ -108,7 +120,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     public int CarrierDrop { get; private set; } = -1;
     public bool IsCarrier => CarrierDrop >= 0;
 
-    private enum Pattern { Aimed, Fan, FanRing, Spiral }
+    private enum Pattern { Aimed, Fan, FanRing, Spiral, Snipe, None }
 
     private CombatManager mgr;
     private Rigidbody rb;
@@ -222,6 +234,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         float dist = Vector3.Distance(transform.position, targetPos);
         if (dist > fireRange) return false;
 
+        if (pattern == Pattern.None) return Kind == EnemyKind.Kamikaze && dist < 650f;   // kamikaze: yaklasiyor uyarisi
         if (pattern == Pattern.Aimed)
             return burstLeft > 0 || Vector3.Angle(transform.forward, targetPos - transform.position) < fireCone * 2.5f;
 
@@ -285,6 +298,16 @@ public class EnemyPlane : MonoBehaviour, IDamageable
                 pattern = Pattern.FanRing;
                 burstCdMin = 3f; burstCdMax = 4.5f;
                 bulletDamage = 2; fireRange = 760f; bulletSpeed = 190f;
+                break;
+            case EnemyKind.Kamikaze:
+                pattern = Pattern.None;
+                canPeel = false;
+                break;
+            case EnemyKind.Sniper:
+                pattern = Pattern.Snipe;
+                burstCdMin = 2.6f; burstCdMax = 3.8f;
+                bulletDamage = 2; fireRange = 950f; bulletSpeed = 340f;
+                canPeel = false;
                 break;
             case EnemyKind.Boss:
                 pattern = Pattern.FanRing;
@@ -405,6 +428,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         float speed = cruiseSpeed;
         if (dist > 700f) speed *= 1.4f;
         else if (dist < 150f) speed *= 0.9f;
+        if (Kind == EnemyKind.Kamikaze && dist < 500f) speed *= 1.25f;   // son atilim
         speed = Mathf.Max(speed, mgr.PlayerSpeed * (IsBoss ? 0.45f : 0.7f));
 
         // Onde tutma (lead) ile takip
@@ -417,6 +441,15 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         {
             float weave = Mathf.Sin(Time.time * weaveRate + weavePhase) * 10f;
             desired = Quaternion.AngleAxis(weave, Vector3.up) * desired;
+        }
+
+        // Nisanci: mesafeyi korur (yakinsa uzaklasir, orta mesafede etrafinda doner, uzaksa yaklasir)
+        if (Kind == EnemyKind.Sniper && dist > 1f)
+        {
+            Vector3 dirTo = toPlayer / dist;
+            Vector3 side = Vector3.Cross(Vector3.up, dirTo) * (Mathf.Sin(weavePhase) > 0f ? 1f : -1f);
+            if (dist < 380f) desired = (-dirTo * 0.8f + side * 0.6f + Vector3.up * 0.1f).normalized;
+            else if (dist < 580f) desired = (side + dirTo * 0.25f).normalized;
         }
 
         // Carpisma onleme: cok yakinda ve oyuncuya dogru uciyorsa yana/yukari kirilir (peel-off)
@@ -505,7 +538,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
     private void TryShoot(Vector3 pos, Quaternion rot, Vector3 fwd, Transform target, float dist)
     {
-        if (!mgr.enemiesShoot || mgr.EnemyBulletPrefab == null) return;
+        if (!mgr.enemiesShoot || mgr.EnemyBulletPrefab == null || pattern == Pattern.None) return;
 
         if (pattern == Pattern.Aimed)
         {
@@ -558,6 +591,11 @@ public class EnemyPlane : MonoBehaviour, IDamageable
                 // Heavy/Boss: bir salvo yelpaze, bir salvo hedefe yonelik halka
                 if (volleyIndex % 2 == 0) FanShot(origin, dir, IsBoss ? 5 : 3, IsBoss ? 16f : 11f);
                 else RingShot(origin, dir, IsBoss ? 14 : 10, volleyIndex * 9f);
+                break;
+
+            case Pattern.Snipe:
+                // Tek, hizli ve isabetli mermi (oyuncu yerinde durursa vurur)
+                Spawn(origin, dir, bulletSpeed);
                 break;
 
             case Pattern.Spiral:

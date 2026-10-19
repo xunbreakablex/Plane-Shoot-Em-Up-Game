@@ -285,7 +285,7 @@ public static class PlaneBuilder
             if (type <= 0) continue;
 
             PartDef def = PartCatalog.Weapons[type];
-            float thick = (def.damage > 1f ? 0.15f : (def.rate > 15f ? 0.1f : 0.075f)) * 1.5f;
+            float thick = (def.damage > 1f || def.pellets > 1 ? 0.15f : (def.rate > 15f ? 0.1f : 0.075f)) * 1.5f;
 
             // Namlu ucu WeaponOffset'tedir: silindir merkezi uctan yarim boy geride
             GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);

@@ -124,7 +124,7 @@ public static class LoadoutMath
             PartDef d = PartCatalog.Weapons[i];
             s.weight += d.weight;
             s.powerUsed += d.power;
-            s.weaponDps += d.rate * d.damage;
+            s.weaponDps += d.rate * d.ShotDamage;
             s.weaponCount++;
         }
         foreach (int i in l.shields)

@@ -54,7 +54,7 @@ public partial class PlayerGun : MonoBehaviour
         {
             if (w <= 0) continue;
             PartDef d = PartCatalog.Weapons[w];
-            float perShot = d.beam > 0 ? d.damage : d.damage + sides * 0.5f;   // yan mermiler her iki atista bir cikar (isinlarda yok)
+            float perShot = d.beam > 0 ? d.damage : d.ShotDamage + sides * 0.5f;   // yan mermiler her iki atista bir cikar (isinlarda yok)
             dps += d.rate * rateMul * perShot;
         }
 
@@ -534,7 +534,7 @@ public partial class PlayerGun : MonoBehaviour
             if (Vector3.Angle(t.forward, dir) > gs.fireCone)
                 dir = Vector3.RotateTowards(t.forward, dir, gs.fireCone * Mathf.Deg2Rad, 0f).normalized;
 
-            if (def.spread > 0f)
+            if (def.spread > 0f && def.pellets <= 1)
                 dir = (dir + Random.insideUnitSphere * Mathf.Tan(def.spread * Mathf.Deg2Rad)).normalized;
 
             // Kritik: ek +1 hasar
@@ -543,15 +543,30 @@ public partial class PlayerGun : MonoBehaviour
 
             // Standart oyuncu atisi: namlu ucundan mermi + parlama + kisa gorunmezlik. Mermi namlu yonunde
             // (burun) cikar, nisan noktasina ease-in ile kivrilir: namludan acili cikis goze batmasin.
-            Vector3 aimPoint = muzzle + dir * aimDist;
-            PlayerShot.FireEased(bulletPrefab, muzzlePoint, muzzle, t.forward, aimPoint, bulletSpd, dmg, t, mods.pierce);
+            int pierce = mods.pierce + def.pierce;
+            if (def.pellets > 1)
+            {
+                // Saçma: ayni anda birden cok pelet, her biri rastgele sapar; menzilleri kisadir
+                float pelletLife = def.range / Mathf.Max(bulletSpd, 1f);
+                for (int p = 0; p < def.pellets; p++)
+                {
+                    Vector3 pd = (dir + Random.insideUnitSphere * Mathf.Tan(def.spread * Mathf.Deg2Rad)).normalized;
+                    Bullet pb = PlayerShot.Fire(bulletPrefab, p == 0 ? muzzlePoint : null, muzzle, pd, bulletSpd * Random.Range(0.9f, 1.05f), dmg, t, pierce);
+                    if (pb != null) pb.lifetime = pelletLife;
+                }
+            }
+            else
+            {
+                Vector3 aimPoint = muzzle + dir * aimDist;
+                PlayerShot.FireEased(bulletPrefab, muzzlePoint, muzzle, t.forward, aimPoint, bulletSpd, dmg, t, pierce);
+            }
 
             // Guc 2+: iki yan mermi; guc 4: daha genis ikinci cift. Yan mermiler her iki atista bir
             // cikar (DPS patlamasin diye).
             if ((shotCount[i] & 1) == 0)
             {
-                if (power >= 2) SideBullets(muzzle, dir, t, bulletSpd, 3f, mods.pierce);
-                if (power >= 4) SideBullets(muzzle, dir, t, bulletSpd, 6.5f, mods.pierce);
+                if (power >= 2 && def.pellets <= 1) SideBullets(muzzle, dir, t, bulletSpd, 3f, pierce);
+                if (power >= 4 && def.pellets <= 1) SideBullets(muzzle, dir, t, bulletSpd, 6.5f, pierce);
             }
 
             if (!played)

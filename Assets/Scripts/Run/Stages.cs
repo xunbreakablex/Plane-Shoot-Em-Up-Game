@@ -79,6 +79,7 @@ public static class Stages
                 W(66,  EnemyKind.Swarmer, 8,  Formation.Ring),
                 W(79,  EnemyKind.Heavy,   1,  Formation.Line, PickupKind.Shield),
                 W(82,  EnemyKind.Swarmer, 4,  Formation.V),
+                W(88,  EnemyKind.Kamikaze, 2, Formation.Line),
                 W(94,  EnemyKind.Fighter, 3,  Formation.Pincer, PickupKind.Bomb),
                 W(106, EnemyKind.Swarmer, 10, Formation.Column, PickupKind.Missile),
             }
@@ -103,11 +104,14 @@ public static class Stages
                 W(20,  EnemyKind.Swarmer, 8,  Formation.Ring),
                 W(30,  EnemyKind.Heavy,   2,  Formation.Line, PickupKind.Shield),
                 W(38,  EnemyKind.Swarmer, 7,  Formation.Column),
+                W(44,  EnemyKind.Kamikaze, 3, Formation.Pincer),
                 W(48,  EnemyKind.Fighter, 4,  Formation.V, PickupKind.Power),
                 W(60,  EnemyKind.Swarmer, 6,  Formation.Pincer),
                 W(63,  EnemyKind.Heavy,   1,  Formation.Line, PickupKind.Bomb),
+                W(70,  EnemyKind.Sniper,  1,  Formation.Line, PickupKind.Power),
                 W(74,  EnemyKind.Swarmer, 10, Formation.Ring),
                 W(86,  EnemyKind.Fighter, 4,  Formation.Line, PickupKind.Repair),
+                W(92,  EnemyKind.Kamikaze, 4, Formation.Ring),
                 W(98,  EnemyKind.Heavy,   2,  Formation.V, PickupKind.Power),
                 W(100, EnemyKind.Swarmer, 8,  Formation.Column),
                 W(114, EnemyKind.Fighter, 5,  Formation.Pincer, PickupKind.Missile),
@@ -141,6 +145,12 @@ public static class Stages
                 W(95,  EnemyKind.Swarmer, 10, Formation.Column),
                 W(110, EnemyKind.Fighter, 6,  Formation.Pincer, PickupKind.Missile),
                 W(122, EnemyKind.Swarmer, 12, Formation.Ring, PickupKind.Bomb),
+                W(14,  EnemyKind.Sniper,  2,  Formation.Pincer),
+                W(34,  EnemyKind.Kamikaze, 4, Formation.V),
+                W(62,  EnemyKind.Sniper,  2,  Formation.Line, PickupKind.Shield),
+                W(76,  EnemyKind.Kamikaze, 5, Formation.Ring),
+                W(100, EnemyKind.Sniper,  3,  Formation.V),
+                W(116, EnemyKind.Kamikaze, 6, Formation.Pincer),
             }
         },
         new StageDef
@@ -171,6 +181,13 @@ public static class Stages
                 W(95,  EnemyKind.Swarmer, 12, Formation.Column),
                 W(110, EnemyKind.Fighter, 6,  Formation.Pincer, PickupKind.Missile),
                 W(122, EnemyKind.Swarmer, 14, Formation.Ring, PickupKind.Bomb),
+                W(16,  EnemyKind.Sniper,  2,  Formation.Pincer),
+                W(32,  EnemyKind.Kamikaze, 5, Formation.Ring),
+                W(46,  EnemyKind.Kamikaze, 4, Formation.V),
+                W(64,  EnemyKind.Sniper,  3,  Formation.Line, PickupKind.Shield),
+                W(78,  EnemyKind.Kamikaze, 6, Formation.Pincer),
+                W(98,  EnemyKind.Sniper,  3,  Formation.V),
+                W(118, EnemyKind.Kamikaze, 7, Formation.Ring),
             }
         },
         new StageDef
@@ -201,9 +218,32 @@ public static class Stages
                 W(95,  EnemyKind.Swarmer, 14, Formation.Column),
                 W(110, EnemyKind.Fighter, 7,  Formation.Pincer, PickupKind.Missile),
                 W(124, EnemyKind.Swarmer, 16, Formation.Ring, PickupKind.Bomb),
+                W(14,  EnemyKind.Sniper,  3,  Formation.V),
+                W(34,  EnemyKind.Kamikaze, 6, Formation.Ring),
+                W(48,  EnemyKind.Sniper,  3,  Formation.Pincer),
+                W(66,  EnemyKind.Kamikaze, 6, Formation.Pincer, PickupKind.Repair),
+                W(82,  EnemyKind.Sniper,  4,  Formation.Line),
+                W(100, EnemyKind.Kamikaze, 8, Formation.Ring),
+                W(118, EnemyKind.Sniper,  4,  Formation.V, PickupKind.Power),
             }
         },
     };
+
+    // Dalgalar zamana gore siralanir (yeni dalga eklerken sirayi korumak gerekmez)
+    static Stages()
+    {
+        foreach (StageDef st in All)
+        {
+            WaveDef[] w = st.waves;
+            for (int i = 1; i < w.Length; i++)
+            {
+                WaveDef x = w[i];
+                int j = i - 1;
+                while (j >= 0 && w[j].time > x.time) { w[j + 1] = w[j]; j--; }
+                w[j + 1] = x;
+            }
+        }
+    }
 
     private static WaveDef W(float time, EnemyKind kind, int count, Formation formation, PickupKind? drop = null)
     {

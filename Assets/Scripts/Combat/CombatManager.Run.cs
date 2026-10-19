@@ -398,6 +398,8 @@ public partial class CombatManager
         {
             case EnemyKind.Swarmer: return Mathf.Max(1, Mathf.RoundToInt(basic / 3f));
             case EnemyKind.Heavy: return Mathf.RoundToInt(basic * 2.5f);
+            case EnemyKind.Kamikaze: return Mathf.Max(1, Mathf.RoundToInt(basic / 2f));
+            case EnemyKind.Sniper: return Mathf.RoundToInt(basic * 1.4f);
             default: return basic;
         }
     }

@@ -33,6 +33,11 @@ public class PartDef
     public float speed = 380f;
     public float spread = 0.25f;
     public float range = 500f;
+    public int pellets = 1;    // tek atista cikan mermi sayisi (saçma); her biri 'damage' vurur
+    public int pierce;         // delinen dusman sayisi (ray tufegi)
+
+    /// <summary>Atis basina beklenen hasar: saçma peletlerinin ~%70'i isabet eder (DPS gostergesi ve hangar kapisi).</summary>
+    public float ShotDamage => pellets > 1 ? damage * pellets * 0.7f : damage;
 
     // Lazer (yalniz silahlar): 0 = mermi, 1 = kesintisiz isin, 2 = darbeli isin, 3 = portal lazeri (burnun onunde
     // acilan portaldan darbeli isin). Isin aninda vurur ve onundeki herkesi deler; rate = ORTALAMA vurus/sn
@@ -96,6 +101,8 @@ public static class PartCatalog
                       power = 14f, weight = 14f, thrust = 1.3f, maxSpeed = 1.12f, blades = 4 },
         new PartDef { name = "Hafif Motor", description = "Hafif ve ekonomik. 3 kanatlı pervane. Güç kapasitesi sadece 8.",
                       power = 8f, weight = -8f, thrust = 0.9f, maxSpeed = 0.97f, blades = 3 },
+        new PartDef { name = "Jet Motoru", description = "Çok güçlü itki ve yüksek hız. Güç kapasitesi 17; ağır ve pahalı.",
+                      power = 17f, weight = 22f, thrust = 1.45f, maxSpeed = 1.2f, blades = 4 },
     };
 
     public static readonly PartDef[] Wings =
@@ -106,6 +113,8 @@ public static class PartCatalog
                       span = 1.3f, cruise = 0.85f, roll = 0.8f, maxG = 0.9f, maxSpeed = 0.95f, weight = 6f },
         new PartDef { name = "Kısa Kanat", description = "Çok çevik ve hızlı; ama yüksek stall hızı.",
                       span = 0.78f, cruise = 1.12f, roll = 1.35f, maxG = 1.1f, maxSpeed = 1.06f, weight = -2f },
+        new PartDef { name = "Delta Kanat", description = "Yüksek hızda kararlı ve çevik; düşük hızda süzülmez (yüksek stall hızı).",
+                      span = 0.9f, cruise = 1.2f, roll = 1.15f, maxG = 1.25f, maxSpeed = 1.1f, weight = 4f },
     };
 
     public static readonly PartDef[] Armors =
@@ -131,6 +140,10 @@ public static class PartCatalog
                       rate = 4.5f, damage = 3f, range = 850f, beam = 2, beamOn = 0.45f, beamOff = 0.55f, power = 3f, weight = 8f },
         new PartDef { name = "Portal Lazeri", description = "Burnunun önünde bir portal açılır, ışın oradan darbeler halinde çıkar (açık 0,6 / kapalı 0,6 sn), delici. Güç 4.",
                       rate = 5f, damage = 3f, range = 850f, beam = 3, beamOn = 0.6f, beamOff = 0.6f, power = 4f, weight = 11f },
+        new PartDef { name = "Saçma Topu", description = "Yakın mesafe canavarı: her atışta 7 saçma (1,8 atış/sn), 350 m menzil. Güç 2.",
+                      rate = 1.8f, damage = 1f, speed = 330f, spread = 5f, range = 350f, pellets = 7, power = 2f, weight = 9f },
+        new PartDef { name = "Ray Tüfeği", description = "Yavaş ama devasa: mermi başına 6 hasar, hızlı mermi, 3 düşmanı delip geçer (1,2 atış/sn). Güç 4.",
+                      rate = 1.2f, damage = 6f, speed = 900f, spread = 0f, range = 1500f, pierce = 3, power = 4f, weight = 12f },
     };
 
     public static readonly PartDef[] Shields =
@@ -150,6 +163,8 @@ public static class PartCatalog
                       damage = 3f, speed = 170f, turn = 110f, blast = 12f, range = 1400f, ammo = 3, reload = 8f, power = 2f, weight = 8f },
         new PartDef { name = "Ağır Füze", description = "Daha yavaş ve hantal ama 5 hasar, 16 m patlama. Rampa başına 2 füze, 14 sn'de bir yenilenir. Güç 3.",
                       damage = 5f, speed = 145f, turn = 80f, blast = 16f, range = 1400f, ammo = 2, reload = 14f, power = 3f, weight = 14f },
+        new PartDef { name = "Sürü Füzesi", description = "Küçük, çevik ve bol: 2 hasar, 9 m patlama. Rampa başına 6 füze, 5 sn'de bir yenilenir. Güç 2.",
+                      damage = 2f, speed = 190f, turn = 170f, blast = 9f, range = 1400f, ammo = 6, reload = 5f, power = 2f, weight = 10f },
     };
 
     public static readonly PartDef[] Turrets =
