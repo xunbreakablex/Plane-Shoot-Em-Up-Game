@@ -552,11 +552,11 @@ public partial class CombatManager : MonoBehaviour
             {
                 var main = ps.main;
                 main.loop = false;
-                main.startSizeMultiplier *= 2.2f;
+                main.startSizeMultiplier *= 3.5f;
                 main.startColor = new Color(0.08f, 0.08f, 0.08f, 0.9f);
                 var em = ps.emission;
                 em.rateOverTime = 0f;
-                em.SetBursts(new[] { new ParticleSystem.Burst(0f, 8) });
+                em.SetBursts(new[] { new ParticleSystem.Burst(0f, 12) });
                 ps.Play();
             }
             Destroy(go, 4f);
