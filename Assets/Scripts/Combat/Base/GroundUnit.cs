@@ -159,6 +159,10 @@ public class GroundUnit : MonoBehaviour
 
         mgr.SpawnRubble(pos, r, role == Role.Core || role == Role.Tank);
 
+        // Savas gemisi: govde parcalari gemide kalir ve gemi batar
+        Warship ship = role == Role.Cannon ? GetComponentInParent<Warship>() : null;
+        if (ship != null) ship.AbsorbWreck(transform);
+
         if (role == Role.Tank)
         {
             // Civardaki yer birimleri yanar

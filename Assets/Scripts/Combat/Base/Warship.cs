@@ -20,6 +20,19 @@ public class Warship : MonoBehaviour
         born = Time.time;
     }
 
+    /// <summary>Gemi govdesi yok edilirken: gorsel parcalar gemi kokune tasinir (govde nesnesi silinse de gemi batarken gorunur kalir).</summary>
+    public void AbsorbWreck(Transform hullTransform)
+    {
+        var parts = new System.Collections.Generic.List<Transform>();
+        foreach (Transform c in hullTransform) parts.Add(c);
+        foreach (Transform c in parts)
+        {
+            c.SetParent(transform, true);
+            foreach (var col in c.GetComponentsInChildren<Collider>()) Destroy(col);
+            foreach (var r in c.GetComponentsInChildren<Renderer>()) r.material.color = r.material.color * 0.45f;   // yanik enkaz
+        }
+    }
+
     private void Update()
     {
         if (GameState.Paused) return;
