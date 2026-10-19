@@ -11,6 +11,7 @@ public static class Difficulty
     private static readonly float[] FireCdMuls = { 1.3f, 1f, 0.8f };
     private static readonly float[] ScoreMuls = { 0.7f, 1f, 1.5f };
     private static readonly float[] BossMuls = { 0.8f, 1f, 1.25f };
+    private static readonly float[] AimErrMuls = { 1.3f, 0.75f, 0.5f };   // dusman nisan hatasi carpani (kucuk = isabetli)
 
     private static int level = -1;
 
@@ -26,6 +27,7 @@ public static class Difficulty
     public static float BossHitsMul => BossMuls[Level];
     public static float FireCooldownMul => FireCdMuls[Level];
     public static float ScoreMul => ScoreMuls[Level];
+    public static float AimErrorMul => AimErrMuls[Level];
 
     public static void Next() { Level = (Level + 1) % Names.Length; }
 }

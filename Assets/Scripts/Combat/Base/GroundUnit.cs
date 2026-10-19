@@ -108,7 +108,7 @@ public class GroundUnit : MonoBehaviour
         head.rotation = Quaternion.Slerp(head.rotation, Quaternion.LookRotation(want), 1f - Mathf.Exp(-5f * dt));
 
         // Radar yoksa nisan hatasi iki kati
-        float err = mgr.enemyAimError * (RadarAlive > 0 ? 1f : 2.2f);
+        float err = mgr.enemyAimError * Difficulty.AimErrorMul * (RadarAlive > 0 ? 1f : 2.2f);
 
         if (role == Role.Flak)
         {

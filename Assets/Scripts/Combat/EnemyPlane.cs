@@ -651,7 +651,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
                 float s = transform.localScale.x;
                 Vector3 muzzle = pos + rot * new Vector3((Random.value < 0.5f ? -0.9f : 0.9f) * s, 0f, 1.6f * s);
                 Vector3 aim = target.position + mgr.PlayerVelocity * (dist / bulletSpeed)
-                              + Random.insideUnitSphere * mgr.enemyAimError;
+                              + Random.insideUnitSphere * (mgr.enemyAimError * Difficulty.AimErrorMul);
                 Spawn(muzzle, (aim - muzzle).normalized, bulletSpeed);
                 Sfx.PlayAt(Sfx.Shot, muzzle, 0.25f);
             }
@@ -664,7 +664,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
         Vector3 origin = pos + fwd * (2f * transform.localScale.x);
         Vector3 toT = target.position + mgr.PlayerVelocity * (dist / bulletSpeed) * 0.8f
-                      + Random.insideUnitSphere * (mgr.enemyAimError * 0.5f) - origin;
+                      + Random.insideUnitSphere * (mgr.enemyAimError * 0.5f * Difficulty.AimErrorMul) - origin;
         Vector3 dir = toT.normalized;
 
         FireVolley(origin, dir);
