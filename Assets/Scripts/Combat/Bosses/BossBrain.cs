@@ -221,6 +221,7 @@ public partial class BossBrain : MonoBehaviour
         int newPhase = frac < 0.33f ? 2 : (frac < 0.66f ? 1 : 0);
         if (newPhase != phase)
         {
+            if (newPhase > phase) BreakOffPart();   // her faz gecisinde govdeden bir parca kopar
             phase = newPhase;
             nextAttack = Mathf.Min(nextAttack, Time.time + 1.2f);
             if (mgr != null)
@@ -331,6 +332,54 @@ public partial class BossBrain : MonoBehaviour
         if (dir.sqrMagnitude < 0.01f) return;
         Quaternion want = Quaternion.LookRotation(dir.normalized, Vector3.up) * Quaternion.Euler(0f, 0f, roll);
         rot = Quaternion.RotateTowards(rot, want, degPerSec * dt);
+    }
+
+    // Faz gecisi: govdeden buyuk bir parca (kanat zari, yuzgec, kol, kuyruk...) patlayarak kopar ve duser.
+    // Yalniz yaprak parcalar secilir (alt nesnesi olmayan): namlu/pivot referanslari bozulmaz. Govde, cekirdek,
+    // goz, bas gibi adlar ve bossun yarisindan buyuk parcalar haric.
+    private void BreakOffPart()
+    {
+        if (renderers == null || mgr == null) return;
+        Bounds whole = new Bounds(transform.position, Vector3.zero);
+        foreach (var r in renderers) if (r != null) whole.Encapsulate(r.bounds);
+        float wholeSize = whole.size.magnitude;
+
+        Renderer best = null;
+        float bestSize = 0f;
+        foreach (var r in renderers)
+        {
+            if (r == null || r.transform.childCount > 0 || r.transform == transform) continue;
+            string n = r.name;
+            if (n.Contains("Body") || n.Contains("Torso") || n.Contains("Hull") || n.Contains("Core") || n.Contains("Eye")
+                || n.Contains("Head") || n.Contains("Muzzle") || n.Contains("Chest") || n.Contains("Halo")) continue;
+            float size = r.bounds.size.magnitude;
+            if (size > wholeSize * 0.55f) continue;
+            if (size > bestSize) { bestSize = size; best = r; }
+        }
+        if (best == null) return;
+
+        Transform part = best.transform;
+        Vector3 c = best.bounds.center;
+        part.SetParent(null, true);
+        foreach (var col in part.GetComponents<Collider>()) col.enabled = false;
+        var prb = part.gameObject.AddComponent<Rigidbody>();
+        prb.mass = 3f;
+        prb.useGravity = true;
+        Vector3 outward = (c - transform.position).normalized;
+        prb.linearVelocity = vel * 0.6f + outward * 18f + Vector3.up * 6f;
+        prb.angularVelocity = Random.onUnitSphere * Random.Range(2f, 5f);
+        Destroy(part.gameObject, 7f);
+
+        // Kopan yerde ve parcanin uzerinde patlama; guclu sarsinti
+        mgr.SpawnExplosion(c, 1.8f);
+        mgr.SpawnExplosion(transform.position + outward * (bestSize * 0.3f), 1.2f);
+        FollowCamera.AddShake(1f, 0.6f);
+        Sfx.PlayAt(Sfx.Crack, c, 1f);
+        if (mgr.SmokeTrailPrefab != null)
+        {
+            var smoke = Instantiate(mgr.SmokeTrailPrefab, part);
+            smoke.transform.localPosition = Vector3.zero;
+        }
     }
 
     /// <summary>Verilen noktanin boss parcalarina en kisa uzakligi (temas hasari icin).</summary>
