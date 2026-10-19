@@ -10,8 +10,8 @@ public static class CreateAircraft
 {
     private const string PrefabFolder = "Assets/Prefabs";
 
-    private static readonly string[] Names = { "Atmaca", "Kartal", "YavruKopekbaligi" };
-    private static readonly int[] ModelIndex = { 3, 4, 5 };
+    private static readonly string[] Names = { "Atmaca", "Kartal", "YavruKopekbaligi", "UzayJeti", "Roket" };
+    private static readonly int[] ModelIndex = { 3, 4, 5, 6, 7 };
 
     [MenuItem("Tools/Create New Aircraft")]
     public static void CreateAll()
@@ -22,6 +22,8 @@ public static class CreateAircraft
         BuildAtmaca();
         BuildKartal();
         BuildShark();
+        BuildSpaceJet();
+        BuildRocket();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
@@ -152,6 +154,92 @@ public static class CreateAircraft
         Part(root, PrimitiveType.Cube, "BellySkid", V(0, -0.5f, 0.3f), V(0.18f, 0.1f, 1.4f), dark);
 
         Finish(root, "YavruKopekbaligi", 2.4f, -0.5f, -0.3f);
+    }
+
+    // Uzay jeti: ucgen kanatli, cam kubbeli, parlayan hatlari olan koyu krom jet (yerde kayak, tekerlek yok)
+    private static void BuildSpaceJet()
+    {
+        Material body = CreateGliderPlane.GetMaterial("SpaceJet_Body", new Color(0.20f, 0.22f, 0.30f));
+        Material belly = CreateGliderPlane.GetMaterial("SpaceJet_Belly", new Color(0.55f, 0.58f, 0.68f));
+        Material accent = CreateGliderPlane.GetMaterial("SpaceJet_Accent", new Color(0.15f, 0.85f, 0.95f));
+        Material dark = CreateGliderPlane.GetMaterial("Plane_Dark", new Color(0.12f, 0.12f, 0.12f));
+        Material glass = CreateGliderPlane.GetMaterial("Plane_Glass", new Color(0.35f, 0.65f, 0.95f));
+        Material glow = Unlit("SpaceJet_Glow", new Color(0.3f, 0.95f, 1f));
+        Material flame = Unlit("SpaceJet_Flame", new Color(0.5f, 0.6f, 1f));
+
+        var root = new GameObject("UzayJeti");
+
+        Part(root, PrimitiveType.Capsule, "Fuselage", V(0, 0, 0), V(0.8f, 2.9f, 0.55f), body, V(90, 0, 0));
+        Part(root, PrimitiveType.Sphere, "Nose", V(0, -0.02f, 3.0f), V(0.42f, 0.32f, 2.2f), body);
+        Part(root, PrimitiveType.Sphere, "Canopy", V(0, 0.28f, 0.9f), V(0.45f, 0.36f, 1.6f), glass);
+
+        // Ucgen kanatlar + parlayan on kenar seritleri
+        Part(root, PrimitiveType.Cube, "WingL", V(-1.5f, -0.04f, -0.9f), V(2.8f, 0.05f, 2.4f), body, V(0, -35, 0));
+        Part(root, PrimitiveType.Cube, "WingR", V(1.5f, -0.04f, -0.9f), V(2.8f, 0.05f, 2.4f), body, V(0, 35, 0));
+        Part(root, PrimitiveType.Cube, "WingTipL", V(-2.55f, -0.04f, -1.9f), V(0.4f, 0.07f, 1.0f), accent, V(0, -35, 0));
+        Part(root, PrimitiveType.Cube, "WingTipR", V(2.55f, -0.04f, -1.9f), V(0.4f, 0.07f, 1.0f), accent, V(0, 35, 0));
+        Part(root, PrimitiveType.Cube, "GlowL", V(-1.15f, -0.01f, 0.1f), V(2.0f, 0.04f, 0.07f), glow, V(0, 35, 0));
+        Part(root, PrimitiveType.Cube, "GlowR", V(1.15f, -0.01f, 0.1f), V(2.0f, 0.04f, 0.07f), glow, V(0, -35, 0));
+
+        // On kanatciklar
+        Part(root, PrimitiveType.Cube, "TailPlane", V(-0.55f, 0.02f, 1.7f), V(0.9f, 0.04f, 0.5f), belly, V(0, 18, 0));
+        Part(root, PrimitiveType.Cube, "TailPlane", V(0.55f, 0.02f, 1.7f), V(0.9f, 0.04f, 0.5f), belly, V(0, -18, 0));
+
+        // V kuyruk (disa yatik)
+        Part(root, PrimitiveType.Cube, "Fin", V(-0.5f, 0.38f, -2.3f), V(0.05f, 0.7f, 0.7f), accent, V(0, 0, 28));
+        Part(root, PrimitiveType.Cube, "Fin", V(0.5f, 0.38f, -2.3f), V(0.05f, 0.7f, 0.7f), accent, V(0, 0, -28));
+
+        // Ikiz itici: parlayan cember + mavi alev
+        for (int s = -1; s <= 1; s += 2)
+        {
+            Part(root, PrimitiveType.Cylinder, "Nozzle", V(0.32f * s, 0, -2.9f), V(0.42f, 0.28f, 0.42f), dark, V(90, 0, 0));
+            Part(root, PrimitiveType.Cylinder, "Ring", V(0.32f * s, 0, -3.2f), V(0.5f, 0.03f, 0.5f), glow, V(90, 0, 0));
+            Part(root, PrimitiveType.Sphere, "Flame", V(0.32f * s, 0, -3.7f), V(0.28f, 0.28f, 1.0f), flame);
+        }
+
+        Part(root, PrimitiveType.Cube, "BellySkid", V(0, -0.34f, 0.2f), V(0.16f, 0.08f, 1.6f), dark);
+
+        Finish(root, "UzayJeti", 2.3f, -3.0f, 0f);
+    }
+
+    // Roket: uzun beyaz gövde, kirmizi burun, dort kanatcik, yan iticiler, buyuk nozul
+    private static void BuildRocket()
+    {
+        Material body = CreateGliderPlane.GetMaterial("Rocket_Body", new Color(0.92f, 0.93f, 0.96f));
+        Material belly = CreateGliderPlane.GetMaterial("Rocket_Belly", new Color(0.62f, 0.66f, 0.74f));
+        Material accent = CreateGliderPlane.GetMaterial("Rocket_Accent", new Color(0.88f, 0.18f, 0.14f));
+        Material dark = CreateGliderPlane.GetMaterial("Plane_Dark", new Color(0.12f, 0.12f, 0.12f));
+        Material glass = CreateGliderPlane.GetMaterial("Plane_Glass", new Color(0.35f, 0.65f, 0.95f));
+        Material flame = Unlit("Rocket_Flame", new Color(1f, 0.65f, 0.15f));
+
+        var root = new GameObject("Roket");
+
+        Part(root, PrimitiveType.Capsule, "Fuselage", V(0, 0, 0), V(1.1f, 2.8f, 1.1f), body, V(90, 0, 0));
+        Part(root, PrimitiveType.Sphere, "Nose", V(0, 0, 2.7f), V(0.95f, 0.95f, 2.4f), accent);
+        Part(root, PrimitiveType.Cylinder, "Band", V(0, 0, 1.0f), V(1.14f, 0.12f, 1.14f), accent, V(90, 0, 0));
+        Part(root, PrimitiveType.Sphere, "Porthole", V(0, 0.46f, 0.3f), V(0.38f, 0.38f, 0.38f), glass);
+
+        // Dort yonde sabit kanatcik: yatay ikisi kanat gorevi yapar, dikey ikisi kuyruk
+        Part(root, PrimitiveType.Cube, "WingL", V(-1.2f, -0.1f, -1.2f), V(1.7f, 0.06f, 1.5f), accent, V(0, -18, 0));
+        Part(root, PrimitiveType.Cube, "WingR", V(1.2f, -0.1f, -1.2f), V(1.7f, 0.06f, 1.5f), accent, V(0, 18, 0));
+        Part(root, PrimitiveType.Cube, "Fin", V(0, 0.72f, -1.55f), V(0.07f, 0.95f, 0.85f), accent, V(18, 0, 0));
+        Part(root, PrimitiveType.Cube, "TailPlane", V(0, -0.66f, -1.55f), V(0.07f, 0.75f, 0.8f), belly, V(-18, 0, 0));
+
+        // Yan iticiler
+        for (int s = -1; s <= 1; s += 2)
+        {
+            Part(root, PrimitiveType.Capsule, "Booster", V(0.85f * s, -0.05f, -0.4f), V(0.42f, 1.5f, 0.42f), belly, V(90, 0, 0));
+            Part(root, PrimitiveType.Sphere, "BoosterCap", V(0.85f * s, -0.05f, 1.1f), V(0.4f, 0.4f, 0.8f), accent);
+            Part(root, PrimitiveType.Sphere, "Flame", V(0.85f * s, -0.05f, -2.15f), V(0.3f, 0.3f, 1.0f), flame);
+        }
+
+        // Ana nozul ve alev
+        Part(root, PrimitiveType.Cylinder, "Nozzle", V(0, 0, -2.0f), V(0.7f, 0.3f, 0.7f), dark, V(90, 0, 0));
+        Part(root, PrimitiveType.Sphere, "Flame", V(0, 0, -2.9f), V(0.5f, 0.5f, 1.7f), flame);
+
+        Part(root, PrimitiveType.Cube, "BellySkid", V(0, -0.58f, 0.3f), V(0.2f, 0.1f, 1.8f), dark);
+
+        Finish(root, "Roket", 1.4f, -2.3f, 0f);
     }
 
     // ================================================================== yardimcilar

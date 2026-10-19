@@ -155,6 +155,8 @@ MonoBehaviour:
   - {fileID: 8523036379712212086, guid: 7723760eea3eebf4f9e1c63131de1fec, type: 3}
   - {fileID: 6023321560406621900, guid: 0bf60fc2549ba604fba3627e67adcd5f, type: 3}
   - {fileID: 8443628293075432838, guid: 31d84a205fc817045b9771b5eb19f2be, type: 3}
+  - {fileID: 1170043130402328370, guid: 55ece639a56bdeb4ab6443e1e111e4d8, type: 3}
+  - {fileID: 8399853568319251257, guid: 9517eabd8778d05419f15765471b3447, type: 3}
   previewRoot: {fileID: 331985198}
   cam: {fileID: 2115528661}
 --- !u!4 &31576720

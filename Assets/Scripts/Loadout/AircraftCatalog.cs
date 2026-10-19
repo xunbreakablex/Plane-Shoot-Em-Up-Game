@@ -90,7 +90,7 @@ public class AircraftDef
 // Yeni ucak eklerken: buraya satir + PlaneBuilder dizilerine hardpoint + sahneye prefab (Tools/Create New Aircraft).
 public static class AircraftCatalog
 {
-    public const int Count = 6;
+    public const int Count = 8;
 
     // Ilk uc model (WW1, WW2, planor) eski global kurallari kullanir
     private static SlotRule[] ClassicRules()
@@ -175,6 +175,35 @@ public static class AircraftCatalog
                 new SlotRule(SlotKind.Missile, 0, Requirement.Boss(BossType.Octopus)),
                 new SlotRule(SlotKind.Shield,  0, Requirement.Score(15000)),
                 new SlotRule(SlotKind.Turret,  0, Requirement.Boss(BossType.Zeppelin)),
+            }
+        },
+
+        // ---- Asama 4-5 uçaklari
+        new AircraftDef
+        {
+            name = "Uzay Jeti", tagline = "Gelecekten gelen jet: en çevik, ama zırhı ince.",
+            preset = PlaneController.PlanePreset.SpaceJet,
+            weapons = 3, missiles = 2, shields = 1, turrets = 0, hpMul = 0.65f,
+            unlock = Requirement.Boss(BossType.Demon),
+            rules = new[]
+            {
+                new SlotRule(SlotKind.Weapon,  2, Requirement.Boss(BossType.Angel)),
+                new SlotRule(SlotKind.Missile, 1, Requirement.Boss(BossType.KiWarrior)),
+                new SlotRule(SlotKind.Shield,  0, Requirement.Score(40000)),
+            }
+        },
+        new AircraftDef
+        {
+            name = "Roket", tagline = "Uzay roketi: çok hızlı ve dayanıklı, geniş dönemez.",
+            preset = PlaneController.PlanePreset.Rocket,
+            weapons = 2, missiles = 2, shields = 2, turrets = 1, hpMul = 1.5f,
+            unlock = Requirement.Boss(BossType.Angel),
+            rules = new[]
+            {
+                new SlotRule(SlotKind.Missile, 0, Requirement.Boss(BossType.KiWarrior)),
+                new SlotRule(SlotKind.Missile, 1, Requirement.Boss(BossType.MagicalGirl)),
+                new SlotRule(SlotKind.Shield,  1, Requirement.Wins(1)),
+                new SlotRule(SlotKind.Turret,  0, Requirement.Boss(BossType.MagicalGirl)),
             }
         },
     };

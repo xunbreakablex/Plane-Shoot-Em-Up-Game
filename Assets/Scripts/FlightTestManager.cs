@@ -44,6 +44,8 @@ public class FlightTestManager : MonoBehaviour
         if (kb.digit4Key.wasPressedThisFrame) SelectAircraft(3);
         if (kb.digit5Key.wasPressedThisFrame) SelectAircraft(4);
         if (kb.digit6Key.wasPressedThisFrame) SelectAircraft(5);
+        if (kb.digit7Key.wasPressedThisFrame) SelectAircraft(6);
+        if (kb.digit8Key.wasPressedThisFrame) SelectAircraft(7);
         if (kb.tabKey.wasPressedThisFrame)
         {
             // Sonraki acik ucak
@@ -204,7 +206,7 @@ public class FlightTestManager : MonoBehaviour
         HelpAimAuto,
         HelpSteerArcade,
         HelpKeysDefault,
-        "SAĞ TIK  yakınlaştır     1-6 / TAB  uçak değiştir (açık olanlar)",
+        "SAĞ TIK  yakınlaştır     1-8 / TAB  uçak değiştir (açık olanlar)",
         HelpAutoOn,
     };
 

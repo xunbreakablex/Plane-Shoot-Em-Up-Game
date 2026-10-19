@@ -459,15 +459,18 @@ public class HangarController : MonoBehaviour
 
         // Ucak sekmeleri (kilitli ucaklar sonu kilit isaretiyle gorunur; secilip incelenebilir)
         string[] names = PartCatalog.ModelNames;
-        float bw = 108f, bh = 42f, gap = 4f;
+        float gap = 4f;
         float x = 244f;      // "HANGAR" basligi ile boya secicisi arasinda
+        float bh = 42f;
+        // Sekme genisligi ucak sayisina gore daralir (boya secicisine tasmasin)
+        float bw = Mathf.Min(108f, (W - Gap - 330f - 8f - x) / names.Length - gap);
         for (int i = 0; i < names.Length; i++)
         {
             bool owned = Unlocks.OwnsAircraft(i);
             string label = ShortName(names[i]);
             Rect r = new Rect(x + i * (bw + gap), 11f, bw, bh);
 
-            if (Btn(r, label, 13, i == model, owned ? Gold : new Color(1f, 0.4f, 0.35f)) && i != model)
+            if (Btn(r, label, bw < 110f ? 11 : 13, i == model, owned ? Gold : new Color(1f, 0.4f, 0.35f)) && i != model)
                 lastDesc = CycleModel(i);
 
             if (!owned)
@@ -631,10 +634,10 @@ public class HangarController : MonoBehaviour
         cy += 26f;
         // Taban puan = ucagin kendi ozelligi (jetler ust siralarda); parcalar bunu carpar
         PlaneController.PresetData pd = PlaneController.DataOf(AircraftCatalog.Get(model).preset);
-        Rating(x + 14f, ref cy, w - 28f, "Hız", st.EffMaxSpeed, prev.EffMaxSpeed, pd.maxSpeed / 15f);
-        Rating(x + 14f, ref cy, w - 28f, "İvme", st.EffThrust, prev.EffThrust, pd.thrust / 3f);
-        Rating(x + 14f, ref cy, w - 28f, "Çeviklik (yatış)", st.EffRoll, prev.EffRoll, pd.roll / 40f);
-        Rating(x + 14f, ref cy, w - 28f, "Dönüş gücü (G)", st.EffMaxG, prev.EffMaxG, pd.maxG / 1.5f);
+        Rating(x + 14f, ref cy, w - 28f, "Hız", st.EffMaxSpeed, prev.EffMaxSpeed, pd.maxSpeed / 25f);
+        Rating(x + 14f, ref cy, w - 28f, "İvme", st.EffThrust, prev.EffThrust, pd.thrust / 4.6f);
+        Rating(x + 14f, ref cy, w - 28f, "Çeviklik (yatış)", st.EffRoll, prev.EffRoll, pd.roll / 58f);
+        Rating(x + 14f, ref cy, w - 28f, "Dönüş gücü (G)", st.EffMaxG, prev.EffMaxG, pd.maxG / 2.0f);
         Hud.Text(new Rect(x + 14f, cy - 2f, w - 28f, 16f), "10 üzerinden; ağır donanım puanı düşürür.", Dim, 11, TextAnchor.UpperLeft, false);
         cy += 26f;
 

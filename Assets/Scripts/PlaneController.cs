@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 public class PlaneController : MonoBehaviour
 {
-    public enum PlanePreset { Glider, Fighter, Biplane, LightJet, HeavyJet, MiniShark }
+    public enum PlanePreset { Glider, Fighter, Biplane, LightJet, HeavyJet, MiniShark, SpaceJet, Rocket }
 
     /// <summary>Ucus ozellikleri paketi: ApplyPreset bunu uygular, hangar puanlari da buradan okur.</summary>
     public struct PresetData
@@ -76,6 +76,24 @@ public class PlaneController : MonoBehaviour
                     cruiseAoA = 1.9f, stallAoA = 28f, liftSlope = 5.5f, maxG = 14f,
                     roll = 470f, yaw = 55f, pitchGain = 11f, responsiveness = 15f, inputResponse = 1.9f,
                     arcadeTurn = 150f
+                };
+            case PlanePreset.SpaceJet:
+                // Uzay jeti: cok cevik, hizli, ince govde
+                return new PresetData
+                {
+                    name = "Uzay Jeti", cruise = 124f, maxSpeed = 218f, thrust = 34f,
+                    cruiseAoA = 1.4f, stallAoA = 28f, liftSlope = 5.5f, maxG = 17f,
+                    roll = 480f, yaw = 52f, pitchGain = 11f, responsiveness = 15f, inputResponse = 1.9f,
+                    arcadeTurn = 150f
+                };
+            case PlanePreset.Rocket:
+                // Roket: en hizli, genis donemez, dayanikli
+                return new PresetData
+                {
+                    name = "Roket", cruise = 142f, maxSpeed = 252f, thrust = 38f,
+                    cruiseAoA = 1.6f, stallAoA = 22f, liftSlope = 5.0f, maxG = 14f,
+                    roll = 260f, yaw = 38f, pitchGain = 10f, responsiveness = 12f, inputResponse = 1.4f,
+                    arcadeTurn = 100f
                 };
             default:
                 // WW1: ~90 derece/sn
