@@ -92,6 +92,11 @@ public static class PartCatalog
         new PaintScheme { name = "Kızıl Baron", primary = new Color(0.72f, 0.08f, 0.08f), secondary = new Color(0.55f, 0.06f, 0.06f), accent = new Color(0.08f, 0.08f, 0.08f) },
         new PaintScheme { name = "Gece",      primary = new Color(0.08f, 0.10f, 0.22f), secondary = new Color(0.14f, 0.16f, 0.30f), accent = new Color(0.95f, 0.80f, 0.15f) },
         new PaintScheme { name = "Orman",     primary = new Color(0.17f, 0.30f, 0.14f), secondary = new Color(0.30f, 0.26f, 0.15f), accent = new Color(0.85f, 0.85f, 0.85f) },
+        new PaintScheme { name = "Altın",     primary = new Color(0.85f, 0.68f, 0.2f), secondary = new Color(0.95f, 0.85f, 0.5f), accent = new Color(0.25f, 0.18f, 0.05f) },
+        new PaintScheme { name = "Neon",      primary = new Color(0.05f, 0.85f, 0.75f), secondary = new Color(0.08f, 0.12f, 0.2f), accent = new Color(1f, 0.2f, 0.7f) },
+        new PaintScheme { name = "Gün Batımı", primary = new Color(0.95f, 0.45f, 0.2f), secondary = new Color(0.55f, 0.15f, 0.3f), accent = new Color(1f, 0.85f, 0.4f) },
+        new PaintScheme { name = "Hayalet",   primary = new Color(0.22f, 0.23f, 0.26f), secondary = new Color(0.12f, 0.12f, 0.14f), accent = new Color(0.4f, 0.4f, 0.45f) },
+        new PaintScheme { name = "Buz Mavisi", primary = new Color(0.55f, 0.8f, 0.95f), secondary = new Color(0.85f, 0.93f, 0.98f), accent = new Color(0.1f, 0.3f, 0.6f) },
     };
 
     public static readonly PartDef[] Engines =
