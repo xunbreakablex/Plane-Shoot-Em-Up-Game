@@ -85,6 +85,7 @@ public static class RunState
         pending = false;
         Endless = false;
         Rush = NextRush;
+        Medals.NewRun();
         Stage = 0;
         Score = 0;
         Kills = 0;
@@ -225,6 +226,7 @@ public static class RunState
 
         Phase = result;
         EndedAt = Time.unscaledTime;
+        Medals.OnRunEnd(result == RunPhase.Won);
 
         NewRecord = Score > HighScore;
         if (NewRecord) PlayerPrefs.SetInt(HighKey, Score);

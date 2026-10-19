@@ -418,6 +418,7 @@ public class HangarController : MonoBehaviour
     // ------------------------------------------------------------------ GUI
 
     private bool showSettings;
+    private bool showMedals;
 
     private void OnGUI()
     {
@@ -438,6 +439,7 @@ public class HangarController : MonoBehaviour
         DrawBottom(W, H);
 
         if (showHelp) DrawHelp(W, H);
+        if (showMedals) DrawMedals(W, H);
 
         if (!string.IsNullOrEmpty(toast) && Time.unscaledTime < toastUntil)
         {
@@ -812,6 +814,9 @@ public class HangarController : MonoBehaviour
 
         float exitX = W * 0.5f + bw * 0.5f + 20f + (resume ? 150f : 0f);
 
+        if (Btn(new Rect(exitX + 310f, y + 8f, 112f, 40f), "MADALYALAR", 13))
+            showMedals = true;
+
         // Oyun modu (yeni oyun icin): kampanya ya da yalnizca bosslar
         if (!resume && Btn(new Rect(exitX + 150f, y + 8f, 150f, 40f), RunState.NextRush ? "MOD: BOSS RUSH" : "MOD: KAMPANYA", 14))
             RunState.NextRush = !RunState.NextRush;
@@ -826,6 +831,34 @@ public class HangarController : MonoBehaviour
 
         Hud.Text(new Rect(Gap + LeftW + Gap, H - BottomH - 24f, W - 2f * (Gap + LeftW + Gap), 18f),
             "Sürükle: döndür  •  Tekerlek: yakınlaştır", new Color(0.8f, 0.85f, 0.9f, 0.8f), 12, TextAnchor.MiddleCenter, false);
+    }
+
+    // Madalyalar: kazanilanlar parlak, kazanilmayanlar soluk
+    private void DrawMedals(float W, float H)
+    {
+        Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.82f));
+
+        float pw = 700f, ph = 590f;
+        Rect p = new Rect((W - pw) * 0.5f, (H - ph) * 0.5f, pw, ph);
+        Hud.Fill(p, new Color(0.06f, 0.09f, 0.14f, 0.98f));
+        Hud.Fill(new Rect(p.x, p.y, pw, 5f), Gold);
+        Hud.Text(new Rect(p.x, p.y + 14f, pw, 40f), $"MADALYALAR  {Medals.EarnedCount} / {Medals.All.Length}", Color.white, 28, TextAnchor.MiddleCenter);
+
+        float y = p.y + 66f;
+        foreach (var d in Medals.All)
+        {
+            bool has = Medals.Has(d.id);
+            Hud.Fill(new Rect(p.x + 24f, y, pw - 48f, 30f), has ? new Color(0.25f, 0.2f, 0.06f, 0.9f) : new Color(1f, 1f, 1f, 0.05f));
+            Hud.Text(new Rect(p.x + 36f, y, 24f, 30f), has ? "★" : "·", has ? Gold : Dim, 18, TextAnchor.MiddleCenter);
+            Hud.Text(new Rect(p.x + 70f, y, 220f, 30f), d.name, has ? Gold : Dim, 16, TextAnchor.MiddleLeft);
+            Hud.Text(new Rect(p.x + 290f, y, pw - 330f, 30f), d.desc, has ? Color.white : Dim, 14, TextAnchor.MiddleLeft, false);
+            y += 34f;
+        }
+
+        Rect close = new Rect(p.center.x - 110f, p.yMax - 54f, 220f, 40f);
+        Hud.Fill(close, new Color(0.2f, 0.5f, 0.3f, 0.95f));
+        Hud.Text(close, "KAPAT", Color.white, 18, TextAnchor.MiddleCenter);
+        if (GUI.Button(close, GUIContent.none, GUIStyle.none)) showMedals = false;
     }
 
     // Nasil oynanir: hedef, kontroller, ilerleme

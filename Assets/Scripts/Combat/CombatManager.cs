@@ -127,6 +127,11 @@ public partial class CombatManager : MonoBehaviour
         UpdateBanner();
         StageAtmosphere.Tick(Time.unscaledDeltaTime);
 
+        // Yeni madalyalar savasta duyurulur
+        var medalNews = Medals.TakeAnnouncements();
+        if (medalNews != null)
+            foreach (string m in medalNews) Announce("MADALYA: " + m, new Color(1f, 0.85f, 0.3f), 3.2f);
+
         if (GameState.Paused) return;
 
         // Imlec: gorunmez; nisangah OnGUI'de cizilir. FARE semasinda imlec kilitlenir (fare hareketi
@@ -262,6 +267,7 @@ public partial class CombatManager : MonoBehaviour
         Streak = (Time.time - lastKillTime <= streakWindow) ? Streak + 1 : 1;
         lastKillTime = Time.time;
         RunState.RegisterKill(Streak);
+        Medals.OnKill(enemy, Streak);
 
         // Puan: tur puani x kombo carpani
         EnemyKindInfo info = EnemyKinds.Get(enemy.Kind);

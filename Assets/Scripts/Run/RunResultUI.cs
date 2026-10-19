@@ -80,8 +80,13 @@ public class RunResultUI : MonoBehaviour
                 i == 0 ? 22 : 19, TextAnchor.MiddleRight);
         }
 
-        // Yeni acilanlar
+        // Yeni acilanlar ve bu oyunda kazanilan madalyalar
         float ly = panel.yMax + 10f;
+        if (Medals.EarnedThisRun.Count > 0)
+        {
+            Hud.Text(new Rect(0f, ly, W, 22f), "MADALYA: " + string.Join("  •  ", Medals.EarnedThisRun), new Color(1f, 0.85f, 0.3f), 16, TextAnchor.MiddleCenter);
+            ly += 24f;
+        }
         foreach (string line in unlockLines)
         {
             Hud.Text(new Rect(0f, ly, W, 22f), line, new Color(0.5f, 1f, 0.7f), 16, TextAnchor.MiddleCenter);

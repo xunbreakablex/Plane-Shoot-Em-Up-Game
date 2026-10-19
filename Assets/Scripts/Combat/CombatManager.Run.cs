@@ -77,6 +77,7 @@ public partial class CombatManager
     {
         int next = Mathf.Min(RunState.Stage + 1, RunState.LastStage);
         RunState.BeginStage(next);
+        Medals.OnEndlessStage();
         SetupStage(next);
 
         // Asamalar arasi: kismen onarim (GameSettings.stageClearHeal), kalkan ve fuze dolumu
@@ -449,6 +450,7 @@ public partial class CombatManager
 
         bool lastStage = RunState.IsLastStage;
         RunState.ClearStage();
+        Medals.OnStageClear();
         if (uiAudio != null) uiAudio.PlayOneShot(Sfx.Victory, 0.8f);
 
         if (lastStage)
