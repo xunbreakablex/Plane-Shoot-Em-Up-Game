@@ -28,6 +28,10 @@ public static class RunState
     public static int StageHullHits { get; private set; }
     public static int PowerLevel { get; private set; }
 
+    /// <summary>Boss Rush: bu oyun yalnizca boss'lardan olusur (hangarda secilir, NewCampaign'de uygulanir).</summary>
+    public static bool Rush { get; private set; }
+    public static bool NextRush { get; set; }
+
     /// <summary>Sonsuz Savas: kampanya bittikten sonra asamalar bitmeden devam eder.</summary>
     public static bool Endless { get; private set; }
     public static int LastStage => Endless ? int.MaxValue : Stages.All.Length - 1;
@@ -36,7 +40,7 @@ public static class RunState
     /// <summary>Zafer ekranindan: kampanya bitti, ayni oyuna sonsuz modda devam (asama tamam ekrani acilir).</summary>
     public static void ResumeAsEndless()
     {
-        if (Phase != RunPhase.Won) return;
+        if (Phase != RunPhase.Won || Rush) return;
         Endless = true;
         NewRecord = false;
         Phase = RunPhase.StageClear;
@@ -80,6 +84,7 @@ public static class RunState
     {
         pending = false;
         Endless = false;
+        Rush = NextRush;
         Stage = 0;
         Score = 0;
         Kills = 0;

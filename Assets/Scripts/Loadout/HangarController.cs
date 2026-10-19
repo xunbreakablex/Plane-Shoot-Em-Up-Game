@@ -754,6 +754,7 @@ public class HangarController : MonoBehaviour
         bool resume = RunState.HasPendingCampaign;
         string goal = resume
             ? $"Operasyon devam ediyor: AŞAMA {RunState.PendingStage + 1} sırada  •  skor {RunState.Score:N0}  •  donanımı değiştirip devam et"
+            : RunState.NextRush ? "BOSS RUSH:  dolgu yok, " + Stages.All.Length + " turda tüm bosslar arka arkaya  •  B: bomba  •  hurda ile mağazadan güçlen"
             : "HEDEF:  " + Stages.All.Length + " aşamayı geç  •  düşman üssünü bas: komuta merkezini yık  •  rozetli düşmanı vur  •  B: bomba  •  boss'u indir";
         bool owned = Unlocks.OwnsAircraft(model);
 
@@ -799,6 +800,10 @@ public class HangarController : MonoBehaviour
 
         if (Btn(new Rect(W * 0.5f - bw * 0.5f - 310f, y + 8f, 140f, 40f), "AYARLAR", 15))
             showSettings = true;
+
+        // Oyun modu (yeni oyun icin): kampanya ya da yalnizca bosslar
+        if (!resume && Btn(new Rect(W * 0.5f - bw * 0.5f - 470f, y + 8f, 150f, 40f), RunState.NextRush ? "MOD: BOSS RUSH" : "MOD: KAMPANYA", 14))
+            RunState.NextRush = !RunState.NextRush;
 
         if (Btn(new Rect(W * 0.5f - bw * 0.5f - 160f, y + 8f, 140f, 40f), "SIFIRLA", 15))
         {

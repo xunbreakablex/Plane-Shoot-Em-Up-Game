@@ -233,6 +233,7 @@ public static class Stages
     public static StageDef Get(int index)
     {
         index = Mathf.Max(0, index);
+        if (RunState.Rush) return RushStage(index);
         if (index < All.Length) return All[index];
         if (!endless.TryGetValue(index, out StageDef def))
         {
@@ -240,6 +241,32 @@ public static class Stages
             endless[index] = def;
         }
         return def;
+    }
+
+    // Boss Rush: dolgu dalgalar ve us yok; her asamada kampanyanin orta ve ana bossu arka arkaya gelir
+    private static StageDef[] rush;
+
+    private static StageDef RushStage(int index)
+    {
+        if (rush == null)
+        {
+            rush = new StageDef[All.Length];
+            for (int i = 0; i < All.Length; i++)
+            {
+                StageDef src = All[i];
+                rush[i] = new StageDef
+                {
+                    title = $"Boss Rush {i + 1}",
+                    subtitle = "Dolgu yok: yalnızca bosslar",
+                    midBoss = src.midBoss, midBossTime = 3f,
+                    boss = src.boss,
+                    minFirepower = src.minFirepower,
+                    waves = new[] { W(1f, EnemyKind.Fighter, 3, Formation.V) },
+                    bas = new BaseDef { name = "", enabled = false }
+                };
+            }
+        }
+        return rush[Mathf.Clamp(index, 0, rush.Length - 1)];
     }
 
     private static readonly System.Collections.Generic.Dictionary<int, StageDef> endless = new System.Collections.Generic.Dictionary<int, StageDef>();

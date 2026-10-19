@@ -43,7 +43,7 @@ public class RunResultUI : MonoBehaviour
         Hud.Text(new Rect(0f, H * 0.08f, W, 70f), won ? "ZAFER!" : "UÇAĞIN DÜŞTÜ", accent, 56, TextAnchor.MiddleCenter);
 
         string sub = won
-            ? "Kızıl Komutan'ı yendin ve operasyonu tamamladın."
+            ? (RunState.Rush ? "Tüm bosslar yenildi: Boss Rush tamam." : "Kızıl Komutan'ı yendin ve operasyonu tamamladın.")
             : (RunState.Endless ? $"Sonsuz Savaş'ta {RunState.Stage + 1}. aşamada düştün." : $"Aşama {RunState.Stage + 1} / {Stages.All.Length} içinde düştün.");
         Hud.Text(new Rect(0f, H * 0.08f + 64f, W, 28f), sub, new Color(0.85f, 0.9f, 0.95f), 18, TextAnchor.MiddleCenter, false);
 
@@ -98,7 +98,7 @@ public class RunResultUI : MonoBehaviour
         if (GUI.Button(new Rect(W * 0.5f + 12f, by, bw, bh), "HANGARA DÖN", big))
             Leave(GameScenes.Hangar);
 
-        if (won)
+        if (won && !RunState.Rush)
         {
             // Zafer: kampanya bitti ama ayni oyuna Sonsuz Savas'ta devam edilebilir (skor ve donanim korunur)
             by += bh + 12f;
@@ -113,7 +113,7 @@ public class RunResultUI : MonoBehaviour
         }
 
         Hud.Text(new Rect(0f, by + bh + 14f, W, 22f),
-            won ? "Sonsuz Savaş: aşamalar tekrar eder, düşmanlar ve bosslar her turda güçlenir." : "Hangarda donanımını değiştirip daha güçlü bir uçakla tekrar dene.",
+            won && !RunState.Rush ? "Sonsuz Savaş: aşamalar tekrar eder, düşmanlar ve bosslar her turda güçlenir." : "Hangarda donanımını değiştirip daha güçlü bir uçakla tekrar dene.",
             new Color(0.7f, 0.76f, 0.84f), 14, TextAnchor.MiddleCenter, false);
 
         Hud.End();
