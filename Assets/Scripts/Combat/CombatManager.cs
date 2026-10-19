@@ -206,14 +206,21 @@ public partial class CombatManager : MonoBehaviour
         }
     }
 
-    public void OnEnemyDestroyed(EnemyPlane enemy, bool byPlayer)
+    public void OnEnemyDestroyed(EnemyPlane enemy, bool byPlayer, EnemyPlane.HitZone cause = EnemyPlane.HitZone.Body)
     {
         Vector3 pos = enemy.transform.position;
-        SpawnExplosion(pos);
+        // Indirilen ucak listeden hemen cikar: enkaz hedef alinmaz, sayilmaz
+        enemies.Remove(enemy);
+
+        // Uzuv kopmasi: ucak hala havada, buyuk patlama yere carpinca gelir; simdilik kucuk bir alev
+        bool partKill = cause != EnemyPlane.HitZone.Body && !enemy.IsGround && !enemy.IsBoss;
+        SpawnExplosion(pos, partKill ? 0.4f : 1f);
         if (byPlayer)
         {
             killMarkerTime = Time.unscaledTime;
             if (uiAudio != null && !enemy.IsGround) { uiAudio.pitch = 1f; uiAudio.PlayOneShot(Sfx.KillDing, 0.35f); }
+            // Uzuv kopmasi: metal yirtilma sesi (patlamanin ustune)
+            if (cause != EnemyPlane.HitZone.Body) Sfx.PlayAt(Sfx.Crack, pos, 0.9f);
         }
 
         // Hissiyat: boss olumunde guclu sarsinti + kisa yavaslama (hit-stop); komuta merkezinde sarsinti
@@ -306,16 +313,17 @@ public partial class CombatManager : MonoBehaviour
                 scale = 1f + tier * 0.15f
             });
         }
-        else if (points >= 300)
+
+        // Her indirmede vurdugun yerde puan yazisi; uzuv kopmussa hangi uzuv oldugu da yazar (nisan ogretir)
         {
-            // Buyuk puan: kisa "+puan" yazisi
+            string zone = EnemyPlane.ZoneName(cause);
             texts.Add(new FloatingText
             {
                 position = pos + Vector3.up * 6f,
-                text = "+" + points,
+                text = "+" + points + (zone.Length > 0 ? "  " + zone : ""),
                 born = Time.time,
-                color = new Color(1f, 0.95f, 0.6f),
-                scale = 0.55f
+                color = zone.Length > 0 ? new Color(1f, 0.75f, 0.35f) : new Color(1f, 0.95f, 0.6f),
+                scale = zone.Length > 0 ? 0.7f : 0.55f
             });
         }
 
@@ -329,6 +337,21 @@ public partial class CombatManager : MonoBehaviour
     }
 
     private readonly List<string> pendingUnlockBanners = new List<string>();
+
+    /// <summary>Enkaz yere/suya carpti: patlama + kucuk bonus (indirme odulu zaten verildi).</summary>
+    public void OnWreckImpact(Vector3 pos)
+    {
+        SpawnExplosion(pos);
+        RunState.AddScore(50);
+        texts.Add(new FloatingText
+        {
+            position = pos + Vector3.up * 8f,
+            text = "ÇAKILDI  +50",
+            born = Time.time,
+            color = new Color(1f, 0.6f, 0.3f),
+            scale = 0.5f
+        });
+    }
 
     private int StreakTier(int streak)
     {
@@ -450,18 +473,25 @@ public partial class CombatManager : MonoBehaviour
         hitStopActive = false;
     }
 
-    public void SpawnExplosion(Vector3 pos)
+    public void SpawnExplosion(Vector3 pos) { SpawnExplosion(pos, 1f); }
+
+    /// <summary>Patlama; scale 1 = normal, kucuk degerler uzuv kopmasi gibi kucuk alevler icin.</summary>
+    public void SpawnExplosion(Vector3 pos, float scale)
     {
         // Yakin patlama: hafif kamera sarsintisi
         Transform pt = PlayerTransform;
         if (pt != null)
         {
             float d = Vector3.Distance(pt.position, pos);
-            if (d < 140f) FollowCamera.AddShake(0.35f * (1f - d / 140f), 0.3f);
+            if (d < 140f) FollowCamera.AddShake(0.35f * scale * (1f - d / 140f), 0.3f);
         }
 
-        if (explosionPrefab != null) Instantiate(explosionPrefab, pos, Quaternion.identity);
-        Sfx.PlayAt(Sfx.Explosion, pos, 1f);
+        if (explosionPrefab != null)
+        {
+            var go = Instantiate(explosionPrefab, pos, Quaternion.identity);
+            if (scale < 0.999f) go.transform.localScale = Vector3.one * scale;
+        }
+        Sfx.PlayAt(Sfx.Explosion, pos, Mathf.Lerp(0.45f, 1f, scale));
     }
 
     public void SpawnHitSpark(Vector3 pos)

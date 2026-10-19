@@ -333,7 +333,9 @@ public class Bullet : MonoBehaviour
         if (splash > 0f && fromPlayer) Splash(point, target);
         if (target != null)
         {
-            target.TakeHit(damage, point);
+            // Oyuncu mermisi dusman ucagini vurunca uzuv (kanat/kuyruk/motor) hasari da islenir
+            if (fromPlayer && target is EnemyPlane ep) ep.TakeHitLocal(damage, point);
+            else target.TakeHit(damage, point);
 
             // Delici mermi: dusmani gecip devam eder
             if (pierceLeft > 0)

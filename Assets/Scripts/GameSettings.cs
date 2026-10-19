@@ -90,7 +90,7 @@ public class GameSettings : ScriptableObject
     [Tooltip("Ekranda imlece en fazla bu açı kadar yakın düşmanlar hedeflenir (derece, kameradan bakışla; 1080p'de 1° ≈ 18 piksel). İmlece en yakın düşman seçilir.")]
     [Range(0.5f, 30f)] public float autoAimCone = 4f;
     [Tooltip("Nişan yardımının gücü: 0 = kapalı (mermi hep burnun önüne), 1 = tam. Yardım imlecin dibinde tam, koninin kenarına doğru sıfıra iner.")]
-    [Range(0f, 1f)] public float autoAimStrength = 1f;
+    [Range(0f, 1f)] public float autoAimStrength = 0.5f;
     [Tooltip("Otomatik nişan menzili (m)")]
     [Min(100f)] public float autoAimRange = 1100f;
     [Tooltip("Nişanın hedefe yönelme süresi (sn). Nişan anında atlamaz, bu sürede yumuşakça yönelir. 0 = anında.")]

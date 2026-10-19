@@ -200,7 +200,8 @@ public partial class PlayerGun
             if (dup) continue;
             if (seen < beamSeen.Length) beamSeen[seen++] = target;
 
-            target.TakeHit(dmg, h.point);
+            if (target is EnemyPlane ep) ep.TakeHitLocal(dmg, h.point);
+            else target.TakeHit(dmg, h.point);
         }
 
         // Cizim: ince parlak cekirdek + genis yari saydam hale

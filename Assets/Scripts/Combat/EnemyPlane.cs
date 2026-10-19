@@ -141,6 +141,29 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private int volleyIndex;
     private bool dead;
     private GameObject smoke;
+    private GameObject fire;
+
+    // ---- Uzuv hasari: vurus noktasina gore kanat / kuyruk / motor / govde. Kanat, kuyruk ya da motor
+    // bitince ucak "indirilmis" sayilir (puan, odul hemen) ve enkaz olarak yanarak dusmeye baslar.
+    public enum HitZone { Body, WingL, WingR, Tail, Engine }
+    private readonly int[] zoneHp = new int[5];
+
+    // Vurus flasi (beyaz) ve enkaz durumu
+    private Renderer[] rends;
+    private float flashUntil;
+    private bool flashing;
+    private static MaterialPropertyBlock flashBlock;
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorId = Shader.PropertyToID("_Color");
+
+    private bool wreck;
+    private HitZone wreckCause;
+    private Vector3 wreckVel;
+    private Vector3 spin;        // yerel eksenlerde derece/sn (x yunuslama, y sapma, z yatis)
+    private float wreckBorn;
+
+    /// <summary>Indirildi ve dusuyor (artik hedef degil, mermi islemez).</summary>
+    public bool IsWreck => wreck;
     private float breakUntil;
     private Vector3 breakDir;
     private float nextRamTime;
@@ -289,10 +312,10 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         switch (kind)
         {
             case EnemyKind.Swarmer:
-                pattern = Pattern.Fan;
-                burstCdMin = 2.4f; burstCdMax = 4f;
-                bulletDamage = 1; fireRange = 620f; bulletSpeed = 230f;
-                canPeel = false;
+                // Hafif avci: dogfight, kisa seriler; kopup tekrar gelir
+                pattern = Pattern.Aimed;
+                burstSize = 4; shotGap = 0.11f; burstCdMin = 3f; burstCdMax = 4.5f;
+                bulletDamage = 1; fireRange = 600f; fireCone = 7f; bulletSpeed = 330f;
                 break;
             case EnemyKind.Heavy:
                 pattern = Pattern.FanRing;
@@ -322,9 +345,10 @@ public class EnemyPlane : MonoBehaviour, IDamageable
                 canPeel = false;
                 break;
             default:
+                // Avci: daha uzun seri, daha hizli mermi
                 pattern = Pattern.Aimed;
-                burstSize = 6; shotGap = 0.12f; burstCdMin = 2.5f; burstCdMax = 4f;
-                bulletDamage = 1; fireRange = 650f; fireCone = 8f; bulletSpeed = 300f;
+                burstSize = 5; shotGap = 0.1f; burstCdMin = 3f; burstCdMax = 5f;
+                bulletDamage = 1; fireRange = 650f; fireCone = 7f; bulletSpeed = 360f;
                 break;
         }
 
@@ -342,6 +366,71 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
         propellers = GetComponentsInChildren<Propeller>();
         foreach (var p in propellers) p.Rpm = 1800f;
+
+        SetupZones();
+        rends = GetComponentsInChildren<Renderer>();
+    }
+
+    // Uzuv canlari: kanat %50, kuyruk %55, motor %65 (govde = toplam). Kanada nisan alan daha cabuk indirir.
+    private void SetupZones()
+    {
+        int w = Mathf.Max(1, Mathf.CeilToInt(MaxHits * 0.5f));
+        zoneHp[(int)HitZone.WingL] = w;
+        zoneHp[(int)HitZone.WingR] = w;
+        zoneHp[(int)HitZone.Tail] = Mathf.Max(1, Mathf.CeilToInt(MaxHits * 0.55f));
+        zoneHp[(int)HitZone.Engine] = Mathf.Max(1, Mathf.CeilToInt(MaxHits * 0.65f));
+        zoneHp[(int)HitZone.Body] = MaxHits;
+    }
+
+    // Vurus noktasi ucagin yerel uzayinda hangi uzuvda? (Tek govde collider'i: nokta siluetin uzerindedir;
+    // |x| genis = kanat, arkada = kuyruk, onde = motor.)
+    private HitZone ZoneAt(Vector3 point)
+    {
+        Vector3 p = transform.InverseTransformPoint(point);
+        if (Mathf.Abs(p.x) > 1.0f) return p.x < 0f ? HitZone.WingL : HitZone.WingR;
+        if (p.z < -1.3f) return HitZone.Tail;
+        if (p.z > 1.0f) return HitZone.Engine;
+        return HitZone.Body;
+    }
+
+    public static string ZoneName(HitZone z)
+    {
+        switch (z)
+        {
+            case HitZone.WingL: case HitZone.WingR: return "KANAT";
+            case HitZone.Tail: return "KUYRUK";
+            case HitZone.Engine: return "MOTOR";
+            default: return "";
+        }
+    }
+
+    private void Update()
+    {
+        // Vurus flasi: kisa beyaz parlama (tum parcalar)
+        bool want = Time.time < flashUntil && !wreck;
+        if (want != flashing)
+        {
+            flashing = want;
+            ApplyFlash(want);
+        }
+
+        if (wreck) WreckStep();
+    }
+
+    private void ApplyFlash(bool on)
+    {
+        if (rends == null) return;
+        if (flashBlock == null)
+        {
+            flashBlock = new MaterialPropertyBlock();
+            flashBlock.SetColor(BaseColorId, new Color(1.6f, 1.6f, 1.6f));
+            flashBlock.SetColor(ColorId, new Color(1.6f, 1.6f, 1.6f));
+        }
+        foreach (var r in rends)
+        {
+            if (r == null || r is TrailRenderer || r is ParticleSystemRenderer) continue;
+            r.SetPropertyBlock(on ? flashBlock : null);
+        }
     }
 
     private void FixedUpdate()
@@ -385,7 +474,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         Vector3 newPos = pos + heading * cruiseSpeed * dt;
         if (newPos.y < mgr.GroundHeight(newPos) + 2.5f)
         {
-            Die(IsBoss);
+            Die(IsBoss, HitZone.Body, false);
             return;
         }
 
@@ -490,6 +579,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         // Gorsel yatis: donuse gore
         float yawRate = Vector3.SignedAngle(fwd, newFwd, Vector3.up) / dt;
         float bankTarget = Mathf.Clamp(yawRate * 0.7f, -70f, 70f);
+        if (HitsRemaining * 10 <= MaxHits * 3) bankTarget += Mathf.Sin(Time.time * 17f + weavePhase) * 14f;   // agir hasar: yalpalar
         bank = Mathf.Lerp(bank, bankTarget, 4f * dt);
 
         Quaternion newRot = Quaternion.LookRotation(newFwd, Vector3.up) * Quaternion.Euler(0f, 0f, -bank);
@@ -498,7 +588,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         // Yere carpti
         if (newPos.y < mgr.GroundHeight(newPos) + 2.5f)
         {
-            Die(IsBoss);   // boss yere carpsa da boss odulu/asama sonu verilir
+            Die(IsBoss, HitZone.Body, false);   // boss yere carpsa da boss odulu/asama sonu verilir
             return;
         }
 
@@ -522,7 +612,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         DamagePlayerByRam(point);
 
         // Boss carpmadan etkilenmez; digerleri patlar. Oldurme sayilip sayilmayacagi GameSettings'te.
-        if (!IsBoss) Die(GameSettings.Current.ramKillGivesScore);
+        if (!IsBoss) Die(GameSettings.Current.ramKillGivesScore, HitZone.Body, false);
     }
 
     // Carpisma bize hasar verir: tur hasari x carpan; varsayilan olarak kalkani atlar (bedava olmasin)
@@ -667,53 +757,225 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         HitsRemaining = Mathf.Clamp(Mathf.RoundToInt(MaxHits * Mathf.Clamp01(fraction)), 1, MaxHits);
     }
 
+    /// <summary>Alan hasari (fuze, bomba, plazma): uzuv secilmez, yalnizca toplam can duser.</summary>
     public void TakeHit(int damage, Vector3 point)
+    {
+        ApplyDamage(damage, point, HitZone.Body);
+    }
+
+    /// <summary>Mermi / isin isabeti: vurus noktasina gore uzuv hasari da islenir (kanat koparsa ucak duser).</summary>
+    public void TakeHitLocal(int damage, Vector3 point)
+    {
+        if (dead) return;
+        HitZone z = scripted || IsGround ? HitZone.Body : ZoneAt(point);
+        if (z != HitZone.Body) zoneHp[(int)z] -= damage;
+        ApplyDamage(damage, point, z);
+    }
+
+    private void ApplyDamage(int damage, Vector3 point, HitZone z)
     {
         if (dead) return;
 
         if (FirstHitTime < 0f) FirstHitTime = Time.time;
         TotalDamage += damage;
         HitsRemaining -= damage;
+        flashUntil = Time.time + 0.07f;
         mgr.OnEnemyHit(this, point);
 
         if (HitsRemaining <= 0)
         {
-            Die(true);
+            Die(true, HitZone.Body, true);
+            return;
+        }
+        if (z != HitZone.Body && zoneHp[(int)z] <= 0)
+        {
+            Die(true, z, true);
             return;
         }
 
-        // Hasar gorunumu: duman izi
-        if (smoke == null && mgr.SmokeTrailPrefab != null)
+        UpdateDamageLook();
+    }
+
+    // Hasar halleri: %60'in altinda duman, %30'un altinda alev
+    private void UpdateDamageLook()
+    {
+        if (mgr.SmokeTrailPrefab == null) return;
+        if (smoke == null && HitsRemaining * 10 <= MaxHits * 6)
         {
             smoke = Instantiate(mgr.SmokeTrailPrefab, transform);
             smoke.transform.localPosition = new Vector3(0f, 0.2f, -0.5f);
         }
+        if (fire == null && HitsRemaining * 10 <= MaxHits * 3) StartFire(1f);
     }
 
-    private void Die(bool byPlayer)
+    // Alev: duman prefabinin turuncu, iri ve sik kopyasi (burunda)
+    private void StartFire(float scale)
+    {
+        if (mgr.SmokeTrailPrefab == null) return;
+        if (fire == null)
+        {
+            fire = Instantiate(mgr.SmokeTrailPrefab, transform);
+            fire.transform.localPosition = new Vector3(0f, 0f, 0.8f);
+        }
+        foreach (var ps in fire.GetComponentsInChildren<ParticleSystem>())
+        {
+            var main = ps.main;
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.7f, 0.15f, 1f), new Color(1f, 0.35f, 0.05f, 1f));
+            main.startSizeMultiplier = main.startSizeMultiplier * 1.4f * scale;
+            main.startLifetimeMultiplier = main.startLifetimeMultiplier * 0.7f;
+            var em = ps.emission;
+            em.rateOverTimeMultiplier = em.rateOverTimeMultiplier * 2.5f * scale;
+        }
+    }
+
+    private void Die(bool byPlayer, HitZone cause, bool wreckage)
     {
         if (dead) return;
         dead = true;
 
-        mgr.OnEnemyDestroyed(this, byPlayer);
+        mgr.OnEnemyDestroyed(this, byPlayer, cause);
 
-        // Duman izi sahnede kalsin (kendi omru kadar)
-        if (smoke != null)
+        // Hava ucagi oyuncu tarafindan indirildiyse yanarak duser; yere carpan / bindiren / yer birimi hemen gider
+        if (wreckage && !IsGround && !scripted)
         {
-            smoke.transform.SetParent(null);
-            var ps = smoke.GetComponent<ParticleSystem>();
-            if (ps != null) ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-            Destroy(smoke, 6f);
+            BeginWreck(cause);
+            return;
         }
 
+        ReleaseSmoke();
         Destroy(gameObject);
+    }
+
+    // Duman ve alev izi sahnede kalsin (kendi omru kadar)
+    private void ReleaseSmoke()
+    {
+        foreach (var g in new[] { smoke, fire })
+        {
+            if (g == null) continue;
+            g.transform.SetParent(null);
+            foreach (var ps in g.GetComponentsInChildren<ParticleSystem>()) ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            Destroy(g, 6f);
+        }
+        smoke = null;
+        fire = null;
+    }
+
+    // -------------------------------------------------------------- enkaz
+
+    private void BeginWreck(HitZone cause)
+    {
+        wreck = true;
+        wreckCause = cause;
+        wreckBorn = Time.time;
+        wreckVel = Velocity;
+        ApplyFlash(false);
+        flashing = false;
+
+        // Artik hedef degil: mermi gecsin, pervane dursun, kanat ucu izleri acilsin
+        foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
+        if (propellers != null) foreach (var p in propellers) if (p != null) p.Rpm = 0f;
+        foreach (var tr in GetComponentsInChildren<TrailRenderer>()) tr.emitting = true;
+
+        DetachParts(cause);
+        StartFire(2.2f);
+
+        // Dusus bicimi sebebe gore: kanat kopunca o yana yatarak spiral, kuyruk gidince burun asagi takla,
+        // motor gidince suzulerek yavas donus, govde patlayinca hizli takla
+        switch (cause)
+        {
+            case HitZone.WingL: spin = new Vector3(35f, 0f, 240f); break;
+            case HitZone.WingR: spin = new Vector3(35f, 0f, -240f); break;
+            case HitZone.Tail: spin = new Vector3(-170f, 90f, 50f); break;
+            case HitZone.Engine: spin = new Vector3(-45f, 0f, 60f); break;
+            default: spin = new Vector3(Random.Range(90f, 150f), Random.Range(-90f, 90f), Random.value < 0.5f ? 260f : -260f); break;
+        }
+    }
+
+    // Kopan parcalar: kaybedilen taraftaki cocuklar (kanat, kanat ucu, destek, isaret) ayri nesne olarak doner ve
+    // duser. Tek parca kanatlar (planor "Wing", biplan "UpperWing/LowerWing") ortadan ikiye bolunur: bir yarisi kalir,
+    // digeri kopar. Kuyruk kaybinda gerideki parcalar (z < -1,3) kopar. Iz ve parcacik nesneleri dokunulmaz.
+    private void DetachParts(HitZone cause)
+    {
+        if (cause == HitZone.Engine || cause == HitZone.Body) return;
+        float side = cause == HitZone.WingL ? -1f : 1f;
+
+        var loose = new System.Collections.Generic.List<Transform>();
+        var children = new System.Collections.Generic.List<Transform>();
+        foreach (Transform c in transform) children.Add(c);
+
+        foreach (Transform c in children)
+        {
+            if (c.GetComponent<TrailRenderer>() != null || c.GetComponent<ParticleSystem>() != null || c.GetComponent<Propeller>() != null) continue;
+            Vector3 lp = c.localPosition;
+
+            if (cause == HitZone.Tail)
+            {
+                if (lp.z < -1.3f) loose.Add(c);
+                continue;
+            }
+
+            // Kaybedilen taraftaki parca
+            if (lp.x * side > 1.0f) { loose.Add(c); continue; }
+
+            // Ortadan gecen genis parca (tek parca kanat): ikiye bol
+            var mf = c.GetComponent<MeshFilter>();
+            float width = c.localScale.x;
+            if (Mathf.Abs(lp.x) <= 1.0f && width > 3f && mf != null && mf.sharedMesh != null && mf.sharedMesh.name == "Cube")
+            {
+                Transform half = Instantiate(c.gameObject, transform).transform;
+                half.name = c.name + "Broken";
+                half.localRotation = c.localRotation;
+                half.localScale = new Vector3(width * 0.5f, c.localScale.y, c.localScale.z);
+                half.localPosition = lp + c.localRotation * new Vector3(side * width * 0.25f, 0f, 0f);
+                c.localScale = half.localScale;
+                c.localPosition = lp + c.localRotation * new Vector3(-side * width * 0.25f, 0f, 0f);
+                loose.Add(half);
+            }
+        }
+
+        foreach (Transform p in loose)
+        {
+            p.SetParent(null, true);
+            var prb = p.gameObject.AddComponent<Rigidbody>();
+            prb.mass = 0.3f;
+            prb.useGravity = true;
+            prb.linearVelocity = wreckVel * 0.8f + Random.insideUnitSphere * 6f + Vector3.up * 4f;
+            prb.angularVelocity = Random.onUnitSphere * Random.Range(6f, 12f);
+            foreach (var col in p.GetComponentsInChildren<Collider>()) Destroy(col);
+            Destroy(p.gameObject, 6f);
+        }
+    }
+
+    private void WreckStep()
+    {
+        float dt = Time.deltaTime;
+        if (dt <= 0f || mgr == null) return;
+
+        // Yercekimi + hava direnci; donen govdenin "kaldirma" yonu degistikce yol burgu cizer
+        wreckVel += Vector3.down * 24f * dt;
+        wreckVel += transform.up * 7f * dt;
+        wreckVel -= wreckVel * 0.3f * dt;
+        spin *= 1f + 0.5f * dt;
+
+        Vector3 pos = transform.position + wreckVel * dt;
+        transform.rotation = transform.rotation * Quaternion.Euler(spin * dt);
+        transform.position = pos;
+
+        float ground = Mathf.Max(mgr.GroundHeight(pos), CombatManager.SeaLevel);
+        if (pos.y <= ground + 1.5f || Time.time - wreckBorn > 9f)
+        {
+            mgr.OnWreckImpact(pos);
+            ReleaseSmoke();
+            Destroy(gameObject);
+        }
     }
 
     /// <summary>Asama sonu / yeniden dogus: patlama efektiyle yok et (oldurme ve puan sayilmaz).</summary>
     public void Vanish()
     {
-        if (dead) return;
+        if (dead && !wreck) return;
         dead = true;
+        wreck = false;
         // Yer birimlerinin hepsi patlarsa kare duser: yalnizca birkacinda efekt
         if (mgr != null && (!IsGround || Random.value < 0.2f)) mgr.SpawnExplosion(transform.position);
         Destroy(gameObject);

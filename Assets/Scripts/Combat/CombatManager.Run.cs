@@ -148,7 +148,7 @@ public partial class CombatManager
         if (active != null && Time.time >= nextBossAdds)
         {
             nextBossAdds = Time.time + (active.IsStageBoss ? 16f : 22f);
-            int n = active.Kind == EnemyKind.FinalBoss ? 6 : (active.IsStageBoss ? 4 : 3);
+            int n = active.Kind == EnemyKind.FinalBoss ? 3 : 2;   // boss takviyesi az: boss'a odaklan
             Vector3 c = active.transform.position + Random.onUnitSphere * 40f;
             Vector3 toPlayer = PlayerTransform.position - c;
             SpawnFormationGroup(EnemyKind.Swarmer, n, c, toPlayer.normalized, Formation.V, -1);
@@ -363,7 +363,7 @@ public partial class CombatManager
         int model = choices[Random.Range(0, choices.Count)];
 
         EnemyKindInfo info = EnemyKinds.Get(kind);
-        bool strafe = kind == EnemyKind.Swarmer || kind == EnemyKind.Heavy;
+        bool strafe = kind == EnemyKind.Heavy;   // yalniz bombardiman duz gecis yapar; avcilar dogfight
 
         Vector3 look = heading.sqrMagnitude > 0.01f ? heading.normalized : Vector3.forward;
         GameObject go = Instantiate(modelPrefabs[model], pos, Quaternion.LookRotation(look, Vector3.up));
@@ -397,14 +397,15 @@ public partial class CombatManager
     {
         // +1 vurus / 30 sn (asama icinde) ve her asamada +hitsPerStage
         int basic = baseHits + Mathf.FloorToInt(RunState.StageTime / hitIncreaseInterval) + RunState.Stage * hitsPerStage;
+        // Az ama sert: 1. asamada sürü avcisi ~6, avci ~8 vurus (kanada nisan alan daha erken indirir)
         float dm = Difficulty.HitsMul;
         switch (kind)
         {
-            case EnemyKind.Swarmer: return Mathf.Max(1, Mathf.RoundToInt(basic / 3f * dm));
-            case EnemyKind.Heavy: return Mathf.Max(1, Mathf.RoundToInt(basic * 2.5f * dm));
-            case EnemyKind.Kamikaze: return Mathf.Max(1, Mathf.RoundToInt(basic / 2f * dm));
-            case EnemyKind.Sniper: return Mathf.Max(1, Mathf.RoundToInt(basic * 1.4f * dm));
-            default: return Mathf.Max(1, Mathf.RoundToInt(basic * dm));
+            case EnemyKind.Swarmer: return Mathf.Max(2, Mathf.RoundToInt(basic * 1.5f * dm));
+            case EnemyKind.Heavy: return Mathf.Max(4, Mathf.RoundToInt(basic * 3.5f * dm));
+            case EnemyKind.Kamikaze: return Mathf.Max(2, Mathf.RoundToInt(basic * 0.75f * dm));
+            case EnemyKind.Sniper: return Mathf.Max(3, Mathf.RoundToInt(basic * 2f * dm));
+            default: return Mathf.Max(3, Mathf.RoundToInt(basic * 2f * dm));
         }
     }
 
