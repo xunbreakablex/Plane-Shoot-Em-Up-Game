@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum BossType { Jet, Shark, Crab, Octopus, Zeppelin, Dragon }
+public enum BossType { Jet, Shark, Crab, Octopus, Zeppelin, Dragon, Demon, Angel, KiWarrior, MagicalGirl }
 
 // Boss govdelerini Unity primitive'lerinden kodla uretir (model dosyasi gerekmez).
 // Her bossun parcalari BossBrain tarafindan isimle bulunup canlandirilir; isimleri degistirirsen
 // BossBrain.*.cs'deki Find cagrilarini da guncelle.
 // Koordinat: +Z on, +Y yukari, +X sag; olcek metre.
-public static class BossBuilder
+public static partial class BossBuilder
 {
     private static Material lit, glow;
     private static readonly Dictionary<long, Material> cache = new Dictionary<long, Material>();
@@ -27,6 +27,10 @@ public static class BossBuilder
             case BossType.Crab: BuildCrab(root); break;
             case BossType.Octopus: BuildOctopus(root); break;
             case BossType.Zeppelin: BuildZeppelin(root); break;
+            case BossType.Demon: BuildDemon(root); break;
+            case BossType.Angel: BuildAngel(root); break;
+            case BossType.KiWarrior: BuildKiWarrior(root); break;
+            case BossType.MagicalGirl: BuildMagicalGirl(root); break;
             default: BuildDragon(root); break;
         }
 
@@ -56,7 +60,7 @@ public static class BossBuilder
     }
 
     private static Transform Part(Transform parent, PrimitiveType prim, string name, Vector3 pos, Vector3 scale,
-        Color color, Vector3 euler = default, bool emissive = false)
+        Color color, Vector3 euler = default, bool emissive = false, bool collider = true)
     {
         GameObject go = GameObject.CreatePrimitive(prim);
         go.name = name;
@@ -69,6 +73,7 @@ public static class BossBuilder
         r.sharedMaterial = MatFor(color, emissive);
         r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         r.receiveShadows = false;
+        if (!collider) Object.Destroy(go.GetComponent<Collider>());   // sus/aura parcalari mermi yutmasin
         return go.transform;
     }
 

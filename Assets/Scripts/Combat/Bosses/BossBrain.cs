@@ -47,6 +47,10 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Crab: return "ZIRHLI YENGEÇ";
             case BossType.Octopus: return "MEKANİK AHTAPOT";
             case BossType.Zeppelin: return "HAVA ZIRHLISI";
+            case BossType.Demon: return "İBLİS";
+            case BossType.Angel: return "MELEK";
+            case BossType.KiWarrior: return "Kİ SAVAŞÇISI";
+            case BossType.MagicalGirl: return "YILDIZ BÜYÜCÜSÜ";
             default: return "KIZIL EJDERHA";
         }
     }
@@ -61,6 +65,10 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Crab: return 2.6f;
             case BossType.Octopus: return 2.3f;
             case BossType.Zeppelin: return 1.9f;
+            case BossType.Demon: return 2.4f;
+            case BossType.Angel: return 2.3f;
+            case BossType.KiWarrior: return 2.3f;
+            case BossType.MagicalGirl: return 2.2f;
             default: return 2.2f;
         }
     }
@@ -75,6 +83,10 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Crab: return 18f * ScaleOf(t);
             case BossType.Octopus: return 22f * ScaleOf(t);
             case BossType.Zeppelin: return 36f * ScaleOf(t);
+            case BossType.Demon: return 16f * ScaleOf(t);
+            case BossType.Angel: return 16f * ScaleOf(t);
+            case BossType.KiWarrior: return 14f * ScaleOf(t);
+            case BossType.MagicalGirl: return 15f * ScaleOf(t);
             default: return 18f * ScaleOf(t);
         }
     }
@@ -96,6 +108,10 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Crab: return 1300;
             case BossType.Octopus: return 2400;
             case BossType.Zeppelin: return 2000;
+            case BossType.Demon: return 2600;
+            case BossType.Angel: return 3400;
+            case BossType.KiWarrior: return 5500;
+            case BossType.MagicalGirl: return 8000;
             default: return 5000;
         }
     }

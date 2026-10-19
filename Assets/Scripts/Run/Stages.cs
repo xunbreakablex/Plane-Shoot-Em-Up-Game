@@ -143,6 +143,66 @@ public static class Stages
                 W(122, EnemyKind.Swarmer, 12, Formation.Ring, PickupKind.Bomb),
             }
         },
+        new StageDef
+        {
+            title = "Cehennem Kapısı",
+            subtitle = "Kanatlı iblisin ve ki savaşçısının topraklarına gir",
+            midBoss = BossType.Demon, midBossTime = 60f,
+            boss = BossType.KiWarrior, minFirepower = 32f,
+            bas = new BaseDef
+            {
+                name = "Cehennem Kalesi", enabled = true, island = true, center = new Vector2(400f, 5600f), radius = 420f,
+                ground = new Color(0.2f, 0.12f, 0.1f), hasStart = true, startXZ = new Vector2(400f, 3400f), startAlt = 300f,
+                intro = "DENİZİ GEÇ: Cehennem Kalesi'ni yık, komuta merkezini indir",
+                flak = 12, cannons = 4, hangars = 4, tanks = 4, planes = 6
+            },
+            waves = new[]
+            {
+                W(2,   EnemyKind.Fighter, 4,  Formation.V),
+                W(10,  EnemyKind.Swarmer, 8,  Formation.Ring, PickupKind.Power),
+                W(20,  EnemyKind.Heavy,   2,  Formation.Pincer, PickupKind.Shield),
+                W(28,  EnemyKind.Swarmer, 10, Formation.Column),
+                W(40,  EnemyKind.Fighter, 5,  Formation.Line, PickupKind.Power),
+                W(52,  EnemyKind.Swarmer, 10, Formation.Pincer),
+                W(55,  EnemyKind.Heavy,   2,  Formation.V, PickupKind.Bomb),
+                W(68,  EnemyKind.Swarmer, 12, Formation.Ring),
+                W(80,  EnemyKind.Fighter, 6,  Formation.V, PickupKind.Repair),
+                W(92,  EnemyKind.Heavy,   3,  Formation.Line, PickupKind.Power),
+                W(95,  EnemyKind.Swarmer, 12, Formation.Column),
+                W(110, EnemyKind.Fighter, 6,  Formation.Pincer, PickupKind.Missile),
+                W(122, EnemyKind.Swarmer, 14, Formation.Ring, PickupKind.Bomb),
+            }
+        },
+        new StageDef
+        {
+            title = "Gökyüzü Tapınağı",
+            subtitle = "Melek ve Yıldız Büyücüsü: son sınav",
+            midBoss = BossType.Angel, midBossTime = 64f,
+            boss = BossType.MagicalGirl, minFirepower = 38f,
+            bas = new BaseDef
+            {
+                name = "Gökyüzü Tapınağı", enabled = true, island = true, center = new Vector2(-300f, -5600f), radius = 440f,
+                ground = new Color(0.85f, 0.85f, 0.9f), hasStart = true, startXZ = new Vector2(-300f, -3400f), startAlt = 300f,
+                intro = "DENİZİ GEÇ: Gökyüzü Tapınağı'nı indir",
+                flak = 12, cannons = 4, hangars = 4, tanks = 4, planes = 6
+            },
+            waves = new[]
+            {
+                W(2,   EnemyKind.Swarmer, 10, Formation.V),
+                W(10,  EnemyKind.Fighter, 5,  Formation.Ring, PickupKind.Power),
+                W(20,  EnemyKind.Heavy,   3,  Formation.Pincer, PickupKind.Shield),
+                W(28,  EnemyKind.Swarmer, 12, Formation.Column),
+                W(40,  EnemyKind.Fighter, 6,  Formation.Line, PickupKind.Power),
+                W(52,  EnemyKind.Swarmer, 12, Formation.Pincer),
+                W(55,  EnemyKind.Heavy,   3,  Formation.V, PickupKind.Bomb),
+                W(68,  EnemyKind.Swarmer, 14, Formation.Ring),
+                W(80,  EnemyKind.Fighter, 7,  Formation.V, PickupKind.Repair),
+                W(92,  EnemyKind.Heavy,   4,  Formation.Line, PickupKind.Power),
+                W(95,  EnemyKind.Swarmer, 14, Formation.Column),
+                W(110, EnemyKind.Fighter, 7,  Formation.Pincer, PickupKind.Missile),
+                W(124, EnemyKind.Swarmer, 16, Formation.Ring, PickupKind.Bomb),
+            }
+        },
     };
 
     private static WaveDef W(float time, EnemyKind kind, int count, Formation formation, PickupKind? drop = null)

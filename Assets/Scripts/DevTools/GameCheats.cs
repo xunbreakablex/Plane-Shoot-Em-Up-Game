@@ -74,7 +74,7 @@ public static class GameCheats
         CombatManager.Instance.DebugSkipStage();
     }
 
-    [AtomicCommand("", "boss", "Boss çağırır: jet shark crab octopus zeppelin dragon")]
+    [AtomicCommand("", "boss", "Boss çağırır: jet shark crab octopus zeppelin dragon demon angel ki magic")]
     public static void Boss(string name)
     {
         if (!InBattle()) return;
@@ -88,8 +88,12 @@ public static class GameCheats
             case "octopus": case "ahtapot": type = BossType.Octopus; break;
             case "zeppelin": case "zeplin": type = BossType.Zeppelin; break;
             case "dragon": case "ejderha": type = BossType.Dragon; break;
+            case "demon": case "iblis": type = BossType.Demon; break;
+            case "angel": case "melek": type = BossType.Angel; break;
+            case "ki": case "kiwarrior": type = BossType.KiWarrior; break;
+            case "magic": case "buyucu": type = BossType.MagicalGirl; break;
             default:
-                AtomicDebug.Error("Bilinmeyen boss. Seçenekler: jet shark crab octopus zeppelin dragon");
+                AtomicDebug.Error("Bilinmeyen boss. Seçenekler: jet shark crab octopus zeppelin dragon demon angel ki magic");
                 return;
         }
 

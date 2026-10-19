@@ -8,10 +8,13 @@ public partial class CombatManager
     {
         switch (type)
         {
-            case BossType.Dragon: return EnemyKind.FinalBoss;
+            case BossType.Dragon:
+            case BossType.MagicalGirl: return EnemyKind.FinalBoss;
             case BossType.Jet:
             case BossType.Crab:
-            case BossType.Zeppelin: return EnemyKind.MidBoss;
+            case BossType.Zeppelin:
+            case BossType.Demon:
+            case BossType.Angel: return EnemyKind.MidBoss;
             default: return EnemyKind.Boss;
         }
     }

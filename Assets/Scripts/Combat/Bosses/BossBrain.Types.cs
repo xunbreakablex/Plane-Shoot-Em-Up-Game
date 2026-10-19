@@ -12,6 +12,10 @@ public partial class BossBrain
             case BossType.Crab: CrabInit(); break;
             case BossType.Octopus: OctoInit(); break;
             case BossType.Zeppelin: ZepInit(); break;
+            case BossType.Demon: DemonInit(); break;
+            case BossType.Angel: AngelInit(); break;
+            case BossType.KiWarrior: KiInit(); break;
+            case BossType.MagicalGirl: MagicInit(); break;
             default: DragonInit(); break;
         }
     }
@@ -25,6 +29,10 @@ public partial class BossBrain
             case BossType.Crab: CrabMove(dt); break;
             case BossType.Octopus: OctoMove(dt); break;
             case BossType.Zeppelin: ZepMove(dt); break;
+            case BossType.Demon: DemonMove(dt); break;
+            case BossType.Angel: AngelMove(dt); break;
+            case BossType.KiWarrior: KiMove(dt); break;
+            case BossType.MagicalGirl: MagicMove(dt); break;
             default: DragonMove(dt); break;
         }
     }
@@ -38,6 +46,10 @@ public partial class BossBrain
             case BossType.Crab: CrabAttack(); break;
             case BossType.Octopus: OctoAttack(); break;
             case BossType.Zeppelin: ZepAttack(); break;
+            case BossType.Demon: DemonAttack(); break;
+            case BossType.Angel: AngelAttack(); break;
+            case BossType.KiWarrior: KiAttack(); break;
+            case BossType.MagicalGirl: MagicAttack(); break;
             default: DragonAttack(); break;
         }
     }
@@ -61,6 +73,10 @@ public partial class BossBrain
             case BossType.Crab: CrabAnimate(); break;
             case BossType.Octopus: OctoAnimate(); break;
             case BossType.Zeppelin: ZepAnimate(); break;
+            case BossType.Demon: DemonAnimate(); break;
+            case BossType.Angel: AngelAnimate(); break;
+            case BossType.KiWarrior: KiAnimate(); break;
+            case BossType.MagicalGirl: MagicAnimate(); break;
             default: DragonAnimate(); break;
         }
     }
