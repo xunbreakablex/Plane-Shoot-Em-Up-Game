@@ -415,13 +415,13 @@ public partial class CombatManager
             bool ground = e.IsGround && !e.IsCore;
             if (ground && !locked && !missileLock)
             {
-                if (!onScreen || dist > 700f || groundBoxes >= 6) continue;
+                if (!onScreen || dist > 550f || groundBoxes >= 3) continue;
                 groundBoxes++;
             }
 
             if (onScreen)
             {
-                if (!important && !ground && (boxes >= 8 || dist > 1300f)) continue;
+                if (!important && !ground && (boxes >= 5 || dist > 1300f)) continue;
                 if (!ground) boxes++;
 
                 // Uzaktaki ucak mesafe arttikca kuculmesin: kutu en az 28 px (eskiden 20)
@@ -446,8 +446,9 @@ public partial class CombatManager
 
                 float topY = box.y;
 
-                // Can: kucukse vurus noktalari, buyukse ince cubuk
-                if (e.MaxHits <= 10)
+                // Can: kucukse vurus noktalari, buyukse ince cubuk (siradan yer birimlerinde yok: ekran sakin kalsin)
+                if (ground && !locked && !missileLock) { }
+                else if (e.MaxHits <= 10)
                 {
                     float pipW = 9f, pipH = 5f, gap = 3f;
                     float total = e.MaxHits * (pipW + gap) - gap;
@@ -474,8 +475,8 @@ public partial class CombatManager
                     Hud.Text(chip, PowerUp.Letters[e.CarrierDrop], Color.black, 14, TextAnchor.MiddleCenter);
                 }
 
-                // Mesafe yazisi: en yakin hedef ve onemliler (kalabalikta yazilar karismasin)
-                if (important || boxes <= 1)
+                // Mesafe yazisi: yalniz onemliler ve en yakin hava hedefi (yer birimlerinde yok)
+                if (important || (!ground && boxes <= 1))
                     Hud.Text(new Rect(box.x - 30f, box.yMax + 2f, size + 60f, 16f), Hud.Meters(dist), col, 12, TextAnchor.UpperCenter);
 
                 if (missileLock)
@@ -484,7 +485,7 @@ public partial class CombatManager
             }
             else
             {
-                if (!important && arrows >= 4) continue;
+                if (!important && (arrows >= 3 || ground)) continue;
                 arrows++;
                 AddArrow(c, hp, sp.z < 0f, col, dist, e.IsBoss || e.IsCore,
                     e.IsCarrier ? PowerUp.Letters[e.CarrierDrop] + " " : (e.IsCore ? "ÜS " : null));
