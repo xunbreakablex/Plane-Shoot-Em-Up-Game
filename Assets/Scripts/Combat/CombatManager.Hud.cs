@@ -118,7 +118,7 @@ public partial class CombatManager
         if (stageBarText.Update(RunState.Stage, bossState, stage != null ? stage.title.GetHashCode() : 0))
         {
             string title = stage != null ? stage.title : "";
-            stageBarText.Text = (RunState.Endless ? $"SONSUZ  •  AŞAMA {RunState.Stage + 1}" : $"AŞAMA {RunState.Stage + 1} / {Stages.All.Length}") + $"   •   {title}"
+            stageBarText.Text = (RunState.Endless ? $"SONSUZ  •  AŞAMA {RunState.Stage + 1}" : $"AŞAMA {RunState.Stage + 1} / {RunState.StageTotal}") + $"   •   {title}"
                                 + (fight ? "   •   BOSS" : (activeBoss != null ? "   •   ORTA BOSS" : ""));
         }
         Hud.Text(bar, stageBarText.Text, Color.white, 12, TextAnchor.MiddleCenter);

@@ -16,6 +16,8 @@ public partial class BossBrain
             case BossType.Angel: AngelInit(); break;
             case BossType.KiWarrior: KiInit(); break;
             case BossType.MagicalGirl: MagicInit(); break;
+            case BossType.Eagle: EagleInit(); break;
+            case BossType.Golem: GolemInit(); break;
             default: DragonInit(); break;
         }
     }
@@ -33,6 +35,8 @@ public partial class BossBrain
             case BossType.Angel: AngelMove(dt); break;
             case BossType.KiWarrior: KiMove(dt); break;
             case BossType.MagicalGirl: MagicMove(dt); break;
+            case BossType.Eagle: EagleMove(dt); break;
+            case BossType.Golem: GolemMove(dt); break;
             default: DragonMove(dt); break;
         }
     }
@@ -50,6 +54,8 @@ public partial class BossBrain
             case BossType.Angel: AngelAttack(); break;
             case BossType.KiWarrior: KiAttack(); break;
             case BossType.MagicalGirl: MagicAttack(); break;
+            case BossType.Eagle: EagleAttack(); break;
+            case BossType.Golem: GolemAttack(); break;
             default: DragonAttack(); break;
         }
     }
@@ -77,6 +83,8 @@ public partial class BossBrain
             case BossType.Angel: AngelAnimate(); break;
             case BossType.KiWarrior: KiAnimate(); break;
             case BossType.MagicalGirl: MagicAnimate(); break;
+            case BossType.Eagle: EagleAnimate(); break;
+            case BossType.Golem: GolemAnimate(); break;
             default: DragonAnimate(); break;
         }
     }

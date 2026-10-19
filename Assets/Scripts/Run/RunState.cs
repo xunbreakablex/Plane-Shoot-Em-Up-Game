@@ -34,8 +34,10 @@ public static class RunState
 
     /// <summary>Sonsuz Savas: kampanya bittikten sonra asamalar bitmeden devam eder.</summary>
     public static bool Endless { get; private set; }
-    public static int LastStage => Endless ? int.MaxValue : Stages.All.Length - 1;
-    public static bool IsLastStage => !Endless && Stage >= Stages.All.Length - 1;
+    /// <summary>Kampanya/Boss Rush'taki toplam asama sayisi.</summary>
+    public static int StageTotal => Rush ? Stages.All.Length + 1 : Stages.All.Length;
+    public static int LastStage => Endless ? int.MaxValue : StageTotal - 1;
+    public static bool IsLastStage => !Endless && Stage >= StageTotal - 1;
 
     /// <summary>Zafer ekranindan: kampanya bitti, ayni oyuna sonsuz modda devam (asama tamam ekrani acilir).</summary>
     public static void ResumeAsEndless()

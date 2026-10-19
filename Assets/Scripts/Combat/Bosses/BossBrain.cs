@@ -51,6 +51,8 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Angel: return "MELEK";
             case BossType.KiWarrior: return "Kİ SAVAŞÇISI";
             case BossType.MagicalGirl: return "YILDIZ BÜYÜCÜSÜ";
+            case BossType.Eagle: return "ÇELİK KARTAL";
+            case BossType.Golem: return "TAŞ DEV";
             default: return "KIZIL EJDERHA";
         }
     }
@@ -69,6 +71,8 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Angel: return 2.3f;
             case BossType.KiWarrior: return 2.3f;
             case BossType.MagicalGirl: return 2.2f;
+            case BossType.Eagle: return 2.3f;
+            case BossType.Golem: return 2.4f;
             default: return 2.2f;
         }
     }
@@ -87,6 +91,8 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Angel: return 16f * ScaleOf(t);
             case BossType.KiWarrior: return 14f * ScaleOf(t);
             case BossType.MagicalGirl: return 15f * ScaleOf(t);
+            case BossType.Eagle: return 20f * ScaleOf(t);
+            case BossType.Golem: return 14f * ScaleOf(t);
             default: return 18f * ScaleOf(t);
         }
     }
@@ -112,6 +118,8 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Angel: return 2800;
             case BossType.KiWarrior: return 4200;
             case BossType.MagicalGirl: return 6000;
+            case BossType.Eagle: return 3200;
+            case BossType.Golem: return 4000;
             default: return 5000;
         }
     }

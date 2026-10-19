@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum BossType { Jet, Shark, Crab, Octopus, Zeppelin, Dragon, Demon, Angel, KiWarrior, MagicalGirl }
+public enum BossType { Jet, Shark, Crab, Octopus, Zeppelin, Dragon, Demon, Angel, KiWarrior, MagicalGirl, Eagle, Golem }
 
 // Boss govdelerini Unity primitive'lerinden kodla uretir (model dosyasi gerekmez).
 // Her bossun parcalari BossBrain tarafindan isimle bulunup canlandirilir; isimleri degistirirsen
@@ -31,6 +31,8 @@ public static partial class BossBuilder
             case BossType.Angel: BuildAngel(root); break;
             case BossType.KiWarrior: BuildKiWarrior(root); break;
             case BossType.MagicalGirl: BuildMagicalGirl(root); break;
+            case BossType.Eagle: BuildEagle(root); break;
+            case BossType.Golem: BuildGolem(root); break;
             default: BuildDragon(root); break;
         }
 

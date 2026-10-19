@@ -250,7 +250,7 @@ public static class Stages
     {
         if (rush == null)
         {
-            rush = new StageDef[All.Length];
+            rush = new StageDef[All.Length + 1];
             for (int i = 0; i < All.Length; i++)
             {
                 StageDef src = All[i];
@@ -265,6 +265,17 @@ public static class Stages
                     bas = new BaseDef { name = "", enabled = false }
                 };
             }
+            // Son tur: yalnizca Boss Rush'a ozel iki boss
+            rush[All.Length] = new StageDef
+            {
+                title = $"Boss Rush {All.Length + 1}",
+                subtitle = "Çelik Kartal ve Taş Dev",
+                midBoss = BossType.Eagle, midBossTime = 3f,
+                boss = BossType.Golem,
+                minFirepower = All[All.Length - 1].minFirepower + 4f,
+                waves = new[] { W(1f, EnemyKind.Fighter, 3, Formation.V) },
+                bas = new BaseDef { name = "", enabled = false }
+            };
         }
         return rush[Mathf.Clamp(index, 0, rush.Length - 1)];
     }
@@ -278,6 +289,8 @@ public static class Stages
         int k = index - All.Length;
         StageDef src = All[k % All.Length];
         StageDef mixed = All[(k + 2) % All.Length];
+        BossType midType = k % 2 == 1 ? BossType.Eagle : mixed.midBoss;       // yeni bosslar sonsuz modda araya girer
+        BossType mainType = k % 3 == 2 ? BossType.Golem : src.boss;
 
         float scale = 1f + 0.12f * (k + 1);
         var waves = new WaveDef[src.waves.Length];
@@ -304,8 +317,8 @@ public static class Stages
             title = $"Sonsuz Savaş {k + 1}",
             subtitle = $"{src.title}: düşman geri çekilmiyor, daha çok ve daha güçlü",
             waves = waves,
-            midBoss = mixed.midBoss, midBossTime = Mathf.Max(48f, src.midBossTime - 2f * k),
-            boss = src.boss,
+            midBoss = midType, midBossTime = Mathf.Max(48f, src.midBossTime - 2f * k),
+            boss = mainType,
             minFirepower = All[All.Length - 1].minFirepower + 3f * (k + 1),
             bas = bas
         };

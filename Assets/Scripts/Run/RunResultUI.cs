@@ -44,7 +44,7 @@ public class RunResultUI : MonoBehaviour
 
         string sub = won
             ? (RunState.Rush ? "Tüm bosslar yenildi: Boss Rush tamam." : "Kızıl Komutan'ı yendin ve operasyonu tamamladın.")
-            : (RunState.Endless ? $"Sonsuz Savaş'ta {RunState.Stage + 1}. aşamada düştün." : $"Aşama {RunState.Stage + 1} / {Stages.All.Length} içinde düştün.");
+            : (RunState.Endless ? $"Sonsuz Savaş'ta {RunState.Stage + 1}. aşamada düştün." : $"Aşama {RunState.Stage + 1} / {RunState.StageTotal} içinde düştün.");
         Hud.Text(new Rect(0f, H * 0.08f + 64f, W, 28f), sub, new Color(0.85f, 0.9f, 0.95f), 18, TextAnchor.MiddleCenter, false);
 
         if (RunState.NewRecord)
@@ -64,7 +64,7 @@ public class RunResultUI : MonoBehaviour
         {
             RunState.Score.ToString("N0"),
             RunState.HighScore.ToString("N0"),
-            RunState.Endless ? $"{RunState.Stage + 1} (sonsuz)" : $"{RunState.Stage + 1} / {Stages.All.Length}",
+            RunState.Endless ? $"{RunState.Stage + 1} (sonsuz)" : $"{RunState.Stage + 1} / {RunState.StageTotal}",
             RunState.Kills.ToString(),
             "x" + RunState.BestCombo,
             RunState.BossKills.ToString(),
