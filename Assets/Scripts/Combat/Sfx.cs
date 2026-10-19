@@ -129,7 +129,7 @@ public static class Sfx
     }
 
     // ---- Lazer, boss, uyari, arayuz sesleri
-    private static AudioClip beamHum, beamCharge, warning, victory, bossRoar, click, bossAttack, killDing, shotgun, plasma, rail, crack;
+    private static AudioClip beamHum, beamCharge, warning, victory, bossRoar, click, bossAttack, killDing, shotgun, plasma, rail, crack, lockTick;
 
     public static AudioClip BeamHum => beamHum != null ? beamHum : (beamHum = MakeBeamHum());
     public static AudioClip BeamCharge => beamCharge != null ? beamCharge : (beamCharge = MakeBeamCharge());
@@ -137,6 +137,7 @@ public static class Sfx
     public static AudioClip Victory => victory != null ? victory : (victory = MakeVictory());
     public static AudioClip BossRoar => bossRoar != null ? bossRoar : (bossRoar = MakeBossRoar());
     public static AudioClip Click => click != null ? click : (click = MakeClick());
+    public static AudioClip Lock => lockTick != null ? lockTick : (lockTick = MakeLock());
     public static AudioClip Crack => crack != null ? crack : (crack = MakeCrack());
     public static AudioClip Shotgun => shotgun != null ? shotgun : (shotgun = MakeShotgun());
     public static AudioClip Plasma => plasma != null ? plasma : (plasma = MakePlasma());
@@ -314,6 +315,21 @@ public static class Sfx
             d[i] = (y * 0.8f * Mathf.Exp(-t * 14f) + Mathf.Sin(2f * Mathf.PI * 55f * t) * 0.5f * Mathf.Exp(-t * 7f) + crackle * 0.8f);
         }
         return Create("crack", d);
+    }
+
+    // Nisan alindi: iki kisa tiz blip
+    private static AudioClip MakeLock()
+    {
+        int n = (int)(Rate * 0.16f);
+        var d = new float[n];
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float seg = t < 0.07f ? t : (t >= 0.09f ? t - 0.09f : -1f);
+            if (seg < 0f) continue;
+            d[i] = Mathf.Sin(2f * Mathf.PI * 1900f * seg) * Mathf.Exp(-seg * 60f) * 0.45f;
+        }
+        return Create("lock", d);
     }
 
     private static AudioClip MakeClick()

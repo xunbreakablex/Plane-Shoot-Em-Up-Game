@@ -190,6 +190,17 @@ public partial class CombatManager : MonoBehaviour
 
     // ---------------------------------------------------------------- events
 
+    // Dusman sana nisan aldi (seriye basladi): yakinsa kisa uyari tiki (sik tekrar etmesin)
+    private float nextTargetTick;
+
+    public void OnEnemyTargeting(EnemyPlane enemy, float dist)
+    {
+        if (dist > 520f || Time.time < nextTargetTick || uiAudio == null) return;
+        nextTargetTick = Time.time + 1.1f;
+        uiAudio.pitch = 1f;
+        uiAudio.PlayOneShot(Sfx.Lock, 0.3f);
+    }
+
     // Vurus onayi (nisangah isareti): normal vurus kucuk beyaz, oldurme buyuk kirmizi
     private float hitMarkerTime = -10f, killMarkerTime = -10f;
 

@@ -640,6 +640,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
             {
                 burstLeft = burstSize;
                 nextBurstTime = Time.time + Random.Range(burstCdMin, burstCdMax);
+                mgr.OnEnemyTargeting(this, dist);   // "nisan aldi" uyarisi
             }
 
             if (burstLeft > 0 && Time.time >= nextShotTime)
@@ -819,12 +820,27 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         }
         foreach (var ps in fire.GetComponentsInChildren<ParticleSystem>())
         {
+            // Duman prefabinin gri omur-rengi alevi kahverengiye bogar: parlak sari -> turuncu -> kizil -> koyu duman
             var main = ps.main;
-            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.7f, 0.15f, 1f), new Color(1f, 0.35f, 0.05f, 1f));
-            main.startSizeMultiplier = main.startSizeMultiplier * 1.4f * scale;
-            main.startLifetimeMultiplier = main.startLifetimeMultiplier * 0.7f;
+            main.startColor = Color.white;
+            main.startSizeMultiplier = main.startSizeMultiplier * 1.1f * scale;
+            main.startLifetimeMultiplier = main.startLifetimeMultiplier * 0.55f;
             var em = ps.emission;
-            em.rateOverTimeMultiplier = em.rateOverTimeMultiplier * 2.5f * scale;
+            em.rateOverTimeMultiplier = em.rateOverTimeMultiplier * 3f * scale;
+
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            var g = new Gradient();
+            g.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(new Color(1f, 0.95f, 0.6f), 0f),
+                    new GradientColorKey(new Color(1f, 0.55f, 0.1f), 0.3f),
+                    new GradientColorKey(new Color(0.75f, 0.18f, 0.04f), 0.6f),
+                    new GradientColorKey(new Color(0.15f, 0.15f, 0.15f), 1f)
+                },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0.9f, 0.5f), new GradientAlphaKey(0f, 1f) });
+            col.color = new ParticleSystem.MinMaxGradient(g);
         }
     }
 

@@ -199,10 +199,31 @@ public partial class CombatManager
         }
     }
 
+    // Komutan telsizi: her dalgada kisa bir satir (neden vurdugunu soyler); art arda gelmesin diye araligi var
+    private float nextRadio;
+
+    private void Radio(EnemyKind kind, int count)
+    {
+        if (Time.time < nextRadio) return;
+        nextRadio = Time.time + 14f;
+        string line;
+        switch (kind)
+        {
+            case EnemyKind.Swarmer: line = count > 1 ? "Komutan: avcı sürüsü peşinde, silkele ve indir!" : "Komutan: tek avcı yaklaşıyor, hallet."; break;
+            case EnemyKind.Fighter: line = count > 1 ? $"Komutan: {count} avcı havalandı, üsse ulaşmadan önünü kes!" : "Komutan: bir avcı seni hedef aldı, kanadını vur!"; break;
+            case EnemyKind.Heavy: line = "Komutan: bombardıman uçağı rotada, geçmesine izin verme!"; break;
+            case EnemyKind.Kamikaze: line = "Komutan: KAMİKAZE! Yaklaşmadan vur, kaç!"; break;
+            case EnemyKind.Sniper: line = "Komutan: nişancı uzaktan vuruyor, yan yan yaklaş."; break;
+            default: return;
+        }
+        Announce(line, new Color(0.75f, 0.95f, 1f), 3.2f);
+    }
+
     private void SpawnWave(WaveDef w)
     {
         Transform pt = PlayerTransform;
         if (pt == null) return;
+        Radio(w.kind, w.count);
 
         Vector3 playerPos = pt.position;
         Vector3 vel = PlayerVelocity;
