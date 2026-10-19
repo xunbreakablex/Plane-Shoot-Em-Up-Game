@@ -228,7 +228,10 @@ public partial class BossBrain : MonoBehaviour
         TickType(dt);
 
         if (playerAlive && !overridden && !beamActive && Time.time >= nextAttack)
+        {
             Attack();
+            Sfx.PlayAt(Sfx.BossAttack, pos, 0.7f);
+        }
 
         // Zemin
         float ground = mgr.GroundHeight(pos);
@@ -466,6 +469,7 @@ public partial class BossBrain : MonoBehaviour
         beamFire = fire;
         beamStart = Time.time;
         beamActive = true;
+        Sfx.PlayAt(Sfx.BeamCharge, origin.position, 0.8f);
         beamDir = (player.position - origin.position).normalized;
         beamNextTick = 0f;
 

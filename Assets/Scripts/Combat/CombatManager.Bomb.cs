@@ -37,6 +37,7 @@ public partial class CombatManager
         }
 
         nextBombTime = Time.time + 1.5f;
+        FollowCamera.AddShake(1.1f, 0.7f);
         Vector3 center = plane.transform.position;
 
         // Mermi yagmuru temizlenir; herkes agir hasar alir (boss daha fazla)

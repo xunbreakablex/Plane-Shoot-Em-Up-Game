@@ -64,6 +64,9 @@ public class HangarController : MonoBehaviour
 
     private void Start()
     {
+        MusicPlayer.Ensure(gameObject, MusicTrack.Hangar);
+        GameAudio.Apply();
+
         GameState.Paused = false;
         Time.timeScale = 1f;
         AudioListener.pause = false;
@@ -414,10 +417,20 @@ public class HangarController : MonoBehaviour
 
     // ------------------------------------------------------------------ GUI
 
+    private bool showSettings;
+
     private void OnGUI()
     {
         Hud.Begin();
         float W = Hud.W, H = Hud.H;
+
+        // Ayarlar paneli tek basina cizilir (alttaki dugmeler tiklanmasin)
+        if (showSettings)
+        {
+            if (SettingsPanel.Draw()) showSettings = false;
+            Hud.End();
+            return;
+        }
 
         DrawTopBar(W);
         DrawLeft(H);
@@ -449,7 +462,9 @@ public class HangarController : MonoBehaviour
         if (selected) Hud.Fill(new Rect(r.x, r.yMax - 3f, r.width, 3f), a);
 
         Hud.Text(r, text, Color.white, size, TextAnchor.MiddleCenter);
-        return !showHelp && GUI.Button(r, GUIContent.none, GUIStyle.none);
+        bool clicked = !showHelp && GUI.Button(r, GUIContent.none, GUIStyle.none);
+        if (clicked) GameAudio.PlayUi(Sfx.Click, 0.5f);
+        return clicked;
     }
 
     private void DrawTopBar(float W)
@@ -781,6 +796,9 @@ public class HangarController : MonoBehaviour
             RunState.CancelPending();
             Toast("Yeni oyun: 1. aşamadan başlayacaksın.");
         }
+
+        if (Btn(new Rect(W * 0.5f - bw * 0.5f - 310f, y + 8f, 140f, 40f), "AYARLAR", 15))
+            showSettings = true;
 
         if (Btn(new Rect(W * 0.5f - bw * 0.5f - 160f, y + 8f, 140f, 40f), "SIFIRLA", 15))
         {

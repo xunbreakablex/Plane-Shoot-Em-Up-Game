@@ -34,7 +34,9 @@ public class PauseMenu : MonoBehaviour
     private void Update()
     {
         var kb = Keyboard.current;
-        if (kb == null || !kb.escapeKey.wasPressedThisFrame) return;
+        var pad = Gamepad.current;
+        bool pressed = (kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.startButton.wasPressedThisFrame);
+        if (!pressed) return;
 
         // Asama tamam ve sonuc ekranlarinda kendi dugmeleri vardir
         if (results != null && results.IsOpen) return;
@@ -51,9 +53,18 @@ public class PauseMenu : MonoBehaviour
         GameState.SetPaused(!GameState.Paused);
     }
 
+    private bool showSettings;
+
+    private bool Click(Rect r, string text)
+    {
+        bool c = GUI.Button(r, text, button);
+        if (c) GameAudio.PlayUi(Sfx.Click, 0.5f);
+        return c;
+    }
+
     private void OnGUI()
     {
-        if (!GameState.Paused) return;
+        if (!GameState.Paused) { showSettings = false; return; }
         if (shop != null && shop.IsOpen) return;
         if (stageClear != null && stageClear.IsOpen) return;
         if (results != null && results.IsOpen) return;
@@ -65,24 +76,31 @@ public class PauseMenu : MonoBehaviour
 
         // Diger ekranlarla ayni sanal 1280x720 olcek
         Hud.Begin();
-        float W = Hud.W, H = Hud.H;
 
+        if (showSettings)
+        {
+            if (SettingsPanel.Draw()) showSettings = false;
+            Hud.End();
+            return;
+        }
+
+        float W = Hud.W, H = Hud.H;
         Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.62f));
 
         float w = 400f, h = 56f, gap = 16f;
         float x = (W - w) * 0.5f;
-        float y = H * 0.22f;   // 5 dugme + ipuclari sigsin
+        float y = H * 0.24f;
 
         Hud.Text(new Rect(0f, y - 80f, W, 60f), "DURAKLATILDI", Color.white, 44, TextAnchor.MiddleCenter);
 
-        if (GUI.Button(new Rect(x, y, w, h), "DEVAM ET   (ESC)", button))
+        if (Click(new Rect(x, y, w, h), "DEVAM ET   (ESC)"))
             GameState.SetPaused(false);
 
         // Savas ortasinda magaza (sinirsiz onarim) GameSettings.shopInPauseMenu ile acilir; varsayilan:
         // yalniz asama aralarinda (Asama Tamam ekrani)
         if (shop != null && GameSettings.Current.shopInPauseMenu)
         {
-            if (GUI.Button(new Rect(x, y + (h + gap), w, h), $"MAĞAZA   •   {RunUpgrades.Scrap} hurda", button))
+            if (Click(new Rect(x, y + (h + gap), w, h), $"MAĞAZA   •   {RunUpgrades.Scrap} hurda"))
                 shop.Open();
         }
         else
@@ -92,29 +110,22 @@ public class PauseMenu : MonoBehaviour
             GUI.enabled = true;
         }
 
-        if (GUI.Button(new Rect(x, y + (h + gap) * 2f, w, h), "HANGARA DÖN", button))
+        if (Click(new Rect(x, y + (h + gap) * 2f, w, h), "AYARLAR"))
+            showSettings = true;
+
+        if (Click(new Rect(x, y + (h + gap) * 3f, w, h), "HANGARA DÖN"))
         {
             // Savasin ortasinda hangara donmek oyunu bastan baslatir
             GameState.SetPaused(false);
             SceneManager.LoadScene(GameScenes.Hangar);
         }
 
-        // Kontrol semasi: Fare -> Arcade -> Klasik (tercih kalicidir)
-        if (GUI.Button(new Rect(x, y + (h + gap) * 3f, w, h), $"KONTROL:  {ControlSettings.Label}", button))
-            ControlSettings.Scheme = ControlSettings.Next(ControlSettings.Scheme);
-
-        // Nisan: Otomatik / Fare. FARE semasinda fare ucagi yonettigi icin nisan hep otomatiktir.
-        GUI.enabled = !ControlSettings.MouseSteering;
-        if (GUI.Button(new Rect(x, y + (h + gap) * 4f, w, h), $"NİŞAN:  {ControlSettings.AimLabel}", button))
-            ControlSettings.AutoAim = !ControlSettings.AutoAim;
-        GUI.enabled = true;
-
-        Hud.Text(new Rect(0f, y + (h + gap) * 5f - 4f, W, 22f), ControlSettings.SteerHint,
+        Hud.Text(new Rect(0f, y + (h + gap) * 4f - 4f, W, 22f), ControlSettings.SteerHint,
             new Color(1f, 0.9f, 0.55f), 15, TextAnchor.MiddleCenter);
-        Hud.Text(new Rect(0f, y + (h + gap) * 5f + 20f, W, 22f), ControlSettings.AimHint,
+        Hud.Text(new Rect(0f, y + (h + gap) * 4f + 20f, W, 22f), ControlSettings.AimHint,
             new Color(1f, 0.9f, 0.55f), 15, TextAnchor.MiddleCenter);
 
-        Hud.Text(new Rect(0f, y + (h + gap) * 5f + 50f, W, 24f),
+        Hud.Text(new Rect(0f, y + (h + gap) * 4f + 50f, W, 24f),
             "Savaş sırasında hangara dönersen oyun baştan başlar. Mağaza yükseltmeleri bu oyuna özeldir.",
             new Color(0.8f, 0.85f, 0.9f), 14, TextAnchor.MiddleCenter, false);
 

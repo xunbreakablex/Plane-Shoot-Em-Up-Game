@@ -15,6 +15,7 @@ public partial class PlayerGun
     private class BeamVisual
     {
         public LineRenderer core, glow, ring;
+        public AudioSource hum;
         public float clock;                       // tus basili kaldigi sure (darbe fazi icin)
         public float nextTick;
         public bool active;
@@ -59,6 +60,12 @@ public partial class PlayerGun
         b.glow = MakeLine("Glow", root, mat, false, 2);
         b.core = MakeLine("Core", root, mat, false, 2);
         b.ring = MakeLine("Portal", root, mat, true, PortalSegments);
+        b.hum = root.gameObject.AddComponent<AudioSource>();
+        b.hum.clip = Sfx.BeamHum;
+        b.hum.loop = true;
+        b.hum.spatialBlend = 0f;
+        b.hum.playOnAwake = false;
+        b.hum.volume = 0.18f;
         beams[slot] = b;
         return b;
     }
@@ -83,6 +90,7 @@ public partial class PlayerGun
             if (b.core != null) b.core.enabled = false;
             if (b.glow != null) b.glow.enabled = false;
             if (b.ring != null) b.ring.enabled = false;
+            if (b.hum != null) b.hum.Stop();
         }
     }
 
@@ -149,8 +157,10 @@ public partial class PlayerGun
         {
             b.core.enabled = false;
             b.glow.enabled = false;
+            if (b.hum != null && b.hum.isPlaying) b.hum.Pause();
             return;
         }
+        if (b.hum != null && !b.hum.isPlaying) b.hum.Play();
 
         // Isin boyunca tara: en yakindan uzaga; hasar almayan ilk sey isini durdurur, dusmanlar delinir
         float range = def.range;

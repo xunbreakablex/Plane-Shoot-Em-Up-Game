@@ -614,12 +614,30 @@ public class PlaneController : MonoBehaviour
 
             if (kb.tKey.wasPressedThisFrame) autoLevel = !autoLevel;
             if (kb.mKey.wasPressedThisFrame && !mouseScheme) SetMouseFlight(!mouseFlight);
-            if (kb.rKey.wasPressedThisFrame) Respawn();
-            if (kb.pKey.wasPressedThisFrame) PlaceOnRunway();
+            if (DevBuild.Enabled && kb.rKey.wasPressedThisFrame) Respawn();           // test araci
+            if (DevBuild.Enabled && kb.pKey.wasPressedThisFrame) PlaceOnRunway();     // test araci
         }
 
         var pad = Gamepad.current;
-        if (pad != null)
+        if (pad != null && mouseScheme)
+        {
+            // FARE semasi + gamepad: sol cubuk x = kayma, sol cubuk y = gaz, omuzlar = yukari/asagi, sag cubuk = yonlendirme
+            Vector2 l = Deadzone(pad.leftStick.ReadValue());
+            float shoulders = (pad.rightShoulder.isPressed ? 1f : 0f) - (pad.leftShoulder.isPressed ? 1f : 0f);
+            if (strafeKeys) strafeRaw = new Vector3(l.x, shoulders, 0f);
+            else turnRaw += l.x;
+            throttleRaw += l.y;
+
+            Vector2 r = Deadzone(pad.rightStick.ReadValue());
+            if (r.sqrMagnitude > 0f)
+            {
+                GameSettings g = GameSettings.Current;
+                if (g.invertMouseY ^ UserSettings.InvertY) r.y = -r.y;
+                if (arcadeActive) mouseAimPending += r * (ArcadePitchRate * 0.9f * UserSettings.MouseSens * Time.deltaTime);
+                else { pitchRaw += r.y; turnRaw += r.x; }
+            }
+        }
+        else if (pad != null)
         {
             Vector2 stick = pad.leftStick.ReadValue();
             pitchRaw += -stick.y;
@@ -640,17 +658,17 @@ public class PlaneController : MonoBehaviour
             Vector2 d = Cursor.lockState != CursorLockMode.Locked
                 ? Vector2.zero
                 : Mouse.current.delta.ReadValue();
-            if (gs.invertMouseY) d.y = -d.y;   // varsayilan: fare yukari = burun yukari
+            if (gs.invertMouseY ^ UserSettings.InvertY) d.y = -d.y;   // varsayilan: fare yukari = burun yukari
 
             if (arcadeActive)
             {
-                mouseAimPending += d * (MouseDegPerPixel * gs.mouseSensitivity);
+                mouseAimPending += d * (MouseDegPerPixel * gs.mouseSensitivity * UserSettings.MouseSens);
                 steerStick = Vector2.zero;
             }
             else
             {
                 mouseAimPending = mouseAimVel = Vector2.zero;
-                float k = 0.008f * gs.mouseSensitivity;
+                float k = 0.008f * gs.mouseSensitivity * UserSettings.MouseSens;
                 steerStick.x = Mathf.Clamp(steerStick.x + d.x * k, -1f, 1f);
                 steerStick.y = Mathf.Clamp(steerStick.y + d.y * k, -1f, 1f);
                 steerStick *= Mathf.Exp(-gs.mouseSteerDecay * Time.deltaTime);
@@ -689,6 +707,14 @@ public class PlaneController : MonoBehaviour
         yawRaw = Mathf.Clamp(yawRaw, -1f, 1f);
         turnRaw = Mathf.Clamp(turnRaw, -1f, 1f);
         throttleRaw = Mathf.Clamp(throttleRaw, -1f, 1f);
+    }
+
+    // Analog cubuk olu bolgesi (0,18): kucuk titremeler ucagi surukleme
+    private static Vector2 Deadzone(Vector2 v)
+    {
+        float m = v.magnitude;
+        if (m < 0.18f) return Vector2.zero;
+        return v / m * Mathf.Clamp01((m - 0.18f) / 0.82f);
     }
 
     private void SetMouseFlight(bool on)

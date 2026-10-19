@@ -45,6 +45,22 @@ public class FollowCamera : MonoBehaviour
         look = Vector2.zero;
     }
 
+    // ---- Kamera sarsintisi (vurus, patlama, boss olumu): siddet UserSettings.Shake ile olceklenir
+    private static float shakeAmp, shakeStart, shakeDur;
+
+    public static void AddShake(float amplitude, float duration)
+    {
+        amplitude *= UserSettings.Shake;
+        if (amplitude <= 0.005f) return;
+        if (amplitude >= CurrentShake()) { shakeAmp = amplitude; shakeStart = Time.unscaledTime; shakeDur = Mathf.Max(0.05f, duration); }
+    }
+
+    private static float CurrentShake()
+    {
+        float k = 1f - (Time.unscaledTime - shakeStart) / Mathf.Max(shakeDur, 0.05f);
+        return k > 0f ? shakeAmp * k * k : 0f;
+    }
+
     public void SetTarget(Transform newTarget)
     {
         target = newTarget;
@@ -66,14 +82,14 @@ public class FollowCamera : MonoBehaviour
 
         // Sag tik: nisan alinan bolgeye (ekran ortasi) yakinlastirir; GameSettings.aimZoom / aimZoomTime
         var mouse = Mouse.current;
-        bool zoomHeld = mouse != null && mouse.rightButton.isPressed && !GameState.UiOpen;
+        var pad = Gamepad.current;
+        bool zoomHeld = ((mouse != null && mouse.rightButton.isPressed) || (pad != null && pad.leftTrigger.ReadValue() > 0.4f)) && !GameState.UiOpen;
         float zoomTarget = zoomHeld ? 1f : 0f;
         zoomBlend = Mathf.SmoothDamp(zoomBlend, zoomTarget, ref zoomVel, GameSettings.Current.aimZoomTime);
 
         // Etrafa bakma yalniz gamepad sag cubugunda (sag tik artik zoom)
         Vector2 lookIn = Vector2.zero;
-        var pad = Gamepad.current;
-        if (pad != null)
+        if (pad != null && !ControlSettings.MouseSteering)   // FARE semasinda sag cubuk yonlendirir
             lookIn += pad.rightStick.ReadValue() * 90f * Time.deltaTime;
 
         if (lookIn.sqrMagnitude > 0.0001f)
@@ -133,7 +149,8 @@ public class FollowCamera : MonoBehaviour
         distanceScale = Mathf.Lerp(distanceScale, wantScale, 2f * dt);
 
         Vector3 offset = Offsets[offsetIndex];
-        offset.z *= distanceScale;
+        offset.z *= distanceScale * UserSettings.CameraDistance;
+        offset.y *= Mathf.Lerp(1f, UserSettings.CameraDistance, 0.5f);
 
         Vector3 pos = target.position + rot * lookRot * offset;
         // Gorus "yukarisi" ucagin yatisini %25 takip eder; hizli yatan ucaklarda ekran savrulmasin diye
@@ -166,6 +183,16 @@ public class FollowCamera : MonoBehaviour
                     Mathf.PerlinNoise(n, 13.13f) - 0.5f) * 2f;
                 pos += noise * shake;
             }
+        }
+
+        // Vurus / patlama sarsintisi
+        float sh = CurrentShake();
+        if (sh > 0.001f)
+        {
+            float tt = Time.unscaledTime * 38f;
+            Vector3 n = new Vector3(Mathf.PerlinNoise(tt, 1.7f) - 0.5f, Mathf.PerlinNoise(tt, 9.3f) - 0.5f, Mathf.PerlinNoise(tt, 4.1f) - 0.5f) * 2f;
+            pos += n * sh * 1.1f;
+            finalRot *= Quaternion.Euler(n.y * sh * 1.6f, n.x * sh * 1.6f, n.z * sh * 2.2f);
         }
 
         transform.SetPositionAndRotation(pos, finalRot);

@@ -128,6 +128,139 @@ public static class Sfx
         return Create("launch", d);
     }
 
+    // ---- Lazer, boss, uyari, arayuz sesleri
+    private static AudioClip beamHum, beamCharge, warning, victory, bossRoar, click, bossAttack;
+
+    public static AudioClip BeamHum => beamHum != null ? beamHum : (beamHum = MakeBeamHum());
+    public static AudioClip BeamCharge => beamCharge != null ? beamCharge : (beamCharge = MakeBeamCharge());
+    public static AudioClip Warning => warning != null ? warning : (warning = MakeWarning());
+    public static AudioClip Victory => victory != null ? victory : (victory = MakeVictory());
+    public static AudioClip BossRoar => bossRoar != null ? bossRoar : (bossRoar = MakeBossRoar());
+    public static AudioClip Click => click != null ? click : (click = MakeClick());
+    public static AudioClip BossAttack => bossAttack != null ? bossAttack : (bossAttack = MakeBossAttack());
+
+    // Lazer uguldamasi: 0,5 sn dikisiz dongu (frekanslar tam periyot icin 100 Hz'in katlari)
+    private static AudioClip MakeBeamHum()
+    {
+        int n = Rate / 2;
+        var d = new float[n];
+        var rng = new System.Random(21);
+        float y = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float noise = (float)rng.NextDouble() * 2f - 1f;
+            y += (noise - y) * 0.05f;
+            float saw = ((t * 200f) % 1f) * 2f - 1f;
+            d[i] = (Mathf.Sin(2f * Mathf.PI * 100f * t) * 0.5f + saw * 0.18f + Mathf.Sin(2f * Mathf.PI * 400f * t) * 0.1f + y * 0.25f) * 0.7f;
+        }
+        return Create("beamHum", d);
+    }
+
+    // Yukselen sarj sesi (boss isini hazirligi)
+    private static AudioClip MakeBeamCharge()
+    {
+        int n = (int)(Rate * 0.9f);
+        var d = new float[n];
+        float phase = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float f = Mathf.Lerp(140f, 1100f, (t / 0.9f) * (t / 0.9f));
+            phase += 2f * Mathf.PI * f / Rate;
+            d[i] = (Mathf.Sin(phase) * 0.5f + Mathf.Sin(phase * 2f) * 0.2f) * Mathf.Clamp01(t * 6f) * Mathf.Clamp01((0.9f - t) * 8f);
+        }
+        return Create("beamCharge", d);
+    }
+
+    private static AudioClip MakeWarning()
+    {
+        int n = (int)(Rate * 0.26f);
+        var d = new float[n];
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float f = t < 0.12f ? 880f : 660f;
+            float env = (t < 0.12f ? Mathf.Exp(-(t) * 12f) : Mathf.Exp(-(t - 0.12f) * 12f));
+            d[i] = Mathf.Sin(2f * Mathf.PI * f * t) * env * 0.5f;
+        }
+        return Create("warning", d);
+    }
+
+    private static AudioClip MakeVictory()
+    {
+        float[] notes = { 523.25f, 659.25f, 783.99f, 1046.5f, 783.99f, 1046.5f, 1318.5f };
+        float[] len = { 0.14f, 0.14f, 0.14f, 0.3f, 0.12f, 0.12f, 0.6f };
+        int n = (int)(Rate * 1.9f);
+        var d = new float[n];
+        float start = 0f;
+        for (int k = 0; k < notes.Length; k++)
+        {
+            int s0 = (int)(start * Rate);
+            for (int i = s0; i < n; i++)
+            {
+                float t = (i - s0) / (float)Rate;
+                float s = Mathf.Sin(2f * Mathf.PI * notes[k] * t) + 0.4f * Mathf.Sin(4f * Mathf.PI * notes[k] * t) + 0.2f * Mathf.Sin(6f * Mathf.PI * notes[k] * t);
+                d[i] += s * Mathf.Exp(-t * 3.5f) * 0.22f;
+            }
+            start += len[k];
+        }
+        for (int i = 0; i < n; i++) d[i] = Mathf.Clamp(d[i], -1f, 1f);
+        return Create("victory", d);
+    }
+
+    // Boss girisi: alcak, titresen kukreme
+    private static AudioClip MakeBossRoar()
+    {
+        int n = (int)(Rate * 1.4f);
+        var d = new float[n];
+        var rng = new System.Random(31);
+        float phase = 0f, y = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float f = 52f + Mathf.Sin(t * 14f) * 9f - t * 12f;
+            phase += 2f * Mathf.PI * f / Rate;
+            float noise = (float)rng.NextDouble() * 2f - 1f;
+            y += (noise - y) * 0.06f;
+            float saw = ((phase / (2f * Mathf.PI)) % 1f) * 2f - 1f;
+            d[i] = (saw * 0.6f + Mathf.Sin(phase) * 0.5f + y * 0.5f) * Mathf.Clamp01(t * 10f) * Mathf.Exp(-t * 1.4f);
+        }
+        for (int i = 0; i < n; i++) d[i] = Mathf.Clamp(d[i], -1f, 1f);
+        return Create("bossRoar", d);
+    }
+
+    private static AudioClip MakeClick()
+    {
+        int n = (int)(Rate * 0.05f);
+        var d = new float[n];
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            d[i] = Mathf.Sin(2f * Mathf.PI * 1200f * t) * Mathf.Exp(-t * 90f) * 0.5f;
+        }
+        return Create("click", d);
+    }
+
+    // Boss saldirisi baslarken: alcak "vurus"
+    private static AudioClip MakeBossAttack()
+    {
+        int n = (int)(Rate * 0.3f);
+        var d = new float[n];
+        var rng = new System.Random(41);
+        float phase = 0f, y = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float f = Mathf.Lerp(180f, 60f, t / 0.3f);
+            phase += 2f * Mathf.PI * f / Rate;
+            float noise = (float)rng.NextDouble() * 2f - 1f;
+            y += (noise - y) * 0.12f;
+            d[i] = (Mathf.Sin(phase) * 0.7f + y * 0.4f) * Mathf.Exp(-t * 9f);
+        }
+        return Create("bossAttack", d);
+    }
+
     public static void PlayAt(AudioClip clip, Vector3 position, float volume = 1f)
     {
         if (clip != null) AudioSource.PlayClipAtPoint(clip, position, volume);

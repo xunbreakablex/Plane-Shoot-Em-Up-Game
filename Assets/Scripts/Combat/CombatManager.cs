@@ -99,6 +99,10 @@ public partial class CombatManager : MonoBehaviour
     {
         if (cam == null) cam = Camera.main;
 
+        // Muzik (savas / boss) ve kayitli ses seviyesi
+        MusicPlayer.Ensure(gameObject, MusicTrack.None);
+        GameAudio.Apply();
+
         // Dusman ucaklar (layer 2) oyuncuyla fiziksel carpismaz; temas hasari EnemyPlane'de yakinliktan hesaplanir.
         // Mermi/fuze/nisan isinlari tum katmanlari taradigi icin dusmanlara yine isabet eder.
         Physics.IgnoreLayerCollision(0, EnemyLayer, true);
@@ -135,14 +139,33 @@ public partial class CombatManager : MonoBehaviour
 
         if (Streak > 0 && Time.time - lastKillTime > streakWindow) Streak = 0;
 
+        UpdateWarningBeeps();
+
         var kb = Keyboard.current;
-        if (kb != null && kb.bKey.wasPressedThisFrame) TryBomb();
+        var gpad = Gamepad.current;
+        if ((kb != null && kb.bKey.wasPressedThisFrame) || (gpad != null && gpad.buttonWest.wasPressedThisFrame)) TryBomb();
 
         UpdateDirector();
         UpdateArena();
         UpdateBombRings();
 
         texts.RemoveAll(t => Time.time - t.born > 2.2f);
+    }
+
+    private float nextBeep;
+
+    // Dusuk can ve savas alani disi: aralikli uyari sesi
+    private void UpdateWarningBeeps()
+    {
+        if (!RunState.Active || Time.time < nextBeep || uiAudio == null) return;
+
+        PlayerHealth ph = CurrentPlayerHealth;
+        PlaneController plane = flight != null ? flight.Current : null;
+        if (plane == null || plane.IsCrashed) return;
+
+        bool lowHealth = ph != null && ph.maxHealth > 0 && (float)ph.Health / ph.maxHealth <= 0.3f;
+        if (OutsideArena) { nextBeep = Time.time + 0.8f; uiAudio.PlayOneShot(Sfx.Warning, 0.45f); }
+        else if (lowHealth) { nextBeep = Time.time + 1.3f; uiAudio.PlayOneShot(Sfx.Warning, 0.35f); }
     }
 
     public float GroundHeight(Vector3 p)
@@ -176,6 +199,10 @@ public partial class CombatManager : MonoBehaviour
     {
         Vector3 pos = enemy.transform.position;
         SpawnExplosion(pos);
+
+        // Hissiyat: boss olumunde guclu sarsinti + kisa yavaslama (hit-stop); komuta merkezinde sarsinti
+        if (enemy.IsBoss) { FollowCamera.AddShake(1.7f, 1.3f); HitStop(0.35f, 0.18f); }
+        else if (enemy.IsCore) FollowCamera.AddShake(1.3f, 1.0f);
 
         if (enemy.IsGround)
         {
@@ -357,6 +384,7 @@ public partial class CombatManager : MonoBehaviour
 
     public void OnPlayerHit(Vector3 point, bool hullDamaged)
     {
+        FollowCamera.AddShake(hullDamaged ? 0.9f : 0.3f, hullDamaged ? 0.4f : 0.2f);
         // Kalkan emdiyse ekran kirmizilasmaz; sadece govde hasarinda uyari
         if (hullDamaged)
         {
@@ -367,8 +395,36 @@ public partial class CombatManager : MonoBehaviour
         Sfx.PlayAt(Sfx.Hit, point, hullDamaged ? 0.6f : 0.3f);
     }
 
+    private bool hitStopActive;
+
+    /// <summary>Kisa yavaslama (hit-stop): sure gercek zamanlidir; duraklatma ile cakismaz.</summary>
+    public void HitStop(float seconds, float scale)
+    {
+        if (hitStopActive || GameState.Paused) return;
+        StartCoroutine(HitStopRoutine(seconds, scale));
+    }
+
+    private System.Collections.IEnumerator HitStopRoutine(float seconds, float scale)
+    {
+        hitStopActive = true;
+        float prev = Time.timeScale;
+        if (prev > 0.01f) Time.timeScale = scale;
+        float end = Time.unscaledTime + seconds;
+        while (Time.unscaledTime < end && !GameState.Paused) yield return null;
+        if (!GameState.Paused && prev > 0.01f) Time.timeScale = prev;
+        hitStopActive = false;
+    }
+
     public void SpawnExplosion(Vector3 pos)
     {
+        // Yakin patlama: hafif kamera sarsintisi
+        Transform pt = PlayerTransform;
+        if (pt != null)
+        {
+            float d = Vector3.Distance(pt.position, pos);
+            if (d < 140f) FollowCamera.AddShake(0.35f * (1f - d / 140f), 0.3f);
+        }
+
         if (explosionPrefab != null) Instantiate(explosionPrefab, pos, Quaternion.identity);
         Sfx.PlayAt(Sfx.Explosion, pos, 1f);
     }

@@ -111,7 +111,8 @@ public partial class PlayerGun : MonoBehaviour
 
         // Ates: SPACE basili tut (her iki nisan modunda) ya da sol tik. SPACE yerde ayrica frendir.
         bool trigger = (Mouse.current != null && Mouse.current.leftButton.isPressed)
-                       || (Keyboard.current != null && Keyboard.current.spaceKey.isPressed);
+                       || (Keyboard.current != null && Keyboard.current.spaceKey.isPressed)
+                       || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > 0.35f);
         IsFiring = trigger && !plane.IsCrashed && HasWeapons;
 
         if (IsFiring) FireWeapons(plane, loadout);
@@ -209,7 +210,9 @@ public partial class PlayerGun : MonoBehaviour
         }
 
         var kb = Keyboard.current;
-        if (kb != null && kb.fKey.wasPressedThisFrame && !plane.IsCrashed && Time.time >= nextMissile)
+        var gp = Gamepad.current;
+        bool missileKey = (kb != null && kb.fKey.wasPressedThisFrame) || (gp != null && gp.buttonNorth.wasPressedThisFrame);
+        if (missileKey && !plane.IsCrashed && Time.time >= nextMissile)
             LaunchMissile(plane, loadout, ammo, refill);
     }
 

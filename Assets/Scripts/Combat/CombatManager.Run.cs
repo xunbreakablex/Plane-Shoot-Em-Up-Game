@@ -339,6 +339,7 @@ public partial class CombatManager
             : (stageBoss ? new Color(1f, 0.85f, 0.3f) : new Color(1f, 0.65f, 0.25f));
         string prefix = kind == EnemyKind.FinalBoss ? "SON BOSS: " : (stageBoss ? "BOSS: " : "ORTA BOSS: ");
         Announce(prefix + BossBrain.TitleOf(bossType) + "!", c, 3.5f, true);
+        if (uiAudio != null) uiAudio.PlayOneShot(Sfx.BossRoar, 0.9f);
 
         return enemy;
     }
@@ -443,6 +444,7 @@ public partial class CombatManager
 
         bool lastStage = RunState.Stage >= Stages.All.Length - 1;
         RunState.ClearStage();
+        if (uiAudio != null) uiAudio.PlayOneShot(Sfx.Victory, 0.8f);
 
         if (lastStage)
         {

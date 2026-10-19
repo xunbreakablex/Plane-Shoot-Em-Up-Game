@@ -38,6 +38,8 @@ public class FlightTestManager : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null || planes == null || planes.Length == 0) return;
 
+        if (DevBuild.Enabled)   // savasta ucak degistirme test aracidir (yayinda ucak yalniz hangardan secilir)
+        {
         if (kb.digit1Key.wasPressedThisFrame) SelectAircraft(0);
         if (kb.digit2Key.wasPressedThisFrame) SelectAircraft(1);
         if (kb.digit3Key.wasPressedThisFrame) SelectAircraft(2);
@@ -58,6 +60,7 @@ public class FlightTestManager : MonoBehaviour
                     break;
                 }
             }
+        }
         }
         if (kb.hKey.wasPressedThisFrame) helpToggled = !helpToggled;
     }
@@ -198,15 +201,16 @@ public class FlightTestManager : MonoBehaviour
     private const string HelpSteerArcade = "W / S  yunuslama        A / D  sağa-sola dön     Q / E  yatış";
     private const string HelpSteerClassic = "W / S  yunuslama        A / D  yatış        Q / E  dümen";
 
-    private const string HelpAutoOn = "R  havada başla         P  pistte başla     T  oto-düzeltme: AÇIK";
-    private const string HelpAutoOff = "R  havada başla         P  pistte başla     T  oto-düzeltme: KAPALI";
+    // R/P ve 1-8/TAB test araclaridir: yalniz editor ve development build yardimda gorunur
+    private static readonly string HelpAutoOn = (DevBuild.Enabled ? "R  havada başla         P  pistte başla     " : "") + "T  oto-düzeltme: AÇIK";
+    private static readonly string HelpAutoOff = (DevBuild.Enabled ? "R  havada başla         P  pistte başla     " : "") + "T  oto-düzeltme: KAPALI";
 
     private static readonly string[] helpLines =
     {
         HelpAimAuto,
         HelpSteerArcade,
         HelpKeysDefault,
-        "SAĞ TIK  yakınlaştır     1-8 / TAB  uçak değiştir (açık olanlar)",
+        DevBuild.Enabled ? "SAĞ TIK  yakınlaştır     1-8 / TAB  uçak değiştir (açık olanlar)" : "SAĞ TIK  yakınlaştır     B  bomba     F  füze",
         HelpAutoOn,
     };
 
