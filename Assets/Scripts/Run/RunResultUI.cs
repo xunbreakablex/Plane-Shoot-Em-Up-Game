@@ -5,6 +5,17 @@ using UnityEngine.SceneManagement;
 public class RunResultUI : MonoBehaviour
 {
     public bool IsOpen { get; private set; }
+    private int focus;
+    private bool padAccept;
+
+    // Gamepad: odaklanan dugme cerceveli; A onaylar
+    private bool Btn(Rect r, string text, GUIStyle style, int index)
+    {
+        bool c = GUI.Button(r, text, style);
+        if (index == focus) { PadNav.Highlight(r); if (padAccept) c = true; }
+        if (c) GameAudio.PlayUi(Sfx.Click, 0.5f);
+        return c;
+    }
 
     private void Update()
     {
@@ -97,17 +108,22 @@ public class RunResultUI : MonoBehaviour
         float bw = 240f, bh = 52f, by = ly + 16f;
         var big = new GUIStyle(GUI.skin.button) { fontSize = 20, fontStyle = FontStyle.Bold };
 
-        if (GUI.Button(new Rect(W * 0.5f - bw - 12f, by, bw, bh), "TEKRAR OYNA", big))
+        // Gamepad: 0 tekrar, 1 hangar, 2 sonsuz (yalniz zaferde)
+        bool endlessOffer = won && !RunState.Rush;
+        focus = PadNav.Move(focus, endlessOffer ? 3 : 2);
+        padAccept = PadNav.Accept;
+
+        if (Btn(new Rect(W * 0.5f - bw - 12f, by, bw, bh), "TEKRAR OYNA", big, 0))
             Leave(GameScenes.Flight);
 
-        if (GUI.Button(new Rect(W * 0.5f + 12f, by, bw, bh), "HANGARA DÖN", big))
+        if (Btn(new Rect(W * 0.5f + 12f, by, bw, bh), "HANGARA DÖN", big, 1))
             Leave(GameScenes.Hangar);
 
         if (won && !RunState.Rush)
         {
             // Zafer: kampanya bitti ama ayni oyuna Sonsuz Savas'ta devam edilebilir (skor ve donanim korunur)
             by += bh + 12f;
-            if (GUI.Button(new Rect(W * 0.5f - bw - 12f, by, bw * 2f + 24f, bh), "SONSUZ SAVAŞA DEVAM ET", big))
+            if (Btn(new Rect(W * 0.5f - bw - 12f, by, bw * 2f + 24f, bh), "SONSUZ SAVAŞA DEVAM ET", big, 2))
             {
                 IsOpen = false;
                 GameState.UiOpen = false;

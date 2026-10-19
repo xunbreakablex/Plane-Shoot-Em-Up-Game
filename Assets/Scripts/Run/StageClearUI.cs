@@ -7,6 +7,17 @@ public class StageClearUI : MonoBehaviour
     public bool IsOpen { get; private set; }
 
     private ShopUI shop;
+    private int focus;
+    private bool padAccept;
+
+    // Gamepad: odaklanan dugme cerceveli; A onaylar
+    private bool Btn(Rect r, string text, GUIStyle style, int index)
+    {
+        bool c = GUI.Button(r, text, style);
+        if (index == focus) { PadNav.Highlight(r); if (padAccept) c = true; }
+        if (c) GameAudio.PlayUi(Sfx.Click, 0.5f);
+        return c;
+    }
 
     private void Start()
     {
@@ -96,10 +107,16 @@ public class StageClearUI : MonoBehaviour
 
         var big = new GUIStyle(GUI.skin.button) { fontSize = 19, fontStyle = FontStyle.Bold };
 
+        // Gamepad: 0 sonraki asama, 1 magaza, 2 hangar (olmayanlar atlanir)
+        int count = (hasNext ? 1 : 0) + (shop != null ? 1 : 0) + 1;
+        focus = PadNav.Move(focus, count);
+        padAccept = PadNav.Accept;
+        int slot = 0;
+
         if (hasNext)
         {
             StageDef next = Stages.Get(RunState.Stage + 1);
-            if (GUI.Button(new Rect(bx, by, bw, bh), $"SONRAKİ AŞAMA:  {next.title}", big))
+            if (Btn(new Rect(bx, by, bw, bh), $"SONRAKİ AŞAMA:  {next.title}", big, slot++))
             {
                 Close();
                 if (CombatManager.Instance != null) CombatManager.Instance.NextStage();
@@ -109,12 +126,12 @@ public class StageClearUI : MonoBehaviour
 
         if (shop != null)
         {
-            if (GUI.Button(new Rect(bx, by, bw, 44f), $"MAĞAZA   •   {RunUpgrades.Scrap} hurda", big))
+            if (Btn(new Rect(bx, by, bw, 44f), $"MAĞAZA   •   {RunUpgrades.Scrap} hurda", big, slot++))
                 shop.Open();
             by += 44f + 12f;
         }
 
-        if (GUI.Button(new Rect(bx, by, bw, 44f), "HANGARA DÖN  (donanımı değiştir)", big))
+        if (Btn(new Rect(bx, by, bw, 44f), "HANGARA DÖN  (donanımı değiştir)", big, slot))
         {
             // Kampanya (skor, guc, bomba, hurda, upgrade) hangardan sonra kaldigi yerden surer
             PlayerHealth leaving = CombatManager.Instance != null ? CombatManager.Instance.CurrentPlayerHealth : null;

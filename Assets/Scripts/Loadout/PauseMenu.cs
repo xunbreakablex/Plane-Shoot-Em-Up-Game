@@ -54,10 +54,17 @@ public class PauseMenu : MonoBehaviour
     }
 
     private bool showSettings;
+    private int focus;          // gamepad odagi: 0 devam, 1 magaza, 2 ayarlar, 3 hangar
+    private bool padAccept;     // bu karede A basildi (odaklanan dugme tiklanmis sayilir)
 
-    private bool Click(Rect r, string text)
+    private bool Click(Rect r, string text, int index = -1)
     {
         bool c = GUI.Button(r, text, button);
+        if (index >= 0 && index == focus)
+        {
+            PadNav.Highlight(r);
+            if (padAccept) c = true;
+        }
         if (c) GameAudio.PlayUi(Sfx.Click, 0.5f);
         return c;
     }
@@ -87,20 +94,26 @@ public class PauseMenu : MonoBehaviour
         float W = Hud.W, H = Hud.H;
         Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.62f));
 
+        // Gamepad: dpad/cubuk odak, A onay, B devam
+        bool shopOpen = shop != null && GameSettings.Current.shopInPauseMenu;
+        focus = PadNav.Move(focus, 4, i => i != 1 || shopOpen);
+        padAccept = PadNav.Accept;
+        if (PadNav.Back) { GameState.SetPaused(false); Hud.End(); return; }
+
         float w = 400f, h = 56f, gap = 16f;
         float x = (W - w) * 0.5f;
         float y = H * 0.24f;
 
         Hud.Text(new Rect(0f, y - 80f, W, 60f), "DURAKLATILDI", Color.white, 44, TextAnchor.MiddleCenter);
 
-        if (Click(new Rect(x, y, w, h), "DEVAM ET   (ESC)"))
+        if (Click(new Rect(x, y, w, h), "DEVAM ET   (ESC)", 0))
             GameState.SetPaused(false);
 
         // Savas ortasinda magaza (sinirsiz onarim) GameSettings.shopInPauseMenu ile acilir; varsayilan:
         // yalniz asama aralarinda (Asama Tamam ekrani)
         if (shop != null && GameSettings.Current.shopInPauseMenu)
         {
-            if (Click(new Rect(x, y + (h + gap), w, h), $"MAĞAZA   •   {RunUpgrades.Scrap} hurda"))
+            if (Click(new Rect(x, y + (h + gap), w, h), $"MAĞAZA   •   {RunUpgrades.Scrap} hurda", 1))
                 shop.Open();
         }
         else
@@ -110,10 +123,10 @@ public class PauseMenu : MonoBehaviour
             GUI.enabled = true;
         }
 
-        if (Click(new Rect(x, y + (h + gap) * 2f, w, h), "AYARLAR"))
+        if (Click(new Rect(x, y + (h + gap) * 2f, w, h), "AYARLAR", 2))
             showSettings = true;
 
-        if (Click(new Rect(x, y + (h + gap) * 3f, w, h), "HANGARA DÖN"))
+        if (Click(new Rect(x, y + (h + gap) * 3f, w, h), "HANGARA DÖN", 3))
         {
             // Savasin ortasinda hangara donmek oyunu bastan baslatir
             GameState.SetPaused(false);
