@@ -1010,6 +1010,7 @@ public class PlaneController : MonoBehaviour
         Vector3 omega = Mathf.Abs(ang) > 1e-4f && axis.sqrMagnitude > 0.5f && !float.IsNaN(axis.x)
             ? axis * (ang * Mathf.Deg2Rad / dt)
             : Vector3.zero;
+        if (float.IsNaN(omega.x) || float.IsNaN(omega.y) || float.IsNaN(omega.z)) omega = Vector3.zero;   // koruma
         rb.angularVelocity = omega;
         localOmega = Quaternion.Inverse(rb.rotation) * omega;
 
@@ -1039,7 +1040,9 @@ public class PlaneController : MonoBehaviour
 
         Vector3 velDir = speed > 0.1f ? baseVel / speed : nose;
         Vector3 dir = Vector3.Slerp(velDir, nose, 1f - Mathf.Exp(-ArcadeGrip * dt));
-        rb.linearVelocity = dir * s + strafeWorld;
+        Vector3 newVel = dir * s + strafeWorld;
+        if (float.IsNaN(newVel.x) || float.IsNaN(newVel.y) || float.IsNaN(newVel.z)) newVel = rb.rotation * Vector3.forward * cruiseSpeed;   // koruma
+        rb.linearVelocity = newVel;
 
         // HUD / kamera / iz efekti icin temsili G (gercek degil; donus sertligiyle orantili)
         float pull = Mathf.Max(Mathf.Abs(pitchStep) / Mathf.Max(pitchCap, 1e-5f), Mathf.Abs(yawStep) / Mathf.Max(yawCap, 1e-5f));

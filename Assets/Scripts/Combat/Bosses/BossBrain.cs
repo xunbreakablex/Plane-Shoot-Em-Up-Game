@@ -108,10 +108,10 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Crab: return 1300;
             case BossType.Octopus: return 2400;
             case BossType.Zeppelin: return 2000;
-            case BossType.Demon: return 2600;
-            case BossType.Angel: return 3400;
-            case BossType.KiWarrior: return 5500;
-            case BossType.MagicalGirl: return 8000;
+            case BossType.Demon: return 2200;
+            case BossType.Angel: return 2800;
+            case BossType.KiWarrior: return 4200;
+            case BossType.MagicalGirl: return 6000;
             default: return 5000;
         }
     }
@@ -150,6 +150,11 @@ public partial class BossBrain : MonoBehaviour
         ready = true;
     }
 
+    private static bool IsFinite(Vector3 v)
+    {
+        return !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z) || float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
+    }
+
     private Transform Get(string childName)
     {
         if (named.TryGetValue(childName, out Transform t)) return t;
@@ -185,6 +190,14 @@ public partial class BossBrain : MonoBehaviour
         age += dt;
         pos = rb.position;
         rot = rb.rotation;
+
+        // Koruma: bozuk (NaN/sonsuz) konum ya da donus gelirse oyuncunun onune sifirlanir
+        if (!IsFinite(pos) || !IsFinite(vel) || float.IsNaN(rot.x) || float.IsNaN(rot.w))
+        {
+            pos = Anchor(520f, 0f, 30f);
+            vel = Vector3.zero;
+            rot = Quaternion.LookRotation(player.position - pos, Vector3.up);
+        }
 
         UpdateAnchor(dt);
 
