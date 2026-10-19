@@ -44,7 +44,7 @@ public class RunResultUI : MonoBehaviour
 
         string sub = won
             ? "Kızıl Komutan'ı yendin ve operasyonu tamamladın."
-            : $"Aşama {RunState.Stage + 1} / {Stages.All.Length} içinde düştün.";
+            : (RunState.Endless ? $"Sonsuz Savaş'ta {RunState.Stage + 1}. aşamada düştün." : $"Aşama {RunState.Stage + 1} / {Stages.All.Length} içinde düştün.");
         Hud.Text(new Rect(0f, H * 0.08f + 64f, W, 28f), sub, new Color(0.85f, 0.9f, 0.95f), 18, TextAnchor.MiddleCenter, false);
 
         if (RunState.NewRecord)
@@ -64,7 +64,7 @@ public class RunResultUI : MonoBehaviour
         {
             RunState.Score.ToString("N0"),
             RunState.HighScore.ToString("N0"),
-            $"{RunState.Stage + 1} / {Stages.All.Length}",
+            RunState.Endless ? $"{RunState.Stage + 1} (sonsuz)" : $"{RunState.Stage + 1} / {Stages.All.Length}",
             RunState.Kills.ToString(),
             "x" + RunState.BestCombo,
             RunState.BossKills.ToString(),
@@ -98,8 +98,22 @@ public class RunResultUI : MonoBehaviour
         if (GUI.Button(new Rect(W * 0.5f + 12f, by, bw, bh), "HANGARA DÖN", big))
             Leave(GameScenes.Hangar);
 
+        if (won)
+        {
+            // Zafer: kampanya bitti ama ayni oyuna Sonsuz Savas'ta devam edilebilir (skor ve donanim korunur)
+            by += bh + 12f;
+            if (GUI.Button(new Rect(W * 0.5f - bw - 12f, by, bw * 2f + 24f, bh), "SONSUZ SAVAŞA DEVAM ET", big))
+            {
+                IsOpen = false;
+                GameState.UiOpen = false;
+                GameState.SetPaused(false);
+                RunState.ResumeAsEndless();
+                return;
+            }
+        }
+
         Hud.Text(new Rect(0f, by + bh + 14f, W, 22f),
-            "Hangarda donanımını değiştirip daha güçlü bir uçakla tekrar dene.",
+            won ? "Sonsuz Savaş: aşamalar tekrar eder, düşmanlar ve bosslar her turda güçlenir." : "Hangarda donanımını değiştirip daha güçlü bir uçakla tekrar dene.",
             new Color(0.7f, 0.76f, 0.84f), 14, TextAnchor.MiddleCenter, false);
 
         Hud.End();

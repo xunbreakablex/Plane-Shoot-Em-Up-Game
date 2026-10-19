@@ -254,7 +254,7 @@ public partial class CombatManager : MonoBehaviour
 
         // Puan: tur puani x kombo carpani
         EnemyKindInfo info = EnemyKinds.Get(enemy.Kind);
-        int points = Mathf.RoundToInt(info.score * ComboMultiplier);
+        int points = Mathf.RoundToInt(info.score * ComboMultiplier * Difficulty.ScoreMul);
         RunState.AddScore(points);
 
         // Hurda odulu: dusman cani x seri carpani x upgrade carpani (bossta sinirli)
@@ -361,6 +361,19 @@ public partial class CombatManager : MonoBehaviour
                 if (RunState.AddBomb()) text = "BOMBA +1  (B)";
                 else { RunState.AddScore(2000); text = "BOMBA MAKSİMUM  +2000"; }
                 break;
+
+            case PickupKind.Overdrive:
+                RunState.StartOverdrive();
+                text = $"AŞIRI YÜK: ateş hızı +%50  ({RunState.OverdriveSeconds:0} sn)";
+                break;
+
+            case PickupKind.Scrap:
+            {
+                int gain = 60 + RunState.Stage * 25;
+                RunUpgrades.AddScrap(gain);
+                text = $"HURDA +{gain}";
+                break;
+            }
 
             default:
                 if (ph != null && ph.Health < ph.maxHealth)

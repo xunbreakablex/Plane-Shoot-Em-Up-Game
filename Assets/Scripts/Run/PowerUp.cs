@@ -24,11 +24,13 @@ public class PowerUp : MonoBehaviour
         new Color(0.35f, 0.75f, 1f),    // S - kalkan
         new Color(1f, 0.4f, 0.35f),     // M - fuze
         new Color(0.8f, 0.45f, 1f),     // B - bomba
-        new Color(0.4f, 1f, 0.5f)       // + - onarim
+        new Color(0.4f, 1f, 0.5f),      // + - onarim
+        new Color(0.95f, 1f, 0.25f),    // O - asiri yuk (hizli ates)
+        new Color(1f, 0.85f, 0.3f)      // $ - hurda
     };
 
-    public static readonly string[] Letters = { "P", "S", "M", "B", "+" };
-    public static readonly string[] Names = { "GÜÇ", "KALKAN", "FÜZE", "BOMBA", "ONARIM" };
+    public static readonly string[] Letters = { "P", "S", "M", "B", "+", "O", "$" };
+    public static readonly string[] Names = { "GÜÇ", "KALKAN", "FÜZE", "BOMBA", "ONARIM", "AŞIRI YÜK", "HURDA" };
 
     public PickupKind Kind { get; private set; }
     public float Born { get; private set; }
@@ -61,6 +63,14 @@ public class PowerUp : MonoBehaviour
         int i = (int)kind;
         if (coreRenderer != null && kindMaterials != null && i < kindMaterials.Length && kindMaterials[i] != null)
             coreRenderer.sharedMaterial = kindMaterials[i];
+        else if (coreRenderer != null)
+        {
+            // Yeni turlerin ozel malzemesi yok: cekirdek rengi dogrudan boyanir
+            if (block == null) block = new MaterialPropertyBlock();
+            coreRenderer.GetPropertyBlock(block);
+            block.SetColor(ColorId, KindColors[i]);
+            coreRenderer.SetPropertyBlock(block);
+        }
 
         if (glowRenderer != null)
         {

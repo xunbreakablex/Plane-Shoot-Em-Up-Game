@@ -46,8 +46,8 @@ public partial class CombatManager
 
     private void SetupStage(int index)
     {
-        index = Mathf.Clamp(index, 0, Stages.All.Length - 1);
-        stage = Stages.All[index];
+        index = Mathf.Max(0, index);
+        stage = Stages.Get(index);
         stageLoaded = index;
         waveIndex = 0;
         waveClock = 0f;
@@ -74,7 +74,7 @@ public partial class CombatManager
     /// <summary>Asama tamam ekranindan "sonraki asama".</summary>
     public void NextStage()
     {
-        int next = Mathf.Min(RunState.Stage + 1, Stages.All.Length - 1);
+        int next = Mathf.Min(RunState.Stage + 1, RunState.LastStage);
         RunState.BeginStage(next);
         SetupStage(next);
 
@@ -136,7 +136,7 @@ public partial class CombatManager
             bool baseDone = baseCleared || waveClock > lastTime + bossWaitAfterLastWave + GameSettings.Current.baseBossFallbackSeconds;
             if (baseDone && (calm || waveClock > lastTime + bossWaitAfterLastWave))
             {
-                bool final = RunState.Stage >= Stages.All.Length - 1;
+                bool final = RunState.IsLastStage;
                 SpawnBossEncounter(stage.boss, final ? EnemyKind.FinalBoss : EnemyKind.Boss);
             }
         }
@@ -318,7 +318,8 @@ public partial class CombatManager
         go.transform.localScale = Vector3.one * BossBrain.ScaleOf(bossType);
         SetLayerRecursively(go, EnemyLayer);
 
-        int hits = BossBrain.BaseHits(bossType);
+        float endlessMul = RunState.Endless ? 1f + 0.12f * (RunState.Stage - Stages.All.Length + 1) : 1f;   // sonsuz modda bosslar her turda guclenir
+        int hits = Mathf.Max(1, Mathf.RoundToInt(BossBrain.BaseHits(bossType) * Difficulty.BossHitsMul * endlessMul));
 
         var enemy = go.AddComponent<EnemyPlane>();
         var brain = go.AddComponent<BossBrain>();
@@ -394,13 +395,14 @@ public partial class CombatManager
     {
         // +1 vurus / 30 sn (asama icinde) ve her asamada +hitsPerStage
         int basic = baseHits + Mathf.FloorToInt(RunState.StageTime / hitIncreaseInterval) + RunState.Stage * hitsPerStage;
+        float dm = Difficulty.HitsMul;
         switch (kind)
         {
-            case EnemyKind.Swarmer: return Mathf.Max(1, Mathf.RoundToInt(basic / 3f));
-            case EnemyKind.Heavy: return Mathf.RoundToInt(basic * 2.5f);
-            case EnemyKind.Kamikaze: return Mathf.Max(1, Mathf.RoundToInt(basic / 2f));
-            case EnemyKind.Sniper: return Mathf.RoundToInt(basic * 1.4f);
-            default: return basic;
+            case EnemyKind.Swarmer: return Mathf.Max(1, Mathf.RoundToInt(basic / 3f * dm));
+            case EnemyKind.Heavy: return Mathf.Max(1, Mathf.RoundToInt(basic * 2.5f * dm));
+            case EnemyKind.Kamikaze: return Mathf.Max(1, Mathf.RoundToInt(basic / 2f * dm));
+            case EnemyKind.Sniper: return Mathf.Max(1, Mathf.RoundToInt(basic * 1.4f * dm));
+            default: return Mathf.Max(1, Mathf.RoundToInt(basic * dm));
         }
     }
 
@@ -444,7 +446,7 @@ public partial class CombatManager
             e.Vanish();
         }
 
-        bool lastStage = RunState.Stage >= Stages.All.Length - 1;
+        bool lastStage = RunState.IsLastStage;
         RunState.ClearStage();
         if (uiAudio != null) uiAudio.PlayOneShot(Sfx.Victory, 0.8f);
 

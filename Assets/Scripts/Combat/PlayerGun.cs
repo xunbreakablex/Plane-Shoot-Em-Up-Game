@@ -517,7 +517,7 @@ public partial class PlayerGun : MonoBehaviour
 
             // Guc seviyesi (P ikonlari): ates hizi, hasar ve yan mermi sayisi artar
             int power = RunState.PowerLevel;
-            float rateMul = mods.fireRateMul * (1f + PowerRateStep * power);
+            float rateMul = mods.fireRateMul * (1f + PowerRateStep * power) * (RunState.OverdriveActive ? 1.5f : 1f);
             nextFire[i] = Time.time + 1f / Mathf.Max(def.rate * rateMul, 0.1f);
             shotCount[i]++;
 

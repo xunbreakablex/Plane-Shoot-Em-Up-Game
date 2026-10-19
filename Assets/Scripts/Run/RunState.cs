@@ -27,6 +27,27 @@ public static class RunState
     public static int StageSpawned { get; private set; }
     public static int StageHullHits { get; private set; }
     public static int PowerLevel { get; private set; }
+
+    /// <summary>Sonsuz Savas: kampanya bittikten sonra asamalar bitmeden devam eder.</summary>
+    public static bool Endless { get; private set; }
+    public static int LastStage => Endless ? int.MaxValue : Stages.All.Length - 1;
+    public static bool IsLastStage => !Endless && Stage >= Stages.All.Length - 1;
+
+    /// <summary>Zafer ekranindan: kampanya bitti, ayni oyuna sonsuz modda devam (asama tamam ekrani acilir).</summary>
+    public static void ResumeAsEndless()
+    {
+        if (Phase != RunPhase.Won) return;
+        Endless = true;
+        NewRecord = false;
+        Phase = RunPhase.StageClear;
+        EndedAt = Time.unscaledTime - 10f;   // asama tamam ekrani hemen acilsin
+    }
+
+    public static float OverdriveUntil { get; private set; }
+    public const float OverdriveSeconds = 12f;
+    public static bool OverdriveActive => Time.time < OverdriveUntil;
+    public static float OverdriveLeft => Mathf.Max(0f, OverdriveUntil - Time.time);
+    public static void StartOverdrive() { OverdriveUntil = Time.time + OverdriveSeconds; }
     public static int Bombs { get; private set; }
     public static int BossKills { get; private set; }
     public static int BestCombo { get; private set; }
@@ -58,6 +79,7 @@ public static class RunState
     public static void NewCampaign()
     {
         pending = false;
+        Endless = false;
         Stage = 0;
         Score = 0;
         Kills = 0;
@@ -66,6 +88,7 @@ public static class RunState
         RevivesUsed = 0;
         PowerLevel = 0;
         Bombs = StartBombs;
+        OverdriveUntil = 0f;
         Elapsed = 0f;
         EndedAt = 0f;
         NewRecord = false;

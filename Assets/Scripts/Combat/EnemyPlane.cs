@@ -328,6 +328,8 @@ public class EnemyPlane : MonoBehaviour, IDamageable
                 break;
         }
 
+        burstCdMin *= Difficulty.FireCooldownMul;
+        burstCdMax *= Difficulty.FireCooldownMul;
         nextBurstTime = Time.time + Random.Range(1.5f, 3.5f);
 
         rb = GetComponent<Rigidbody>();

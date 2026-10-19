@@ -119,7 +119,7 @@ public partial class CombatManager
             center.y = top + 0.3f;
         }
 
-        BaseBuilder.Result built = BaseBuilder.Build(this, baseDef, index, center, approach, modelPrefabs, bossLit, bossGlow);
+        BaseBuilder.Result built = BaseBuilder.Build(this, baseDef, Mathf.Min(index, 7), center, approach, modelPrefabs, bossLit, bossGlow);
         baseRoot = built.root;
         baseCore = built.core;
         foreach (var u in built.units)

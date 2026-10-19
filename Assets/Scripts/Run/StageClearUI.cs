@@ -50,8 +50,8 @@ public class StageClearUI : MonoBehaviour
         Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.8f));
 
         int stageNo = RunState.Stage + 1;
-        StageDef def = Stages.All[Mathf.Clamp(RunState.Stage, 0, Stages.All.Length - 1)];
-        bool hasNext = RunState.Stage < Stages.All.Length - 1;
+        StageDef def = Stages.Get(RunState.Stage);
+        bool hasNext = RunState.Stage < RunState.LastStage;
 
         Color accent = new Color(0.5f, 1f, 0.6f);
         Hud.Text(new Rect(0f, H * 0.08f, W, 60f), $"AŞAMA {stageNo} TAMAM", accent, 48, TextAnchor.MiddleCenter);
@@ -98,7 +98,7 @@ public class StageClearUI : MonoBehaviour
 
         if (hasNext)
         {
-            StageDef next = Stages.All[RunState.Stage + 1];
+            StageDef next = Stages.Get(RunState.Stage + 1);
             if (GUI.Button(new Rect(bx, by, bw, bh), $"SONRAKİ AŞAMA:  {next.title}", big))
             {
                 Close();
@@ -118,7 +118,7 @@ public class StageClearUI : MonoBehaviour
         {
             // Kampanya (skor, guc, bomba, hurda, upgrade) hangardan sonra kaldigi yerden surer
             PlayerHealth leaving = CombatManager.Instance != null ? CombatManager.Instance.CurrentPlayerHealth : null;
-            RunState.PrepareContinue(Mathf.Min(RunState.Stage + 1, Stages.All.Length - 1),
+            RunState.PrepareContinue(Mathf.Min(RunState.Stage + 1, RunState.LastStage),
                 leaving != null ? leaving.HealthFraction : 1f);
             Close();
             SceneManager.LoadScene(GameScenes.Hangar);

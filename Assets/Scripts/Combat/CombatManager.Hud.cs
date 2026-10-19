@@ -118,7 +118,7 @@ public partial class CombatManager
         if (stageBarText.Update(RunState.Stage, bossState, stage != null ? stage.title.GetHashCode() : 0))
         {
             string title = stage != null ? stage.title : "";
-            stageBarText.Text = $"AŞAMA {RunState.Stage + 1} / {Stages.All.Length}   •   {title}"
+            stageBarText.Text = (RunState.Endless ? $"SONSUZ  •  AŞAMA {RunState.Stage + 1}" : $"AŞAMA {RunState.Stage + 1} / {Stages.All.Length}") + $"   •   {title}"
                                 + (fight ? "   •   BOSS" : (activeBoss != null ? "   •   ORTA BOSS" : ""));
         }
         Hud.Text(bar, stageBarText.Text, Color.white, 12, TextAnchor.MiddleCenter);
@@ -219,6 +219,8 @@ public partial class CombatManager
         const float rowH = 22f;
         float h = 10f + rowH * 2f + 20f + 24f + 24f;
         if (gun != null && gun.HasMissiles) h += 20f;
+        bool overdrive = RunState.OverdriveActive;
+        if (overdrive) h += 22f;
 
         Hud.Panel(new Rect(x, y, w, h));
 
@@ -246,6 +248,16 @@ public partial class CombatManager
             Hud.Fill(br, b < RunState.Bombs ? PowerUp.KindColors[3] : new Color(1f, 1f, 1f, 0.15f));
         }
         cy += rowH + 4f;
+
+        if (overdrive)
+        {
+            Color oc = PowerUp.KindColors[(int)PickupKind.Overdrive];
+            Hud.Text(new Rect(x + 10f, cy, 140f, 20f), "AŞIRI YÜK", oc, 14);
+            Rect bar = new Rect(x + 110f, cy + 5f, w - 120f, 10f);
+            Hud.Fill(bar, new Color(1f, 1f, 1f, 0.15f));
+            Hud.Fill(new Rect(bar.x, bar.y, bar.width * Mathf.Clamp01(RunState.OverdriveLeft / RunState.OverdriveSeconds), bar.height), oc);
+            cy += 22f;
+        }
 
         if (gun != null && gun.HasMissiles)
         {

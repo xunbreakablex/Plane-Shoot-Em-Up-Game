@@ -757,8 +757,8 @@ public class HangarController : MonoBehaviour
             : "HEDEF:  " + Stages.All.Length + " aşamayı geç  •  düşman üssünü bas: komuta merkezini yık  •  rozetli düşmanı vur  •  B: bomba  •  boss'u indir";
         bool owned = Unlocks.OwnsAircraft(model);
 
-        int stageIdx = resume ? Mathf.Clamp(RunState.PendingStage, 0, Stages.All.Length - 1) : 0;
-        float needed = Stages.All[stageIdx].minFirepower;
+        int stageIdx = resume ? Mathf.Max(0, RunState.PendingStage) : 0;
+        float needed = Stages.Get(stageIdx).minFirepower;
         float firepower = cur.weaponDps + cur.turretDps;
         if (owned && firepower >= needed) Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), goal, resume ? Gold : Dim, 13, TextAnchor.MiddleCenter, false);
 

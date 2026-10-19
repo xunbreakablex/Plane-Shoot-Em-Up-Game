@@ -3,7 +3,7 @@ using UnityEngine;
 public enum Formation { Line, V, Column, Pincer, Ring, Scatter }
 
 // Dusen guclendirme turleri (-1 = dusurmez)
-public enum PickupKind { Power, Shield, Missile, Bomb, Repair }
+public enum PickupKind { Power, Shield, Missile, Bomb, Repair, Overdrive, Scrap }
 
 public struct WaveDef
 {
@@ -74,9 +74,9 @@ public static class Stages
                 W(10,  EnemyKind.Swarmer, 5,  Formation.V),
                 W(19,  EnemyKind.Fighter, 2,  Formation.Line, PickupKind.Power),
                 W(31,  EnemyKind.Swarmer, 6,  Formation.Pincer),
-                W(42,  EnemyKind.Swarmer, 6,  Formation.Column),
+                W(42,  EnemyKind.Swarmer, 6,  Formation.Column, PickupKind.Scrap),
                 W(54,  EnemyKind.Fighter, 3,  Formation.V, PickupKind.Power),
-                W(66,  EnemyKind.Swarmer, 8,  Formation.Ring),
+                W(66,  EnemyKind.Swarmer, 8,  Formation.Ring, PickupKind.Overdrive),
                 W(79,  EnemyKind.Heavy,   1,  Formation.Line, PickupKind.Shield),
                 W(82,  EnemyKind.Swarmer, 4,  Formation.V),
                 W(88,  EnemyKind.Kamikaze, 2, Formation.Line),
@@ -101,9 +101,9 @@ public static class Stages
             {
                 W(2,   EnemyKind.Swarmer, 6,  Formation.V),
                 W(9,   EnemyKind.Fighter, 3,  Formation.Pincer, PickupKind.Power),
-                W(20,  EnemyKind.Swarmer, 8,  Formation.Ring),
+                W(20,  EnemyKind.Swarmer, 8,  Formation.Ring, PickupKind.Overdrive),
                 W(30,  EnemyKind.Heavy,   2,  Formation.Line, PickupKind.Shield),
-                W(38,  EnemyKind.Swarmer, 7,  Formation.Column),
+                W(38,  EnemyKind.Swarmer, 7,  Formation.Column, PickupKind.Scrap),
                 W(44,  EnemyKind.Kamikaze, 3, Formation.Pincer),
                 W(48,  EnemyKind.Fighter, 4,  Formation.V, PickupKind.Power),
                 W(60,  EnemyKind.Swarmer, 6,  Formation.Pincer),
@@ -135,11 +135,11 @@ public static class Stages
                 W(2,   EnemyKind.Fighter, 4,  Formation.V),
                 W(10,  EnemyKind.Swarmer, 8,  Formation.Ring, PickupKind.Power),
                 W(20,  EnemyKind.Heavy,   2,  Formation.Pincer, PickupKind.Shield),
-                W(28,  EnemyKind.Swarmer, 10, Formation.Column),
+                W(28,  EnemyKind.Swarmer, 10, Formation.Column, PickupKind.Scrap),
                 W(40,  EnemyKind.Fighter, 5,  Formation.Line, PickupKind.Power),
                 W(52,  EnemyKind.Swarmer, 8,  Formation.Pincer),
                 W(55,  EnemyKind.Heavy,   2,  Formation.V, PickupKind.Bomb),
-                W(68,  EnemyKind.Swarmer, 12, Formation.Ring),
+                W(68,  EnemyKind.Swarmer, 12, Formation.Ring, PickupKind.Overdrive),
                 W(80,  EnemyKind.Fighter, 5,  Formation.V, PickupKind.Repair),
                 W(92,  EnemyKind.Heavy,   3,  Formation.Line, PickupKind.Power),
                 W(95,  EnemyKind.Swarmer, 10, Formation.Column),
@@ -171,11 +171,11 @@ public static class Stages
                 W(2,   EnemyKind.Fighter, 4,  Formation.V),
                 W(10,  EnemyKind.Swarmer, 8,  Formation.Ring, PickupKind.Power),
                 W(20,  EnemyKind.Heavy,   2,  Formation.Pincer, PickupKind.Shield),
-                W(28,  EnemyKind.Swarmer, 10, Formation.Column),
+                W(28,  EnemyKind.Swarmer, 10, Formation.Column, PickupKind.Scrap),
                 W(40,  EnemyKind.Fighter, 5,  Formation.Line, PickupKind.Power),
                 W(52,  EnemyKind.Swarmer, 10, Formation.Pincer),
                 W(55,  EnemyKind.Heavy,   2,  Formation.V, PickupKind.Bomb),
-                W(68,  EnemyKind.Swarmer, 12, Formation.Ring),
+                W(68,  EnemyKind.Swarmer, 12, Formation.Ring, PickupKind.Overdrive),
                 W(80,  EnemyKind.Fighter, 6,  Formation.V, PickupKind.Repair),
                 W(92,  EnemyKind.Heavy,   3,  Formation.Line, PickupKind.Power),
                 W(95,  EnemyKind.Swarmer, 12, Formation.Column),
@@ -208,11 +208,11 @@ public static class Stages
                 W(2,   EnemyKind.Swarmer, 10, Formation.V),
                 W(10,  EnemyKind.Fighter, 5,  Formation.Ring, PickupKind.Power),
                 W(20,  EnemyKind.Heavy,   3,  Formation.Pincer, PickupKind.Shield),
-                W(28,  EnemyKind.Swarmer, 12, Formation.Column),
+                W(28,  EnemyKind.Swarmer, 12, Formation.Column, PickupKind.Scrap),
                 W(40,  EnemyKind.Fighter, 6,  Formation.Line, PickupKind.Power),
                 W(52,  EnemyKind.Swarmer, 12, Formation.Pincer),
                 W(55,  EnemyKind.Heavy,   3,  Formation.V, PickupKind.Bomb),
-                W(68,  EnemyKind.Swarmer, 14, Formation.Ring),
+                W(68,  EnemyKind.Swarmer, 14, Formation.Ring, PickupKind.Overdrive),
                 W(80,  EnemyKind.Fighter, 7,  Formation.V, PickupKind.Repair),
                 W(92,  EnemyKind.Heavy,   4,  Formation.Line, PickupKind.Power),
                 W(95,  EnemyKind.Swarmer, 14, Formation.Column),
@@ -228,6 +228,61 @@ public static class Stages
             }
         },
     };
+
+    /// <summary>Asama tanimi. Kampanya asamalarindan sonrasi (Sonsuz Savas) kampanya asamalarindan turetilip guclendirilir.</summary>
+    public static StageDef Get(int index)
+    {
+        index = Mathf.Max(0, index);
+        if (index < All.Length) return All[index];
+        if (!endless.TryGetValue(index, out StageDef def))
+        {
+            def = Generate(index);
+            endless[index] = def;
+        }
+        return def;
+    }
+
+    private static readonly System.Collections.Generic.Dictionary<int, StageDef> endless = new System.Collections.Generic.Dictionary<int, StageDef>();
+
+    // Sonsuz Savas: her tur kampanya asamalarini sirayla yeniden kullanir; dalgalar kalabaliklasir, bosslar karisir,
+    // asgari ates gucu yukselir (hangar kapisi). k = kampanyadan sonra kacinci asama (0 tabanli).
+    private static StageDef Generate(int index)
+    {
+        int k = index - All.Length;
+        StageDef src = All[k % All.Length];
+        StageDef mixed = All[(k + 2) % All.Length];
+
+        float scale = 1f + 0.12f * (k + 1);
+        var waves = new WaveDef[src.waves.Length];
+        for (int i = 0; i < waves.Length; i++)
+        {
+            WaveDef w = src.waves[i];
+            w.count = Mathf.Clamp(Mathf.RoundToInt(w.count * scale), 1, w.kind == EnemyKind.Heavy ? 7 : 24);
+            waves[i] = w;
+        }
+
+        BaseDef bas = src.bas;
+        bas.name = bas.name + " (sonsuz)";
+        if (!bas.hasStart)
+        {
+            // Kiyi ussu normalde pistten baslanir; sonsuz modda her tur denizden yaklasilir
+            bas.hasStart = true;
+            bas.startXZ = bas.center + new Vector2(-2000f, 0f);
+            bas.startAlt = 300f;
+            bas.intro = "DENİZİ GEÇ: " + src.bas.name + " seni bekliyor";
+        }
+
+        return new StageDef
+        {
+            title = $"Sonsuz Savaş {k + 1}",
+            subtitle = $"{src.title}: düşman geri çekilmiyor, daha çok ve daha güçlü",
+            waves = waves,
+            midBoss = mixed.midBoss, midBossTime = Mathf.Max(48f, src.midBossTime - 2f * k),
+            boss = src.boss,
+            minFirepower = All[All.Length - 1].minFirepower + 3f * (k + 1),
+            bas = bas
+        };
+    }
 
     // Dalgalar zamana gore siralanir (yeni dalga eklerken sirayi korumak gerekmez)
     static Stages()
