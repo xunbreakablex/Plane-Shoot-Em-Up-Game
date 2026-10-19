@@ -48,6 +48,7 @@ public partial class CombatManager
     {
         index = Mathf.Max(0, index);
         stage = Stages.Get(index);
+        StageAtmosphere.Begin(index, stageLoaded < 0);
         stageLoaded = index;
         waveIndex = 0;
         waveClock = 0f;

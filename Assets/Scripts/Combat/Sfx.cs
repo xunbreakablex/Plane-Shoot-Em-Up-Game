@@ -129,7 +129,7 @@ public static class Sfx
     }
 
     // ---- Lazer, boss, uyari, arayuz sesleri
-    private static AudioClip beamHum, beamCharge, warning, victory, bossRoar, click, bossAttack;
+    private static AudioClip beamHum, beamCharge, warning, victory, bossRoar, click, bossAttack, killDing;
 
     public static AudioClip BeamHum => beamHum != null ? beamHum : (beamHum = MakeBeamHum());
     public static AudioClip BeamCharge => beamCharge != null ? beamCharge : (beamCharge = MakeBeamCharge());
@@ -137,6 +137,7 @@ public static class Sfx
     public static AudioClip Victory => victory != null ? victory : (victory = MakeVictory());
     public static AudioClip BossRoar => bossRoar != null ? bossRoar : (bossRoar = MakeBossRoar());
     public static AudioClip Click => click != null ? click : (click = MakeClick());
+    public static AudioClip KillDing => killDing != null ? killDing : (killDing = MakeKillDing());
     public static AudioClip BossAttack => bossAttack != null ? bossAttack : (bossAttack = MakeBossAttack());
 
     // Lazer uguldamasi: 0,5 sn dikisiz dongu (frekanslar tam periyot icin 100 Hz'in katlari)
@@ -228,6 +229,21 @@ public static class Sfx
         }
         for (int i = 0; i < n; i++) d[i] = Mathf.Clamp(d[i], -1f, 1f);
         return Create("bossRoar", d);
+    }
+
+    // Oldurme onayi: kisa, parlak iki notalik "ding"
+    private static AudioClip MakeKillDing()
+    {
+        int n = (int)(Rate * 0.16f);
+        var d = new float[n];
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float a = Mathf.Sin(2f * Mathf.PI * 1046f * t) * Mathf.Exp(-t * 28f);
+            float b = t > 0.045f ? Mathf.Sin(2f * Mathf.PI * 1568f * (t - 0.045f)) * Mathf.Exp(-(t - 0.045f) * 30f) : 0f;
+            d[i] = (a * 0.5f + b * 0.55f) * 0.6f;
+        }
+        return Create("killDing", d);
     }
 
     private static AudioClip MakeClick()

@@ -102,6 +102,7 @@ public partial class CombatManager : MonoBehaviour
         // Muzik (savas / boss) ve kayitli ses seviyesi
         MusicPlayer.Ensure(gameObject, MusicTrack.None);
         GameAudio.Apply();
+        StageAtmosphere.Reset();
 
         // Dusman ucaklar (layer 2) oyuncuyla fiziksel carpismaz; temas hasari EnemyPlane'de yakinliktan hesaplanir.
         // Mermi/fuze/nisan isinlari tum katmanlari taradigi icin dusmanlara yine isabet eder.
@@ -124,6 +125,7 @@ public partial class CombatManager : MonoBehaviour
         powerFlash = Mathf.Max(0f, powerFlash - 2f * Time.unscaledDeltaTime);
 
         UpdateBanner();
+        StageAtmosphere.Tick(Time.unscaledDeltaTime);
 
         if (GameState.Paused) return;
 
@@ -183,9 +185,13 @@ public partial class CombatManager : MonoBehaviour
 
     // ---------------------------------------------------------------- events
 
+    // Vurus onayi (nisangah isareti): normal vurus kucuk beyaz, oldurme buyuk kirmizi
+    private float hitMarkerTime = -10f, killMarkerTime = -10f;
+
     public void OnEnemyHit(EnemyPlane enemy, Vector3 point)
     {
         SpawnHitSpark(point);
+        hitMarkerTime = Time.unscaledTime;
 
         // Yogun savasta ses yigilmasin
         if (Time.time - lastHitSound > 0.04f)
@@ -199,6 +205,11 @@ public partial class CombatManager : MonoBehaviour
     {
         Vector3 pos = enemy.transform.position;
         SpawnExplosion(pos);
+        if (byPlayer)
+        {
+            killMarkerTime = Time.unscaledTime;
+            if (uiAudio != null && !enemy.IsGround) { uiAudio.pitch = 1f; uiAudio.PlayOneShot(Sfx.KillDing, 0.35f); }
+        }
 
         // Hissiyat: boss olumunde guclu sarsinti + kisa yavaslama (hit-stop); komuta merkezinde sarsinti
         if (enemy.IsBoss) { FollowCamera.AddShake(1.7f, 1.3f); HitStop(0.35f, 0.18f); }
@@ -365,6 +376,11 @@ public partial class CombatManager : MonoBehaviour
             case PickupKind.Overdrive:
                 RunState.StartOverdrive();
                 text = $"AŞIRI YÜK: ateş hızı +%50  ({RunState.OverdriveSeconds:0} sn)";
+                break;
+
+            case PickupKind.Wingman:
+                Wingman.Grant(this);
+                text = $"YARDIMCI İHA'LAR  ({Wingman.Seconds:0} sn)";
                 break;
 
             case PickupKind.Scrap:

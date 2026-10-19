@@ -26,11 +26,12 @@ public class PowerUp : MonoBehaviour
         new Color(0.8f, 0.45f, 1f),     // B - bomba
         new Color(0.4f, 1f, 0.5f),      // + - onarim
         new Color(0.95f, 1f, 0.25f),    // O - asiri yuk (hizli ates)
-        new Color(1f, 0.85f, 0.3f)      // $ - hurda
+        new Color(1f, 0.85f, 0.3f),     // $ - hurda
+        new Color(0.35f, 0.95f, 0.95f)  // W - yardimci IHA
     };
 
-    public static readonly string[] Letters = { "P", "S", "M", "B", "+", "O", "$" };
-    public static readonly string[] Names = { "GÜÇ", "KALKAN", "FÜZE", "BOMBA", "ONARIM", "AŞIRI YÜK", "HURDA" };
+    public static readonly string[] Letters = { "P", "S", "M", "B", "+", "O", "$", "W" };
+    public static readonly string[] Names = { "GÜÇ", "KALKAN", "FÜZE", "BOMBA", "ONARIM", "AŞIRI YÜK", "HURDA", "İHA" };
 
     public PickupKind Kind { get; private set; }
     public float Born { get; private set; }

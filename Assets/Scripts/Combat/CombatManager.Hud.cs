@@ -787,5 +787,23 @@ public partial class CombatManager
 
         Hud.Disc(p, 3.4f, new Color(0f, 0f, 0f, 0.6f));
         Hud.Disc(p, 2.2f, col);
+
+        // Vurus onayi: vurulunca dort kisa capraz cizgi (beyaz), oldurunce daha buyuk ve kirmizi
+        float hitAge = Time.unscaledTime - hitMarkerTime;
+        float killAge = Time.unscaledTime - killMarkerTime;
+        if (killAge < 0.3f) DrawHitMarker(p, 1f - killAge / 0.3f, new Color(1f, 0.25f, 0.2f), 14f, 11f);
+        else if (hitAge < 0.14f) DrawHitMarker(p, 1f - hitAge / 0.14f, Color.white, 9f, 7f);
+    }
+
+    private static void DrawHitMarker(Vector2 p, float k, Color c, float gap, float len)
+    {
+        c.a = Mathf.Clamp01(k * 1.4f);
+        float g = gap + (1f - k) * 3f;
+        for (int i = 0; i < 4; i++)
+        {
+            Hud.RotateAround(45f + 90f * i, p);
+            Hud.Fill(new Rect(p.x + g, p.y - 1.2f, len, 2.4f), c);
+        }
+        Hud.ClearRotation();
     }
 }
