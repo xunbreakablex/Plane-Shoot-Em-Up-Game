@@ -226,6 +226,10 @@ public partial class CombatManager : MonoBehaviour
         // Uzuv kopmasi: ucak hala havada, buyuk patlama yere carpinca gelir; simdilik kucuk bir alev
         bool partKill = cause != EnemyPlane.HitZone.Body && !enemy.IsGround && !enemy.IsBoss;
         SpawnExplosion(pos, partKill ? 0.4f : 1f);
+
+        // Yakin mesafede uzuv koparma: cok kisa bir donma (hit-stop) vurusu "oturtur"
+        if (partKill && byPlayer && PlayerTransform != null && Vector3.Distance(PlayerTransform.position, pos) < 320f)
+            HitStop(0.06f, 0.25f);
         if (byPlayer)
         {
             killMarkerTime = Time.unscaledTime;
