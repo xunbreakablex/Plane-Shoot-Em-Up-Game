@@ -146,12 +146,12 @@ public static class PartCatalog
                       rate = 4.5f, damage = 3f, range = 850f, beam = 2, beamOn = 0.45f, beamOff = 0.55f, power = 3f, weight = 8f },
         new PartDef { name = "Portal Lazeri", description = "Burnunun önünde bir portal açılır, ışın oradan darbeler halinde çıkar (açık 0,6 / kapalı 0,6 sn), delici. Güç 4.",
                       rate = 5f, damage = 3f, range = 850f, beam = 3, beamOn = 0.6f, beamOff = 0.6f, power = 4f, weight = 11f },
-        new PartDef { name = "Saçma Topu", description = "Yakın mesafe canavarı: her atışta 7 saçma (1,8 atış/sn), 350 m menzil. Güç 2.",
-                      rate = 1.8f, damage = 1f, speed = 330f, spread = 5f, range = 350f, pellets = 7, power = 2f, weight = 9f },
-        new PartDef { name = "Plazma Topu", description = "Çarptığı yerde patlar: 14 m çevresindeki herkese hasar verir (2,2 atış/sn, 3 hasar). Kalabalığa karşı ideal. Güç 3.",
-                      rate = 2.2f, damage = 3f, speed = 300f, spread = 0.3f, range = 700f, splash = 14f, power = 3f, weight = 10f },
-        new PartDef { name = "Ray Tüfeği", description = "Yavaş ama devasa: mermi başına 6 hasar, hızlı mermi, 3 düşmanı delip geçer (1,2 atış/sn). Güç 4.",
-                      rate = 1.2f, damage = 6f, speed = 900f, spread = 0f, range = 1500f, pierce = 3, power = 4f, weight = 12f },
+        new PartDef { name = "Saçma Topu", description = "Yakın mesafe canavarı: her atışta 8 saçma (2 atış/sn), 350 m menzil. Güç 2.",
+                      rate = 2f, damage = 1f, speed = 330f, spread = 5f, range = 350f, pellets = 8, power = 2f, weight = 9f },
+        new PartDef { name = "Plazma Topu", description = "Çarptığı yerde patlar: 14 m çevresindeki herkese hasar verir (2,5 atış/sn, 4 hasar). Kalabalığa karşı ideal. Güç 3.",
+                      rate = 2.5f, damage = 4f, speed = 300f, spread = 0.3f, range = 700f, splash = 14f, power = 3f, weight = 10f },
+        new PartDef { name = "Ray Tüfeği", description = "Yavaş ama devasa: mermi başına 8 hasar, hızlı mermi, 3 düşmanı delip geçer (1,4 atış/sn). Güç 4.",
+                      rate = 1.4f, damage = 8f, speed = 900f, spread = 0f, range = 1500f, pierce = 3, power = 4f, weight = 12f },
     };
 
     public static readonly PartDef[] Shields =
