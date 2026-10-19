@@ -12,6 +12,7 @@ public struct WaveDef
     public int count;
     public Formation formation;
     public int drop;                // PickupKind ya da -1; grubun son dusmani tasir ve vurulunca dusurur
+    public bool ace;                // as pilot: adli, sert, buyuk odullu tek ucak (grubun ilki)
 }
 
 // Asamanin dusman ussu (eski shoot 'em up gibi: yer hedefleri). Komuta merkezi yikilmadan asama sonu boss gelmez
@@ -81,6 +82,7 @@ public static class Stages
                 W(104, EnemyKind.Fighter,  2, Formation.Pincer, PickupKind.Bomb),
                 W(116, EnemyKind.Swarmer,  2, Formation.Ring, PickupKind.Overdrive),
                 W(126, EnemyKind.Fighter,  1, Formation.Line, PickupKind.Missile),
+                Ace(47),
             }
         },
         new StageDef
@@ -110,6 +112,7 @@ public static class Stages
                 W(112, EnemyKind.Kamikaze, 3, Formation.Ring),
                 W(122, EnemyKind.Fighter,  2, Formation.Pincer, PickupKind.Missile),
                 W(134, EnemyKind.Heavy,    1, Formation.Line, PickupKind.Bomb),
+                Ace(45),
             }
         },
         new StageDef
@@ -139,6 +142,7 @@ public static class Stages
                 W(114, EnemyKind.Fighter,  3, Formation.Pincer, PickupKind.Repair),
                 W(126, EnemyKind.Kamikaze, 4, Formation.Ring),
                 W(138, EnemyKind.Fighter,  2, Formation.V, PickupKind.Missile),
+                Ace(47),
             }
         },
         new StageDef
@@ -168,6 +172,7 @@ public static class Stages
                 W(112, EnemyKind.Fighter,  3, Formation.V, PickupKind.Bomb),
                 W(124, EnemyKind.Heavy,    2, Formation.Pincer, PickupKind.Power),
                 W(136, EnemyKind.Kamikaze, 5, Formation.Ring, PickupKind.Missile),
+                Ace(46),
             }
         },
         new StageDef
@@ -197,6 +202,7 @@ public static class Stages
                 W(112, EnemyKind.Heavy,    3, Formation.Line, PickupKind.Bomb),
                 W(124, EnemyKind.Fighter,  4, Formation.Ring, PickupKind.Power),
                 W(138, EnemyKind.Swarmer,  4, Formation.Pincer, PickupKind.Missile),
+                Ace(47),
             }
         },
     };
@@ -310,6 +316,12 @@ public static class Stages
                 w[j + 1] = x;
             }
         }
+    }
+
+    // As pilot dalgasi: tek, adli, sert avci; garanti guc dusurur
+    private static WaveDef Ace(float time)
+    {
+        return new WaveDef { time = time, kind = EnemyKind.Fighter, count = 1, formation = Formation.Line, drop = (int)PickupKind.Power, ace = true };
     }
 
     private static WaveDef W(float time, EnemyKind kind, int count, Formation formation, PickupKind? drop = null)

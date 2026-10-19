@@ -311,7 +311,15 @@ public partial class CombatManager : MonoBehaviour
 
         // Puan: tur puani x kombo carpani
         EnemyKindInfo info = EnemyKinds.Get(enemy.Kind);
-        int points = Mathf.RoundToInt(info.score * ComboMultiplier);
+        int points = Mathf.RoundToInt(info.score * ComboMultiplier * (enemy.IsAce ? 5f : 1f));
+        if (enemy.IsAce)
+        {
+            Announce("AS PİLOT İNDİRİLDİ!  " + enemy.Title.Replace("AS: ", "").ToUpper(), new Color(1f, 0.85f, 0.3f), 3f, true);
+            RunUpgrades.AddScrap(80);
+            FollowCamera.AddShake(0.8f, 0.5f);
+            HitStop(0.2f, 0.2f);
+            if (uiAudio != null) uiAudio.PlayOneShot(Sfx.Victory, 0.5f);
+        }
         RunState.AddScore(points);
 
         // Hurda odulu: dusman cani x seri carpani x upgrade carpani (bossta sinirli)

@@ -164,6 +164,23 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
     /// <summary>Indirildi ve dusuyor (artik hedef degil, mermi islemez).</summary>
     public bool IsWreck => wreck;
+
+    /// <summary>As pilot: adli, daha dayanikli ve agresif; puani bes kat.</summary>
+    public bool IsAce { get; private set; }
+
+    public void MakeAce(string name)
+    {
+        IsAce = true;
+        Title = "AS: " + name;
+        MaxHits = Mathf.RoundToInt(MaxHits * 2.5f);
+        HitsRemaining = MaxHits;
+        SetupZones();
+        burstSize += 3;
+        burstCdMin *= 0.7f; burstCdMax *= 0.7f;
+        turnRate *= 1.25f;
+        cruiseSpeed *= 1.1f;
+        canPeel = true;
+    }
     private float breakUntil;
     private Vector3 breakDir;
     private float nextRamTime;

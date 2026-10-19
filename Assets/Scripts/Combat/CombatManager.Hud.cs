@@ -403,9 +403,9 @@ public partial class CombatManager
             bool locked = gun != null && gun.LockedEnemy == e;
             bool missileLock = gun != null && gun.MissileTarget == e && gun.HasMissiles;
             bool aiming = e.IsAimingAt(playerPos);
-            bool important = e.IsBoss || e.IsCore || locked || missileLock || e.IsCarrier || aiming;
+            bool important = e.IsBoss || e.IsCore || locked || missileLock || e.IsCarrier || aiming || e.IsAce;
 
-            Color col = locked ? new Color(1f, 0.9f, 0.2f) : EnemyKinds.Get(e.Kind).marker;
+            Color col = locked ? new Color(1f, 0.9f, 0.2f) : (e.IsAce ? new Color(1f, 0.55f, 0.15f) : EnemyKinds.Get(e.Kind).marker);
             if (aiming && !locked) col = Color.Lerp(col, new Color(1f, 0.1f, 0.1f), 0.5f + 0.5f * blink);
 
             Vector2 hp = Hud.ToHud(sp);
@@ -488,6 +488,11 @@ public partial class CombatManager
                 if (missileLock)
                     Hud.Text(new Rect(box.x - 40f, box.yMax + 16f, size + 80f, 16f), "FÜZE KİLİDİ",
                         new Color(1f, 0.9f, 0.2f), 12, TextAnchor.UpperCenter);
+
+                // As pilotun adi kutunun ustunde
+                if (e.IsAce)
+                    Hud.Text(new Rect(box.center.x - 120f, topY - 22f, 240f, 18f), e.Title,
+                        new Color(1f, 0.6f, 0.2f), 13, TextAnchor.MiddleCenter);
             }
             else
             {
@@ -714,7 +719,7 @@ public partial class CombatManager
     // Boss, asama ve ipuclari: tek satirlik buyuk duyuru
     private void DrawBanner()
     {
-        if (!bannerActive) return;
+        if (!bannerActive || string.IsNullOrEmpty(currentBanner.text)) return;
 
         float age = Time.time - bannerStart;
         float fadeIn = Mathf.Clamp01(age / 0.15f);

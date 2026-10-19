@@ -209,9 +209,9 @@ public partial class CombatManager
         string line;
         switch (kind)
         {
-            case EnemyKind.Swarmer: line = count > 1 ? "Komutan: avcı sürüsü peşinde, silkele ve indir!" : "Komutan: tek avcı yaklaşıyor, hallet."; break;
-            case EnemyKind.Fighter: line = count > 1 ? $"Komutan: {count} avcı havalandı, üsse ulaşmadan önünü kes!" : "Komutan: bir avcı seni hedef aldı, kanadını vur!"; break;
-            case EnemyKind.Heavy: line = "Komutan: bombardıman uçağı rotada, geçmesine izin verme!"; break;
+            case EnemyKind.Swarmer: line = count > 1 ? "Komutan: üs savunması havalandı, sürü önünde! Kanatlarını vur." : "Komutan: tek savunma avcısı geliyor, hallet."; break;
+            case EnemyKind.Fighter: line = count > 1 ? $"Komutan: üsten {count} avcı kalktı, yolunu kesiyorlar!" : "Komutan: bir avcı seni hedef aldı, kanadını vur!"; break;
+            case EnemyKind.Heavy: line = "Komutan: bombardıman uçağı bizim hatlara gidiyor, düşür onu!"; break;
             case EnemyKind.Kamikaze: line = "Komutan: KAMİKAZE! Yaklaşmadan vur, kaç!"; break;
             case EnemyKind.Sniper: line = "Komutan: nişancı uzaktan vuruyor, yan yan yaklaş."; break;
             default: return;
@@ -219,18 +219,43 @@ public partial class CombatManager
         Announce(line, new Color(0.75f, 0.95f, 1f), 3.2f);
     }
 
+    private static readonly string[] AceNames = { "Kızıl Şahin", "Demir Kartal", "Gece Baykuşu", "Fırtına Kuzgunu", "Altın Atmaca", "Kara Akbaba" };
+
+    // As pilot: tek ucak, onden gelir; adi duyurulur
+    private void SpawnAce(WaveDef w, Vector3 playerPos, Vector3 vel, Vector3 fwd)
+    {
+        Vector3 origin = playerPos + fwd * 720f;
+        origin.y = Mathf.Max(GroundHeight(origin) + 130f, playerPos.y + 30f);
+        EnemyPlane e = SpawnEnemy(EnemyKind.Fighter, origin, (playerPos + vel * 6f - origin).normalized, w.drop);
+        if (e == null) return;
+        string name = AceNames[(RunState.Stage + Random.Range(0, 2)) % AceNames.Length];
+        e.MakeAce(name);
+        Tint(e.gameObject, new Color(0.85f, 0.1f, 0.08f), true);
+        Announce("AS PİLOT: " + name.ToUpper() + "!", new Color(1f, 0.55f, 0.2f), 3.2f, true);
+        Announce("Komutan: o bizim en çok kayıp verdiğimiz pilot. İndir onu!", new Color(0.75f, 0.95f, 1f), 3f);
+        if (uiAudio != null) uiAudio.PlayOneShot(Sfx.Warning, 0.6f);
+    }
+
     private void SpawnWave(WaveDef w)
     {
         Transform pt = PlayerTransform;
         if (pt == null) return;
-        Radio(w.kind, w.count);
 
         Vector3 playerPos = pt.position;
         Vector3 vel = PlayerVelocity;
+        // Dusmanlar ussu savunur: hedef (komuta merkezi) varsa o yonden, yolunun ustunden gelir; yoksa burnun onunden
         Vector3 fwd = Vector3.ProjectOnPlane(pt.forward, Vector3.up);
+        if (baseCore != null && !baseCore.IsDead && !baseCleared)
+        {
+            Vector3 toBase = Vector3.ProjectOnPlane(baseCore.transform.position - playerPos, Vector3.up);
+            if (toBase.magnitude > 250f) fwd = toBase;
+        }
         if (fwd.sqrMagnitude < 0.01f) fwd = Vector3.forward;
         fwd.Normalize();
         Vector3 right = Vector3.Cross(Vector3.up, fwd);
+
+        if (w.ace) { SpawnAce(w, playerPos, vel, fwd); return; }
+        Radio(w.kind, w.count);
 
         switch (w.formation)
         {
@@ -554,6 +579,7 @@ public partial class CombatManager
     // urgent: siradaki ipuclarini atlar, hemen gosterilir (boss, zafer gibi)
     public void Announce(string text, Color color, float duration = 2.4f, bool urgent = false)
     {
+        if (string.IsNullOrEmpty(text)) return;
         if (urgent)
         {
             bannerQueue.Clear();
