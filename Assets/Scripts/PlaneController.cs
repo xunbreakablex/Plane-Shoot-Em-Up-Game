@@ -631,9 +631,14 @@ public class PlaneController : MonoBehaviour
         if (pad != null && mouseScheme)
         {
             // FARE semasi + gamepad: sol cubuk x = kayma, sol cubuk y = gaz, omuzlar = yukari/asagi, sag cubuk = yonlendirme
+            // Kumanda girisi klavyeye EKLENIR, onu ezmez: takili (ya da sanal) bir kumanda bos dururken A/D calismaya devam eder
             Vector2 l = Deadzone(pad.leftStick.ReadValue());
             float shoulders = (pad.rightShoulder.isPressed ? 1f : 0f) - (pad.leftShoulder.isPressed ? 1f : 0f);
-            if (strafeKeys) strafeRaw = new Vector3(l.x, shoulders, 0f);
+            if (strafeKeys)
+            {
+                strafeRaw += new Vector3(l.x, shoulders, 0f);
+                strafeRaw = new Vector3(Mathf.Clamp(strafeRaw.x, -1f, 1f), Mathf.Clamp(strafeRaw.y, -1f, 1f), Mathf.Clamp(strafeRaw.z, -1f, 1f));
+            }
             else turnRaw += l.x;
             throttleRaw += l.y;
 
