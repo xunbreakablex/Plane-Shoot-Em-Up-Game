@@ -801,9 +801,7 @@ public class HangarController : MonoBehaviour
         if (Btn(new Rect(W * 0.5f - bw * 0.5f - 310f, y + 8f, 140f, 40f), "AYARLAR", 15))
             showSettings = true;
 
-        // Oyun modu (yeni oyun icin): kampanya ya da yalnizca bosslar
-        if (!resume && Btn(new Rect(W * 0.5f - bw * 0.5f - 470f, y + 8f, 150f, 40f), RunState.NextRush ? "MOD: BOSS RUSH" : "MOD: KAMPANYA", 14))
-            RunState.NextRush = !RunState.NextRush;
+
 
         if (Btn(new Rect(W * 0.5f - bw * 0.5f - 160f, y + 8f, 140f, 40f), "SIFIRLA", 15))
         {
@@ -813,6 +811,10 @@ public class HangarController : MonoBehaviour
         }
 
         float exitX = W * 0.5f + bw * 0.5f + 20f + (resume ? 150f : 0f);
+
+        // Oyun modu (yeni oyun icin): kampanya ya da yalnizca bosslar
+        if (!resume && Btn(new Rect(exitX + 150f, y + 8f, 150f, 40f), RunState.NextRush ? "MOD: BOSS RUSH" : "MOD: KAMPANYA", 14))
+            RunState.NextRush = !RunState.NextRush;
         if (Btn(new Rect(exitX, y + 8f, 140f, 40f), "ÇIKIŞ", 15))
         {
 #if UNITY_EDITOR
