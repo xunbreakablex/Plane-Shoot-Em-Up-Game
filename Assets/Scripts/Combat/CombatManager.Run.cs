@@ -421,11 +421,11 @@ public partial class CombatManager
     {
         switch (kind)
         {
-            case EnemyKind.Swarmer: return 1.3f;
-            case EnemyKind.Heavy: return 4.5f;
-            case EnemyKind.Kamikaze: return 0.8f;
-            case EnemyKind.Sniper: return 2.2f;
-            default: return 2.0f;     // avci
+            case EnemyKind.Swarmer: return 1.0f;
+            case EnemyKind.Heavy: return 3.5f;
+            case EnemyKind.Kamikaze: return 0.6f;
+            case EnemyKind.Sniper: return 1.8f;
+            default: return 1.5f;     // avci
         }
     }
 
@@ -433,8 +433,8 @@ public partial class CombatManager
     {
         float dps = 12f;
         if (flight != null) dps = Mathf.Max(8f, PlayerGun.TheoreticalDps(LoadoutStore.Get(flight.CurrentIndex)));
-        // Asama ilerledikce %12 daha dayanikli, asama icinde 30 sn'de bir %4
-        float grow = 1f + 0.12f * RunState.Stage + 0.04f * Mathf.Floor(RunState.StageTime / hitIncreaseInterval);
+        // Asama ilerledikce %12 daha dayanikli
+        float grow = 1f + 0.12f * RunState.Stage;
         float hits = dps * 0.5f * TimeToKill(kind) * grow * Difficulty.HitsMul;
         return Mathf.Max(kind == EnemyKind.Kamikaze ? 2 : 4, Mathf.RoundToInt(hits));
     }
