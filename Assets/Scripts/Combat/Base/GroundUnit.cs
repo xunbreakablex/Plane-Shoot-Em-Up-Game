@@ -89,6 +89,7 @@ public class GroundUnit : MonoBehaviour
 
         // Komuta merkezi yikilinca uc aksavarlar susar; asama bitince / savas disinda ates yok
         if (!RunState.Active || mgr.BaseCleared || !mgr.enemiesShoot || mgr.EnemyBulletPrefab == null) return;
+        if (mgr.BossFightActive) return;   // boss savasinda yer birimleri susar
 
         GameSettings gs = GameSettings.Current;
         // Ileri asamalarda uc aksavarlar daha sik atar (%15 / asama)

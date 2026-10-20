@@ -135,6 +135,9 @@ public class FollowCamera : MonoBehaviour
         // loopta ve hizli donuslerde kamera sicriyordu. Yatis ekseni ise yalnizca ufka dogru
         // sinirli hizla duzeltilir (loopta kamera ucakla birlikte asilir, sonra yumusakca dogrulur).
         Vector3 fwd = target.forward;
+        // Boss fazi: kamera ilerleme yonune bakar (burun ±45 derece nisan icin doner, ekran savrulmaz)
+        CombatManager cm = CombatManager.Instance;
+        if (cm != null && cm.RushActive && plane != null && plane.InRush) fwd = cm.RushHeading;
         Quaternion swung = Quaternion.FromToRotation(rot * Vector3.forward, fwd) * rot;
         // FARE semasinda burun fareyle hizli doner; kamera daha siki takip eder ki nisan ekranda kaybolmasin
         float lag = ControlSettings.MouseSteering ? Mathf.Max(rotationLag, 9f) : rotationLag;

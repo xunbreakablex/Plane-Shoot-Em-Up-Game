@@ -362,6 +362,7 @@ public class PlaneController : MonoBehaviour
     /// <summary>Verilen noktada, havada ve seyir hiziyla yeniden dogurur (Yeniden Dogus upgrade'i).</summary>
     public void ReviveAt(Vector3 position, Quaternion rotation)
     {
+        if (RushRevivePose(out Vector3 rp, out Quaternion rr)) { position = rp; rotation = rr; }
         CancelInvoke(nameof(Respawn));
         crashed = false;
         localOmega = Vector3.zero;
@@ -507,16 +508,26 @@ public class PlaneController : MonoBehaviour
     {
         if (GameState.Paused) return;
 
-        ReadInput();
-
         float dt = Time.deltaTime;
-        float resp = Mathf.Max(0.3f, inputResponse);
-        pitchIn = Mathf.MoveTowards(pitchIn, pitchRaw, 7f * resp * dt);
-        rollIn = Mathf.MoveTowards(rollIn, rollRaw, 6f * resp * dt);
-        yawIn = Mathf.MoveTowards(yawIn, yawRaw, 4f * resp * dt);
-        turnIn = Mathf.MoveTowards(turnIn, turnRaw, 4f * resp * dt);
-        // FARE semasi + W/S ileri-geri kayma (wsForwardStrafe) acikken gaz yok: ArcadeFlight motor sesi icin gazi surer
-        if (!(arcadeActive && ControlSettings.WsStrafe)) UpdateThrottle(dt);
+        if (rushMode)
+        {
+            // Boss fazi: kendi girisi (W/S yok), gaz seyirde
+            ReadRushInput();
+            pitchIn = rollIn = yawIn = turnIn = 0f;
+            throttle = Mathf.Lerp(throttle, EquilibriumThrottle(), 1f - Mathf.Exp(-3f * dt));
+        }
+        else
+        {
+            ReadInput();
+
+            float resp = Mathf.Max(0.3f, inputResponse);
+            pitchIn = Mathf.MoveTowards(pitchIn, pitchRaw, 7f * resp * dt);
+            rollIn = Mathf.MoveTowards(rollIn, rollRaw, 6f * resp * dt);
+            yawIn = Mathf.MoveTowards(yawIn, yawRaw, 4f * resp * dt);
+            turnIn = Mathf.MoveTowards(turnIn, turnRaw, 4f * resp * dt);
+            // FARE semasi + W/S ileri-geri kayma (wsForwardStrafe) acikken gaz yok: ArcadeFlight motor sesi icin gazi surer
+            if (!(arcadeActive && ControlSettings.WsStrafe)) UpdateThrottle(dt);
+        }
 
         if (propeller != null)
         {
@@ -526,7 +537,7 @@ public class PlaneController : MonoBehaviour
 
         if (trails != null)
         {
-            bool emit = !crashed && (Mathf.Abs(gForce) > trailGForce || Mathf.Abs(aoa) > stallAoA * Mathf.Deg2Rad * 0.8f);
+            bool emit = !crashed && !rushMode && (Mathf.Abs(gForce) > trailGForce || Mathf.Abs(aoa) > stallAoA * Mathf.Deg2Rad * 0.8f);
             foreach (var t in trails)
                 if (t != null) t.emitting = emit;
         }
@@ -750,6 +761,12 @@ public class PlaneController : MonoBehaviour
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            return;
+        }
+
+        if (rushMode)
+        {
+            RushStep(dt);
             return;
         }
 
@@ -1088,6 +1105,177 @@ public class PlaneController : MonoBehaviour
         float pull = Mathf.Max(Mathf.Abs(pitchStep) / Mathf.Max(pitchCap, 1e-5f), Mathf.Abs(yawStep) / Mathf.Max(yawCap, 1e-5f));
         gForce = Mathf.Lerp(gForce, 1f + Mathf.Clamp01(pull) * (maxG - 1f) * 0.6f, 8f * dt);
         aoa = Mathf.Lerp(aoa, 0f, 8f * dt);
+    }
+
+    // ------------------------------------------------- boss fazi (rush)
+    // Ucak CombatManager'in ilerleyen cercevesine (RushOrigin + RushHeading) baglanir: hiz cerceveden gelir, W/S ve gaz
+    // yoktur. A/D (sol cubuk x) saga-sola, Shift/Ctrl (sol cubuk y / omuzlar) yukari-asagi kaydirir; fare (sag cubuk)
+    // burnu cerceve yonune gore en fazla RushYawLimit saga-sola, RushPitchLimit yukari-asagi cevirir (nisan).
+
+    private const float RushYawLimit = 45f;
+    private const float RushPitchLimit = 30f;
+    private const float RushStrafeSpeed = 85f;      // azami kayma hizi (m/s)
+    private const float RushStrafeResponse = 5.5f;  // kayma hizinin hedefe yaklasma hizi (1/sn)
+    private const float RushMinClearance = 35f;     // deniz / arazi ustu en alcak yukseklik (m)
+
+    private bool rushMode;
+    private Vector2 rushOffset;       // cercevede konum (m): x sag, y yukari
+    private Vector2 rushVel;          // kayma hizi (m/s)
+    private Vector2 rushMove;         // kayma girisi -1..1
+    private Vector2 rushAim;          // burun acisi (derece): x saga, y yukari
+    private float rushBank;
+    private bool rushSavedGravity;
+
+    public bool InRush => rushMode;
+
+    public void BeginRush(Vector3 origin, Vector3 heading)
+    {
+        rushMode = true;
+        Vector3 right = Vector3.Cross(Vector3.up, heading).normalized;
+        Vector3 rel = transform.position - origin;
+        rushOffset = new Vector2(Vector3.Dot(rel, right), rel.y);
+        rushVel = Vector2.zero;
+        rushMove = Vector2.zero;
+        rushAim = Vector2.zero;
+        rushBank = 0f;
+        if (rb != null)
+        {
+            rushSavedGravity = rb.useGravity;
+            rb.useGravity = false;
+        }
+        ResetArcadeState();
+    }
+
+    public void EndRush()
+    {
+        if (!rushMode) return;
+        rushMode = false;
+        if (rb != null)
+        {
+            rb.useGravity = rushSavedGravity;
+            rb.linearVelocity = transform.forward * cruiseSpeed;
+            rb.angularVelocity = Vector3.zero;
+        }
+        throttle = EquilibriumThrottle();
+        ResetArcadeState();
+    }
+
+    private void ReadRushInput()
+    {
+        GameSettings gs = GameSettings.Current;
+        Vector2 move = Vector2.zero;
+
+        var kb = Keyboard.current;
+        if (kb != null)
+        {
+            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) move.x += 1f;
+            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) move.x -= 1f;
+            if (kb.leftShiftKey.isPressed) move.y += 1f;
+            if (kb.leftCtrlKey.isPressed) move.y -= 1f;
+            if (kb.tKey.wasPressedThisFrame) autoLevel = !autoLevel;
+        }
+
+        var pad = Gamepad.current;
+        if (pad != null)
+        {
+            move += Deadzone(pad.leftStick.ReadValue());
+            move.y += (pad.rightShoulder.isPressed ? 1f : 0f) - (pad.leftShoulder.isPressed ? 1f : 0f);
+
+            Vector2 r = Deadzone(pad.rightStick.ReadValue());
+            if (r.sqrMagnitude > 0f)
+            {
+                if (gs.invertMouseY ^ UserSettings.InvertY) r.y = -r.y;
+                rushAim += r * (110f * UserSettings.MouseSens * Time.deltaTime);
+            }
+        }
+        rushMove = new Vector2(Mathf.Clamp(move.x, -1f, 1f), Mathf.Clamp(move.y, -1f, 1f));
+
+        var mouse = Mouse.current;
+        if (mouse != null && Cursor.lockState == CursorLockMode.Locked)
+        {
+            Vector2 d = mouse.delta.ReadValue();
+            if (gs.invertMouseY ^ UserSettings.InvertY) d.y = -d.y;   // varsayilan: fare yukari = burun yukari
+            rushAim += d * (MouseDegPerPixel * gs.mouseSensitivity * UserSettings.MouseSens);
+        }
+        rushAim.x = Mathf.Clamp(rushAim.x, -RushYawLimit, RushYawLimit);
+        rushAim.y = Mathf.Clamp(rushAim.y, -RushPitchLimit, RushPitchLimit);
+    }
+
+    private void RushStep(float dt)
+    {
+        CombatManager mgr = CombatManager.Instance;
+        if (mgr == null || !mgr.RushActive)
+        {
+            EndRush();
+            return;
+        }
+
+        mgr.RushStepDelta();
+        Vector3 o = mgr.RushOrigin;
+        Vector3 f = mgr.RushHeading;
+        Vector3 right = Vector3.Cross(Vector3.up, f).normalized;
+
+        // Kayma: hiz hedefe yumusakca yaklasir; cercevenin kenarinda durur
+        rushVel = Vector2.Lerp(rushVel, rushMove * RushStrafeSpeed, 1f - Mathf.Exp(-RushStrafeResponse * dt));
+        rushOffset += rushVel * dt;
+        if (Mathf.Abs(rushOffset.x) > CombatManager.RushHalfWidth)
+        {
+            rushOffset.x = Mathf.Sign(rushOffset.x) * CombatManager.RushHalfWidth;
+            rushVel.x = 0f;
+        }
+        if (rushOffset.y > CombatManager.RushUp) { rushOffset.y = CombatManager.RushUp; rushVel.y = Mathf.Min(rushVel.y, 0f); }
+        if (rushOffset.y < -CombatManager.RushDown) { rushOffset.y = -CombatManager.RushDown; rushVel.y = Mathf.Max(rushVel.y, 0f); }
+
+        Vector3 p = o + right * rushOffset.x + Vector3.up * rushOffset.y;
+        float ground = Mathf.Max(mgr.GroundHeight(p), CombatManager.SeaLevel);
+        if (p.y < ground + RushMinClearance)
+        {
+            float lift = ground + RushMinClearance - p.y;
+            rushOffset.y += lift;
+            p.y += lift;
+            rushVel.y = Mathf.Max(rushVel.y, 0f);
+        }
+
+        // Burun: cerceve yonune gore sinirli nisan; kayarken hafif yatis
+        rushBank = Mathf.Lerp(rushBank, -rushVel.x / RushStrafeSpeed * 32f, 1f - Mathf.Exp(-6f * dt));
+        Quaternion target = Quaternion.LookRotation(f, Vector3.up) * Quaternion.Euler(-rushAim.y, rushAim.x, 0f)
+                            * Quaternion.Euler(0f, 0f, rushBank);
+        Quaternion next = Quaternion.Slerp(rb.rotation, target, 1f - Mathf.Exp(-12f * dt));
+        Quaternion delta = next * Quaternion.Inverse(rb.rotation);
+        delta.ToAngleAxis(out float ang, out Vector3 axis);
+        if (ang > 180f) ang -= 360f;
+        Vector3 omega = Mathf.Abs(ang) > 1e-4f && axis.sqrMagnitude > 0.5f && !float.IsNaN(axis.x)
+            ? axis * (ang * Mathf.Deg2Rad / dt)
+            : Vector3.zero;
+        if (float.IsNaN(omega.x) || float.IsNaN(omega.y) || float.IsNaN(omega.z)) omega = Vector3.zero;
+        rb.angularVelocity = omega;
+        localOmega = Quaternion.Inverse(rb.rotation) * omega;
+
+        // Konum: hiz, ucagi bu adimda cercevedeki yerine goturur (cerceve hizi + kayma)
+        Vector3 v = (p - rb.position) / dt;
+        if (float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z)) v = f * cruiseSpeed;
+        rb.linearVelocity = v;
+
+        gForce = Mathf.Lerp(gForce, 1f, 6f * dt);
+        aoa = Mathf.Lerp(aoa, 0f, 8f * dt);
+    }
+
+    /// <summary>Boss fazinda yeniden dogus: ucak cercevenin ortasina konur.</summary>
+    private bool RushRevivePose(out Vector3 position, out Quaternion rotation)
+    {
+        CombatManager mgr = CombatManager.Instance;
+        if (rushMode && mgr != null && mgr.RushActive)
+        {
+            rushOffset = Vector2.zero;
+            rushVel = Vector2.zero;
+            rushAim = Vector2.zero;
+            position = mgr.RushOrigin;
+            rotation = Quaternion.LookRotation(mgr.RushHeading, Vector3.up);
+            return true;
+        }
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+        return false;
     }
 
     // ------------------------------------------------------------ collision

@@ -130,11 +130,17 @@ public partial class BossBrain
                 Fan(nose, aim, phase >= 1 ? 7 : 5, 28f, 240f, 1);
                 break;
             case 1:
+                // Kanat ucu toplari: kopan topun atisi susar; ikisi de koptuysa burundan dar yelpaze
+                if (jetPodL == null && jetPodR == null)
+                {
+                    Fan(nose, aim, 5, 16f, 260f, 1);
+                    break;
+                }
                 for (int i = 0; i < 3; i++)
                 {
                     Vector3 spread = Random.insideUnitSphere * 0.04f;
-                    Shoot(jetPodL.position, (AimFrom(jetPodL.position, 260f, 4f) + spread).normalized, 260f, 1);
-                    Shoot(jetPodR.position, (AimFrom(jetPodR.position, 260f, 4f) + spread).normalized, 260f, 1);
+                    if (jetPodL != null) Shoot(jetPodL.position, (AimFrom(jetPodL.position, 260f, 4f) + spread).normalized, 260f, 1);
+                    if (jetPodR != null) Shoot(jetPodR.position, (AimFrom(jetPodR.position, 260f, 4f) + spread).normalized, 260f, 1);
                 }
                 break;
             case 2:
@@ -168,6 +174,7 @@ public partial class BossBrain
 
     private Transform sharkJaw, sharkTail, sharkMouth;
     private float sharkJawOpen;
+    private bool sharkJawBroken;       // cene koptu: isin yok, yelpaze daralir
     private int sharkPending;          // 0 yok, 1 yelpaze, 2 halka
     private float sharkFireAt;
 
@@ -202,7 +209,7 @@ public partial class BossBrain
                 sharkFireAt = Time.time + 0.55f;
                 break;
             case 2:
-                if (phase >= 1) StartBeam(sharkMouth, 1.0f, 1.4f);
+                if (phase >= 1 && !sharkJawBroken) StartBeam(sharkMouth, 1.0f, 1.4f);
                 else
                 {
                     sharkPending = 1;
@@ -224,7 +231,7 @@ public partial class BossBrain
             Vector3 mouth = sharkMouth.position;
             Vector3 aim = AimFrom(mouth, 220f, 4f);
 
-            if (sharkPending == 1) Fan(mouth, aim, 7, 38f, 220f, 1);
+            if (sharkPending == 1) Fan(mouth, aim, sharkJawBroken ? 4 : 7, sharkJawBroken ? 24f : 38f, 220f, 1);
             else Cone(mouth, aim, 12, 10f, 190f, 2, Random.value * 90f);
 
             sharkPending = 0;
@@ -287,8 +294,10 @@ public partial class BossBrain
         switch (step++ % 4)
         {
             case 0:
-                Fan(crabMuzzleL.position, AimFrom(crabMuzzleL.position, 230f, 5f), 3, 12f, 230f, 1);
-                Fan(crabMuzzleR.position, AimFrom(crabMuzzleR.position, 230f, 5f), 3, 12f, 230f, 1);
+                // Kiskaclar: kopan kiskac susar; ikisi de koptuysa govdeden halka
+                if (crabMuzzleL != null) Fan(crabMuzzleL.position, AimFrom(crabMuzzleL.position, 230f, 5f), 3, 12f, 230f, 1);
+                if (crabMuzzleR != null) Fan(crabMuzzleR.position, AimFrom(crabMuzzleR.position, 230f, 5f), 3, 12f, 230f, 1);
+                if (crabMuzzleL == null && crabMuzzleR == null) Cone(bodyPos, AimFrom(bodyPos, 190f, 4f), 10, 10f, 190f, 1, Random.value * 90f);
                 break;
             case 1:
                 StartCrabSweep(2.4f);
@@ -314,6 +323,7 @@ public partial class BossBrain
 
     private void StartCrabSweep(float duration)
     {
+        if (crabMuzzleL == null && crabMuzzleR == null) return;   // iki kiskac da koptu: supurme yok
         crabSweepStart = Time.time;
         crabSweepEnd = Time.time + duration;
         crabSweepNext = Time.time;
@@ -333,8 +343,8 @@ public partial class BossBrain
             float t = Time.time - crabSweepStart;
             float angL = Mathf.Sin(t * 2.6f) * 34f;
             float angR = Mathf.Sin(t * 2.6f + Mathf.PI) * 34f;
-            Shoot(crabMuzzleL.position, Quaternion.AngleAxis(angL, Vector3.up) * crabSweepBase, 215f, 1);
-            Shoot(crabMuzzleR.position, Quaternion.AngleAxis(angR, Vector3.up) * crabSweepBase, 215f, 1);
+            if (crabMuzzleL != null) Shoot(crabMuzzleL.position, Quaternion.AngleAxis(angL, Vector3.up) * crabSweepBase, 215f, 1);
+            if (crabMuzzleR != null) Shoot(crabMuzzleR.position, Quaternion.AngleAxis(angR, Vector3.up) * crabSweepBase, 215f, 1);
         }
     }
 

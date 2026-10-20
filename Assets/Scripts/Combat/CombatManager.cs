@@ -54,8 +54,12 @@ public partial class CombatManager : MonoBehaviour
     public GameObject SmokeTrailPrefab => smokeTrailPrefab;
 
     public Transform PlayerTransform => flight != null && flight.Current != null ? flight.Current.transform : null;
-    public float PlayerSpeed => flight != null && flight.Current != null ? flight.Current.Speed : 0f;
-    public Vector3 PlayerVelocity => flight != null && flight.Current != null ? flight.Current.Velocity : Vector3.zero;
+    // Dusman nisani / boss dumeni icin oyuncu hizi. Boss fazinda cercevenin hizi cikarilir (goreli hiz): boss ve
+    // mermiler cerceveyle birlikte tasindigi icin onde tutma goreli hizla yapilir.
+    public float PlayerSpeed => PlayerVelocity.magnitude;
+    public Vector3 PlayerVelocity => flight != null && flight.Current != null
+        ? (RushActive ? flight.Current.Velocity - FrameVelocity : flight.Current.Velocity)
+        : Vector3.zero;
 
     public int Kills => RunState.Kills;
     public int Streak { get; private set; }
@@ -93,6 +97,7 @@ public partial class CombatManager : MonoBehaviour
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
+        FrameVelocity = Vector3.zero;
     }
 
     private void Start()
@@ -137,7 +142,7 @@ public partial class CombatManager : MonoBehaviour
         // Imlec: gorunmez; nisangah OnGUI'de cizilir. FARE semasinda imlec kilitlenir (fare hareketi
         // sinirsiz okunur), digerlerinde pencereye hapsedilir.
         Cursor.visible = false;
-        if (ControlSettings.MouseSteering) Cursor.lockState = CursorLockMode.Locked;
+        if (ControlSettings.MouseSteering || RushActive) Cursor.lockState = CursorLockMode.Locked;   // boss fazinda fare hep nisan
         else if (Cursor.lockState != CursorLockMode.Locked) Cursor.lockState = CursorLockMode.Confined;
 
         enemies.RemoveAll(e => e == null);
@@ -153,6 +158,7 @@ public partial class CombatManager : MonoBehaviour
         if ((kb != null && kb.bKey.wasPressedThisFrame) || (gpad != null && gpad.buttonWest.wasPressedThisFrame)) TryBomb();
 
         UpdateDirector();
+        UpdateRush();
         UpdateArena();
         UpdateBombRings();
 

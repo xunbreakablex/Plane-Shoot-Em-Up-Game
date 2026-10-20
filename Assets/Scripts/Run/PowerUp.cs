@@ -133,7 +133,7 @@ public class PowerUp : MonoBehaviour
             }
         }
 
-        transform.position += drift * dt;
+        transform.position += (drift + CombatManager.FrameVelocity) * dt;   // boss fazinda cerceveyle tasinir
         drift = Vector3.Lerp(drift, Vector3.zero, 2.2f * dt);
 
         // Gorsel: donus, havada asili salinim, uzakta buyuyen parlama

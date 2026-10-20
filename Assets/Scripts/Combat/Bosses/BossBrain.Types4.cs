@@ -25,9 +25,11 @@ public partial class BossBrain
                 break;
             case 1:
             {
-                Vector3 a = eagleMuzzleL.position, b = eagleMuzzleR.position;
-                Cone(a, AimFrom(a, 180f, 3f), 8 + phase * 2, 10f, 180f, 1, Random.value * 90f);
-                Cone(b, AimFrom(b, 180f, 3f), 8 + phase * 2, 10f, 180f, 1, Random.value * 90f);
+                // Kanat ucu toplari: kopan top susar; ikisi de koptuysa gagadan
+                if (eagleMuzzleL != null) Cone(eagleMuzzleL.position, AimFrom(eagleMuzzleL.position, 180f, 3f), 8 + phase * 2, 10f, 180f, 1, Random.value * 90f);
+                if (eagleMuzzleR != null) Cone(eagleMuzzleR.position, AimFrom(eagleMuzzleR.position, 180f, 3f), 8 + phase * 2, 10f, 180f, 1, Random.value * 90f);
+                if (eagleMuzzleL == null && eagleMuzzleR == null)
+                    Cone(eagleBeak.position, AimFrom(eagleBeak.position, 180f, 3f), 10 + phase * 2, 10f, 180f, 1, Random.value * 90f);
                 break;
             }
             case 2:
@@ -74,9 +76,11 @@ public partial class BossBrain
         {
             case 0:
             {
-                Vector3 a = golemMuzzleL.position, b = golemMuzzleR.position;
-                Fan(a, AimFrom(a, 190f, 4f), 5, 30f, 190f, 1);
-                Fan(b, AimFrom(b, 190f, 4f), 5, 30f, 190f, 1);
+                // Yumruklar: kopan yumruk susar; ikisi de koptuysa cekirdekten
+                if (golemMuzzleL != null) Fan(golemMuzzleL.position, AimFrom(golemMuzzleL.position, 190f, 4f), 5, 30f, 190f, 1);
+                if (golemMuzzleR != null) Fan(golemMuzzleR.position, AimFrom(golemMuzzleR.position, 190f, 4f), 5, 30f, 190f, 1);
+                if (golemMuzzleL == null && golemMuzzleR == null)
+                    Fan(golemMuzzleCore.position, AimFrom(golemMuzzleCore.position, 190f, 4f), 7, 36f, 190f, 1);
                 break;
             }
             case 1:

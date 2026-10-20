@@ -58,7 +58,8 @@ public partial class CombatManager
         GameObject water = GameObject.Find("Water");
         if (water == null) return;
         Vector3 s = water.transform.localScale;
-        water.transform.localScale = new Vector3(Mathf.Max(s.x, 20000f), s.y, Mathf.Max(s.z, 20000f));
+        // Boss fazinda acik denizde haritanin cevresinde dolasilir: deniz, sisin otesinde kenari gorunmeyecek kadar genis
+        water.transform.localScale = new Vector3(Mathf.Max(s.x, 90000f), s.y, Mathf.Max(s.z, 90000f));
     }
 
     /// <summary>Asama basinda: eski ussu kaldirir, gerekirse oyuncuyu denize isinlar, yeni ussu kurar.</summary>
@@ -221,7 +222,8 @@ public partial class CombatManager
     private void UpdateArena()
     {
         PlaneController plane = flight != null ? flight.Current : null;
-        if (plane == null || plane.IsCrashed || !RunState.Active || !baseDef.enabled)
+        // Boss fazinda (ve sonundaki donuste) savas alani siniri yok: acik denizde ilerlenir
+        if (plane == null || plane.IsCrashed || !RunState.Active || !baseDef.enabled || RushActive || rushEndRoutine != null)
         {
             OutsideArena = false;
             outsideSince = -1f;
@@ -253,7 +255,7 @@ public partial class CombatManager
 
     private void DrawBaseObjective(float y)
     {
-        if (!baseDef.enabled || stage == null || RunState.StageIsClear || RunState.Ended) return;
+        if (!baseDef.enabled || stage == null || RunState.StageIsClear || RunState.Ended || RushActive) return;
 
         float w = 560f;
         Rect r = new Rect(Hud.W * 0.5f - w * 0.5f, y, w, 20f);

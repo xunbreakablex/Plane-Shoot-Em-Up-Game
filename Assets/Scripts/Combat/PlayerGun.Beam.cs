@@ -200,7 +200,7 @@ public partial class PlayerGun
             if (dup) continue;
             if (seen < beamSeen.Length) beamSeen[seen++] = target;
 
-            if (target is EnemyPlane ep) ep.TakeHitLocal(dmg, h.point);
+            if (target is EnemyPlane ep) ep.TakeHitLocal(dmg, h.point, h.collider);
             else target.TakeHit(dmg, h.point);
         }
 

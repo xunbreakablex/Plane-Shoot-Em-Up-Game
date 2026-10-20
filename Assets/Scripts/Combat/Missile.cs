@@ -62,7 +62,7 @@ public class Missile : MonoBehaviour
         }
 
         Vector3 start = transform.position;
-        Vector3 delta = direction * speed * dt;
+        Vector3 delta = (direction * speed + CombatManager.FrameVelocity) * dt;   // boss fazinda cerceveyle tasinir
         float dist = delta.magnitude;
 
         // Yakinlik sigortasi

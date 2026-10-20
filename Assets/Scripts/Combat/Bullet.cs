@@ -301,10 +301,16 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        if (easing) UpdateEase(dt);
+        // Boss fazi: mermi ilerleyen cerceveyle birlikte tasinir (hizi cerceveye gore)
+        Vector3 frame = CombatManager.FrameVelocity;
+        if (easing)
+        {
+            easePoint += frame * dt;
+            UpdateEase(dt);
+        }
 
         Vector3 start = transform.position;
-        Vector3 delta = velocity * dt;
+        Vector3 delta = (velocity + frame) * dt;
         float dist = delta.magnitude;
         if (dist < 1e-4f) return;
 
@@ -354,7 +360,7 @@ public class Bullet : MonoBehaviour
         if (target != null)
         {
             // Oyuncu mermisi dusman ucagini vurunca uzuv (kanat/kuyruk/motor) hasari da islenir
-            if (fromPlayer && target is EnemyPlane ep) ep.TakeHitLocal(damage, point);
+            if (fromPlayer && target is EnemyPlane ep) ep.TakeHitLocal(damage, point, hit.collider);
             else target.TakeHit(damage, point);
 
             // Delici mermi: dusmani gecip devam eder

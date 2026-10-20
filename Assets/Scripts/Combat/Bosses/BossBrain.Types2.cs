@@ -40,14 +40,19 @@ public partial class BossBrain
                 StartSpray(octoEyes, 3.2f, 3 + phase, 14f, 0.07f, 190f);
                 break;
             case 1:
-                // Her dokuncak ucu hedefe birer mermi gonderir
+            {
+                // Her dokuncak ucu hedefe birer mermi gonderir (kopan dokunac susar)
+                int fired = 0;
                 for (int t = 0; t < BossBuilder.OctoTentacles; t++)
                 {
                     Transform tip = octoSeg[t, BossBuilder.OctoSegments - 1];
                     if (tip == null) continue;
                     Shoot(tip.position, AimFrom(tip.position, 230f, 7f), 230f, 1);
+                    fired++;
                 }
+                if (fired == 0) Fan(eyes, aim, 5, 26f, 215f, 1);
                 break;
+            }
             case 2:
                 Cone(eyes, aim, 14, 10f, 180f, 2, Random.value * 90f);
                 Fan(eyes, aim, 5, 26f, 215f, 1);
@@ -201,6 +206,7 @@ public partial class BossBrain
     // ================================================================== DRAGON
 
     private Transform dragonJaw, dragonMouth, dragonWingL, dragonWingR;
+    private bool dragonJawBroken;      // cene koptu: alev isini yok
     private Transform[] dragonSeg;
     private readonly List<Vector3> trail = new List<Vector3>();
     private const float SegSpacingLocal = 6.6f;     // govde olcegiyle carpilir
@@ -252,7 +258,7 @@ public partial class BossBrain
                 StartSpray(dragonMouth, 2.6f, 2 + phase, 12f, 0.08f, 200f);
                 break;
             case 2:
-                if (phase >= 1) StartBeam(dragonMouth, 1.2f, 1.5f);
+                if (phase >= 1 && !dragonJawBroken) StartBeam(dragonMouth, 1.2f, 1.5f);
                 else Cone(mouth, AimFrom(mouth, 190f, 4f), 12, 10f, 190f, 2, Random.value * 90f);
                 break;
             default:

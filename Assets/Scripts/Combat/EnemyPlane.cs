@@ -705,6 +705,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private void TryShoot(Vector3 pos, Quaternion rot, Vector3 fwd, Transform target, float dist)
     {
         if (!mgr.enemiesShoot || mgr.EnemyBulletPrefab == null || pattern == Pattern.None) return;
+        if (!IsBoss && mgr.BossFightActive) return;   // boss savasinda yalniz boss ates eder
 
         if (pattern == Pattern.Aimed)
         {
@@ -837,6 +838,16 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     public void TakeHit(int damage, Vector3 point)
     {
         ApplyDamage(damage, point, HitZone.Body);
+    }
+
+    /// <summary>
+    /// Mermi / isin isabeti, vurulan collider ile: boss'ta collider'in ait oldugu uzvun (top, kol, kanat...) cani da duser.
+    /// </summary>
+    public void TakeHitLocal(int damage, Vector3 point, Collider hitCollider)
+    {
+        if (dead) return;
+        if (brain != null && hitCollider != null) brain.OnPartHit(hitCollider, damage, point);
+        TakeHitLocal(damage, point);
     }
 
     /// <summary>Mermi / isin isabeti: vurus noktasina gore uzuv hasari da islenir (kanat koparsa ucak duser).</summary>

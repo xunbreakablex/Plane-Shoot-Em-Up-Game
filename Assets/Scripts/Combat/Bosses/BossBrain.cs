@@ -155,6 +155,7 @@ public partial class BossBrain : MonoBehaviour
         }
 
         InitType();
+        InitLimbs();
         ready = true;
     }
 
@@ -196,8 +197,13 @@ public partial class BossBrain : MonoBehaviour
 
         float dt = Time.fixedDeltaTime;
         age += dt;
-        pos = rb.position;
+
+        // Boss fazi: ilerleyen cerceve boss'u ve onun dunyadaki ara durumlarini (hamle hedefi, uyari cizgileri,
+        // ejderha izi) birlikte tasir; boss mantigi duragan savastaki gibi calisir
+        Vector3 shift = mgr.RushStepDelta();
+        pos = rb.position + shift;
         rot = rb.rotation;
+        if (shift != Vector3.zero) ApplyFrameShift(shift);
 
         // Koruma: bozuk (NaN/sonsuz) konum ya da donus gelirse oyuncunun onune sifirlanir
         if (!IsFinite(pos) || !IsFinite(vel) || float.IsNaN(rot.x) || float.IsNaN(rot.w))
@@ -217,11 +223,13 @@ public partial class BossBrain : MonoBehaviour
             chargeActive = false;
         }
 
+        // Faz: can esikleri (%66, %33) ya da (asama sonu bosslarinda) silah uzuvlarinin kopmasi
         float frac = enemy.MaxHits > 0 ? (float)enemy.HitsRemaining / enemy.MaxHits : 1f;
-        int newPhase = frac < 0.33f ? 2 : (frac < 0.66f ? 1 : 0);
-        if (newPhase != phase)
+        int hpPhase = frac < 0.33f ? 2 : (frac < 0.66f ? 1 : 0);
+        int newPhase = Mathf.Max(hpPhase, LimbPhase);
+        if (newPhase > phase)
         {
-            if (newPhase > phase) BreakOffPart();   // her faz gecisinde govdeden bir parca kopar
+            PhaseBurst();   // her faz gecisinde govdeden parcalar sacilir (buyuk parca kopmaz)
             phase = newPhase;
             nextAttack = Mathf.Min(nextAttack, Time.time + 1.2f);
             if (mgr != null)
@@ -298,6 +306,13 @@ public partial class BossBrain : MonoBehaviour
     // Oyuncunun baktigi yonun yumusatilmis yatay hali: boss hep onunde kalir
     private void UpdateAnchor(float dt)
     {
+        // Boss fazi: boss hep ilerleme yonunde, oyuncunun onunde
+        if (mgr.RushActive)
+        {
+            anchorFwd = mgr.RushHeading;
+            return;
+        }
+
         PlaneController plane = mgr.flight != null ? mgr.flight.Current : null;
         Vector3 f = player.forward;
         if (plane != null && plane.Speed > 12f) f = plane.Velocity;
@@ -315,6 +330,14 @@ public partial class BossBrain : MonoBehaviour
 
     private void Steer(Vector3 target, float maxSpeed, float accel, float dt)
     {
+        // Yanan kanat / motor boss'u agirlastirir; hamleden eski yerine donus hizlidir
+        maxSpeed *= wingSpeedMul;
+        if (ChargeReturning)
+        {
+            maxSpeed *= 2.4f;
+            accel *= 3f;
+        }
+
         // Oyuncu hizli ucuyorsa boss geride kalmasin: azami hiz oyuncununkinin ustunde tutulur
         float chase = mgr.PlayerSpeed * 1.3f + 8f;
         if (chase > maxSpeed)
@@ -335,54 +358,6 @@ public partial class BossBrain : MonoBehaviour
         if (dir.sqrMagnitude < 0.01f) return;
         Quaternion want = Quaternion.LookRotation(dir.normalized, Vector3.up) * Quaternion.Euler(0f, 0f, roll);
         rot = Quaternion.RotateTowards(rot, want, degPerSec * dt);
-    }
-
-    // Faz gecisi: govdeden buyuk bir parca (kanat zari, yuzgec, kol, kuyruk...) patlayarak kopar ve duser.
-    // Yalniz yaprak parcalar secilir (alt nesnesi olmayan): namlu/pivot referanslari bozulmaz. Govde, cekirdek,
-    // goz, bas gibi adlar ve bossun yarisindan buyuk parcalar haric.
-    private void BreakOffPart()
-    {
-        if (renderers == null || mgr == null) return;
-        Bounds whole = new Bounds(transform.position, Vector3.zero);
-        foreach (var r in renderers) if (r != null) whole.Encapsulate(r.bounds);
-        float wholeSize = whole.size.magnitude;
-
-        Renderer best = null;
-        float bestSize = 0f;
-        foreach (var r in renderers)
-        {
-            if (r == null || r.transform.childCount > 0 || r.transform == transform) continue;
-            string n = r.name;
-            if (n.Contains("Body") || n.Contains("Torso") || n.Contains("Hull") || n.Contains("Core") || n.Contains("Eye")
-                || n.Contains("Head") || n.Contains("Muzzle") || n.Contains("Chest") || n.Contains("Halo")) continue;
-            float size = r.bounds.size.magnitude;
-            if (size > wholeSize * 0.55f) continue;
-            if (size > bestSize) { bestSize = size; best = r; }
-        }
-        if (best == null) return;
-
-        Transform part = best.transform;
-        Vector3 c = best.bounds.center;
-        part.SetParent(null, true);
-        foreach (var col in part.GetComponents<Collider>()) col.enabled = false;
-        var prb = part.gameObject.AddComponent<Rigidbody>();
-        prb.mass = 3f;
-        prb.useGravity = true;
-        Vector3 outward = (c - transform.position).normalized;
-        prb.linearVelocity = vel * 0.6f + outward * 18f + Vector3.up * 6f;
-        prb.angularVelocity = Random.onUnitSphere * Random.Range(2f, 5f);
-        Destroy(part.gameObject, 7f);
-
-        // Kopan yerde ve parcanin uzerinde patlama; guclu sarsinti
-        mgr.SpawnExplosion(c, 1.8f);
-        mgr.SpawnExplosion(transform.position + outward * (bestSize * 0.3f), 1.2f);
-        FollowCamera.AddShake(1f, 0.6f);
-        Sfx.PlayAt(Sfx.Crack, c, 1f);
-        if (mgr.SmokeTrailPrefab != null)
-        {
-            var smoke = Instantiate(mgr.SmokeTrailPrefab, part);
-            smoke.transform.localPosition = Vector3.zero;
-        }
     }
 
     /// <summary>Verilen noktanin boss parcalarina en kisa uzakligi (temas hasari icin).</summary>
@@ -434,18 +409,19 @@ public partial class BossBrain : MonoBehaviour
     private const float ShotWarning = 0.55f;
     private const float WarnLength = 260f;
 
-    private struct PendingShot { public float at; public System.Action fire; }
+    // fire: atis aninda cagrilir; parametre, uyari basladigindan beri cercevenin (boss fazi) kaydigi yoldur
+    private struct PendingShot { public float at; public System.Action<Vector3> fire; public Vector3 shiftAt; }
     private readonly List<PendingShot> pendingShots = new List<PendingShot>();
 
     private struct WarnLine { public Vector3 origin; public Vector3 dir; public float until; }
     private readonly List<WarnLine> warns = new List<WarnLine>();
     private readonly List<LineRenderer> warnPool = new List<LineRenderer>();
 
-    private void Telegraphed(Vector3 origin, Vector3 dir, System.Action fire)
+    private void Telegraphed(Vector3 origin, Vector3 dir, System.Action<Vector3> fire)
     {
         Vector3 d = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.forward;
         float at = Time.time + ShotWarning;
-        pendingShots.Add(new PendingShot { at = at, fire = fire });
+        pendingShots.Add(new PendingShot { at = at, fire = fire, shiftAt = mgr.RushShift });
         warns.Add(new WarnLine { origin = origin, dir = d, until = at });
         Sfx.PlayAt(Sfx.Lock, origin, 0.5f);
     }
@@ -455,9 +431,9 @@ public partial class BossBrain : MonoBehaviour
         for (int i = pendingShots.Count - 1; i >= 0; i--)
         {
             if (Time.time < pendingShots[i].at) continue;
-            System.Action fire = pendingShots[i].fire;
+            PendingShot p = pendingShots[i];
             pendingShots.RemoveAt(i);
-            if (enemy != null && !enemy.IsDead && !enemy.IsWreck) fire();
+            if (enemy != null && !enemy.IsDead && !enemy.IsWreck) p.fire(mgr.RushShift - p.shiftAt);
         }
     }
 
@@ -508,7 +484,7 @@ public partial class BossBrain : MonoBehaviour
     // Yatay yelpaze: merkez mermi tam hedefe
     private void Fan(Vector3 origin, Vector3 dir, int count, float totalDeg, float speed, int damage)
     {
-        Telegraphed(origin, dir, () => FanNow(origin, dir, count, totalDeg, speed, damage));
+        Telegraphed(origin, dir, s => FanNow(origin + s, dir, count, totalDeg, speed, damage));
     }
 
     private void FanNow(Vector3 origin, Vector3 dir, int count, float totalDeg, float speed, int damage)
@@ -524,7 +500,7 @@ public partial class BossBrain : MonoBehaviour
     // Hedefe yonelik konik halka: merkezde bir hedef mermisi + halka katmani
     private void Cone(Vector3 origin, Vector3 dir, int count, float tiltDeg, float speed, int damage, float offsetDeg)
     {
-        Telegraphed(origin, dir, () => ConeNow(origin, dir, count, tiltDeg, speed, damage, offsetDeg));
+        Telegraphed(origin, dir, s => ConeNow(origin + s, dir, count, tiltDeg, speed, damage, offsetDeg));
     }
 
     private void ConeNow(Vector3 origin, Vector3 dir, int count, float tiltDeg, float speed, int damage, float offsetDeg)
@@ -697,58 +673,92 @@ public partial class BossBrain : MonoBehaviour
     }
 
     // ----------------------------------------------------------- hamle (charge)
+    // Hazirlik (yavaslar, oyuncuya doner) -> kilitlenen noktaya dalis (oyuncu yerinde kalirsa carpar, temas hasari
+    // EnemyPlane.ScriptedStep'te) -> eski yerine, oyuncunun onundeki konumuna hizla geri donus. Arkaya gecip kaybolmaz.
 
     private bool chargeActive;
+    private int chargeStage;            // 0 hazirlik, 1 dalis, 2 donus
     private float chargeStart;
     private float chargeTelegraph;
     private float chargeSpeed;
     private float chargeDuration;
+    private float chargeStageEnd;
     private Vector3 chargeDir;
-    private bool chargeLocked;
+    private Vector3 chargeTarget;
 
     private bool Charging => chargeActive;
+    private bool ChargeReturning => chargeActive && chargeStage == 2;
 
     private void StartCharge(float telegraph, float speed, float duration)
     {
         chargeActive = true;
-        chargeLocked = false;
+        chargeStage = 0;
         chargeStart = Time.time;
         chargeTelegraph = telegraph;
         chargeSpeed = speed;
         chargeDuration = duration;
-        nextAttack = Mathf.Max(nextAttack, Time.time + telegraph + duration + 1f);
+        nextAttack = Mathf.Max(nextAttack, Time.time + telegraph + duration + 3f);
     }
 
-    // true: hareketi bu kare hamle yonetiyor
+    // true: hareketi bu kare hamle yonetiyor (donus asamasinda normal hareket hizlandirilmis calisir)
     private bool TickCharge(float dt)
     {
         if (!chargeActive) return false;
 
-        float t = Time.time - chargeStart;
-        if (t < chargeTelegraph)
+        if (chargeStage == 0)
         {
-            // Hazirlik: yavasca durur, hedefe doner (parcalar parlar)
-            vel = Vector3.MoveTowards(vel, Vector3.zero, 90f * dt);
-            pos += vel * dt;
-            FaceDir(player.position - pos, 160f, dt);
-            return true;
+            if (Time.time - chargeStart < chargeTelegraph)
+            {
+                // Hazirlik: yavasca durur, hedefe doner (parcalar parlar)
+                vel = Vector3.MoveTowards(vel, Vector3.zero, 90f * dt);
+                pos += vel * dt;
+                FaceDir(player.position - pos, 160f, dt);
+                return true;
+            }
+
+            // Kilit: oyuncunun o anki yeri (biraz onde tutma). Dalis bu noktaya gider; oyuncu kayarak kacabilir
+            chargeTarget = player.position + mgr.PlayerVelocity * 0.3f;
+            Vector3 to = chargeTarget - pos;
+            float d = to.magnitude;
+            chargeDir = d > 0.1f ? to / d : transform.forward;
+            chargeStage = 1;
+            chargeStageEnd = Time.time + Mathf.Min(chargeDuration + 0.6f, d / Mathf.Max(chargeSpeed, 1f) + 0.35f);
+            Sfx.PlayAt(Sfx.BossAttack, pos, 0.9f);
         }
 
-        if (!chargeLocked)
-        {
-            chargeLocked = true;
-            chargeDir = (player.position + mgr.PlayerVelocity * 0.35f - pos).normalized;
-        }
-
-        if (t < chargeTelegraph + chargeDuration)
+        if (chargeStage == 1)
         {
             vel = chargeDir * chargeSpeed;
             pos += vel * dt;
             FaceDir(chargeDir, 240f, dt);
+
+            // Kilit noktasini gecti ya da sure doldu: geri donus
+            if (Vector3.Dot(chargeTarget - pos, chargeDir) <= 0f || Time.time >= chargeStageEnd)
+            {
+                chargeStage = 2;
+                chargeStageEnd = Time.time + 3.2f;
+                vel = -chargeDir * chargeSpeed * 0.45f;   // carpinca geri seker: oyuncunun ustunde beklemez
+                nextAttack = Mathf.Max(nextAttack, chargeStageEnd + 0.4f);
+            }
             return true;
         }
 
-        chargeActive = false;
+        // Donus: tur hareketi (Move) hizlandirilmis olarak calisir; oyuncunun onundeki yerine varinca biter
+        Vector3 rel = pos - player.position;
+        if (Vector3.Dot(rel, anchorFwd) > 220f || Time.time >= chargeStageEnd) chargeActive = false;
         return false;
+    }
+
+    // Boss fazi: cerceve kaydiginda dunyada sabit tutulan ara noktalar da kayar
+    private void ApplyFrameShift(Vector3 shift)
+    {
+        chargeTarget += shift;
+        for (int i = 0; i < warns.Count; i++)
+        {
+            WarnLine w = warns[i];
+            w.origin += shift;
+            warns[i] = w;
+        }
+        for (int i = 0; i < trail.Count; i++) trail[i] += shift;
     }
 }

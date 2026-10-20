@@ -20,7 +20,6 @@ public partial class CombatManager
     private float waveClock;          // orta boss yasarken durur: dalgalar bekler
     private EnemyPlane boss;          // asama sonu boss
     private EnemyPlane midBoss;       // asama ortasi boss
-    private float nextBossAdds;
     private int tutorialStage;
 
     public EnemyPlane Boss => boss;
@@ -46,6 +45,7 @@ public partial class CombatManager
 
     private void SetupStage(int index)
     {
+        AbortRush();
         index = Mathf.Max(0, index);
         stage = Stages.Get(index);
         StageAtmosphere.Begin(index, stageLoaded < 0);
@@ -56,7 +56,6 @@ public partial class CombatManager
         midBossSpawned = false;
         boss = null;
         midBoss = null;
-        nextBossAdds = 0f;
 
         foreach (var e in enemies)
             if (e != null && !e.IsDead) e.Vanish();
@@ -143,16 +142,7 @@ public partial class CombatManager
             }
         }
 
-        // Boss savasi: periyodik sürü takviyesi
-        EnemyPlane active = ActiveBoss;
-        if (active != null && Time.time >= nextBossAdds)
-        {
-            nextBossAdds = Time.time + (active.IsStageBoss ? 16f : 22f);
-            int n = active.Kind == EnemyKind.FinalBoss ? 3 : 2;   // boss takviyesi az: boss'a odaklan
-            Vector3 c = active.transform.position + Random.onUnitSphere * 40f;
-            Vector3 toPlayer = PlayerTransform.position - c;
-            SpawnFormationGroup(EnemyKind.Swarmer, n, c, toPlayer.normalized, Formation.V, -1);
-        }
+        // Boss savasinda takviye gelmez: boss fazinda yalniz boss ile dovusulur
     }
 
     // Ilk iki oyunda kisa yonlendirme
@@ -382,13 +372,15 @@ public partial class CombatManager
         RunState.RegisterSpawn(1);
 
         if (stageBoss) boss = enemy; else midBoss = enemy;
-        nextBossAdds = Time.time + 10f;
 
         Color c = kind == EnemyKind.FinalBoss ? new Color(1f, 0.3f, 0.25f)
             : (stageBoss ? new Color(1f, 0.85f, 0.3f) : new Color(1f, 0.65f, 0.25f));
         string prefix = kind == EnemyKind.FinalBoss ? "SON BOSS: " : (stageBoss ? "BOSS: " : "ORTA BOSS: ");
         Announce(prefix + BossBrain.TitleOf(bossType) + "!", c, 3.5f, true);
         if (uiAudio != null) uiAudio.PlayOneShot(Sfx.BossRoar, 0.9f);
+
+        // Boss fazi: diger ucaklar cekilir, oyuncu ve boss acik denizde ilerler
+        BeginRush(enemy);
 
         return enemy;
     }
@@ -560,6 +552,7 @@ public partial class CombatManager
 
         // Oyun bitti: otomatik yeniden dogusu iptal et, sonuc ekrani RunResultUI'da acilir
         plane.CancelRespawn();
+        AbortRush();
         RunState.End(RunPhase.Lost);
     }
 

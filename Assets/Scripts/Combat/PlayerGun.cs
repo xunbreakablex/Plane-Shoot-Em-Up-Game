@@ -158,7 +158,8 @@ public partial class PlayerGun : MonoBehaviour
         float leadSpeed = (count > 0 ? speedSum / count : (any > 0 ? 1000000f / (RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier) : bulletSpeed))
                           * RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier;
 
-        if (ControlSettings.EffectiveAutoAim) UpdateAutoAim(plane, leadSpeed);
+        // Boss fazinda nisan hep burnun onunde (fare burnu sinirli aciyla cevirir)
+        if (ControlSettings.EffectiveAutoAim || plane.InRush) UpdateAutoAim(plane, leadSpeed);
         else UpdateAim(plane, leadSpeed);
 
         // Ates: SPACE basili tut (her iki nisan modunda) ya da sol tik. SPACE yerde ayrica frendir.

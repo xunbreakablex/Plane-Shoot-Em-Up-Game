@@ -51,9 +51,11 @@ public partial class CombatManager
         DrawRightColumn();      // rightBlockBottom'i hesaplar; oklar ona gore kacar
         DrawRadar();
         DrawMarkers();
+        DrawBossLimbBars();
         DrawFloatingTexts();
         DrawBanner();
         DrawBottomWarnings();
+        DrawRushHint();
         DrawCrosshair();
         DrawDamageArcs();
         Hud.End();
@@ -73,6 +75,51 @@ public partial class CombatManager
             arrowTexture.SetPixel(x, 31 - y, inside ? Color.white : Color.clear);
         }
         arrowTexture.Apply();
+    }
+
+    // Boss uzuv can cubuklari: vurulan uzvun ustunde kisa sure, cani %30'un altindaki uzuvlarda surekli
+    private BossBrain limbBrain;
+    private EnemyPlane limbBrainOf;
+
+    private void DrawBossLimbBars()
+    {
+        EnemyPlane b = ActiveBoss;
+        if (b == null) return;
+        if (limbBrainOf != b)
+        {
+            limbBrainOf = b;
+            limbBrain = b.GetComponent<BossBrain>();
+        }
+        if (limbBrain == null) return;
+
+        for (int i = 0; i < limbBrain.LimbCount; i++)
+        {
+            if (!limbBrain.LimbBar(i, out Vector3 wp, out float frac, out bool weapon)) continue;
+            Vector3 sp = cam.WorldToScreenPoint(wp);
+            if (sp.z <= 0f) continue;
+
+            Vector2 h = Hud.ToHud(sp);
+            const float w = 58f, hgt = 6f;
+            var r = new Rect(h.x - w * 0.5f, h.y - 18f, w, hgt);
+            Color fill = frac < 0.3f ? new Color(1f, 0.25f, 0.2f)
+                : (frac < 0.6f ? new Color(1f, 0.75f, 0.2f) : new Color(0.45f, 0.95f, 0.45f));
+            // Silah uzvu turuncu, tasiyici uzuv (kanat) acik gri cerceveli
+            Hud.Fill(new Rect(r.x - 1.5f, r.y - 1.5f, r.width + 3f, r.height + 3f),
+                weapon ? new Color(1f, 0.55f, 0.2f, 0.9f) : new Color(0.85f, 0.88f, 0.92f, 0.65f));
+            Hud.Bar(r, frac, fill);
+        }
+    }
+
+    // Boss fazinin ilk saniyelerinde kontrol ipucu
+    private void DrawRushHint()
+    {
+        if (!RushActive || rushEnding || RushAge > 9f) return;
+        bool pad = UnityEngine.InputSystem.Gamepad.current != null;
+        string txt = pad
+            ? "BOSS SAVAŞI  •  sol çubuk: hareket  •  sağ çubuk: nişan (±45°)"
+            : "BOSS SAVAŞI  •  A/D: sağ-sol  •  Shift/Ctrl: yukarı-aşağı  •  fare: nişan (±45°)  •  W/S kapalı";
+        float a = Mathf.Clamp01((9f - RushAge) / 1.5f);
+        Hud.Text(new Rect(Hud.W * 0.5f - 420f, Hud.H - 100f, 840f, 22f), txt, new Color(1f, 0.85f, 0.45f, a), 14, TextAnchor.MiddleCenter);
     }
 
     private void DrawHitFlash()

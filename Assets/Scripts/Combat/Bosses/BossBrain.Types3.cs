@@ -25,13 +25,14 @@ public partial class BossBrain
         Vector3 tgt = player.position + mgr.PlayerVelocity * 1.1f;   // hedef uyari basinda sabitlenir
 
         // Uyari: hedef bolgeyi gosteren uc dikey cizgi (orta + iki yan), sonra yagmur
-        Telegraphed(tgt + Vector3.up * WarnLength, Vector3.down, () =>
+        Telegraphed(tgt + Vector3.up * WarnLength, Vector3.down, s =>
         {
+            Vector3 at = tgt + s;   // boss fazinda hedef bolge cerceveyle kayar
             for (int i = 0; i < count; i++)
             {
-                Vector3 origin = tgt + fwdAnchor * Random.Range(120f, 320f) + Vector3.up * Random.Range(200f, 320f)
+                Vector3 origin = at + fwdAnchor * Random.Range(120f, 320f) + Vector3.up * Random.Range(200f, 320f)
                                  + right * Random.Range(-spread, spread);
-                Vector3 aim = tgt + right * Random.Range(-45f, 45f) + Vector3.up * Random.Range(-20f, 20f);
+                Vector3 aim = at + right * Random.Range(-45f, 45f) + Vector3.up * Random.Range(-20f, 20f);
                 Shoot(origin, (aim - origin).normalized, speed, 1, 7f);
             }
         });
@@ -59,14 +60,15 @@ public partial class BossBrain
         {
             case 0:
             {
-                // Iki elden ates topu yelpazesi
-                Vector3 a = demonMuzzleL.position, b = demonMuzzleR.position;
-                Fan(a, AimFrom(a, 200f, 4f), 5, 24f, 200f, 1);
-                Fan(b, AimFrom(b, 200f, 4f), 5, 24f, 200f, 1);
+                // Iki elden ates topu yelpazesi (kopan kol susar; iki kol da koptuysa agizdan)
+                if (demonMuzzleL != null) Fan(demonMuzzleL.position, AimFrom(demonMuzzleL.position, 200f, 4f), 5, 24f, 200f, 1);
+                if (demonMuzzleR != null) Fan(demonMuzzleR.position, AimFrom(demonMuzzleR.position, 200f, 4f), 5, 24f, 200f, 1);
+                if (demonMuzzleL == null && demonMuzzleR == null)
+                    Fan(demonMouth.position, AimFrom(demonMouth.position, 200f, 4f), 5, 24f, 200f, 1);
                 break;
             }
             case 1:
-                StartSpray(demonMuzzleR, 2.2f, 2 + phase, 14f, 0.09f, 180f);
+                StartSpray(Pick(demonMuzzleR, demonMuzzleL, demonMouth), 2.2f, 2 + phase, 14f, 0.09f, 180f);
                 break;
             case 2:
                 RainFromAbove(8 + phase * 4, 130f, 140f);
@@ -109,18 +111,21 @@ public partial class BossBrain
         switch (step++ % 4)
         {
             case 0:
-                StartSpray(angelStaff, 3.0f, 3, 20f, 0.07f, 160f);   // tuy yagmuru
+                StartSpray(Pick(angelStaff, angelHaloMuzzle), 3.0f, 3, 20f, 0.07f, 160f);   // tuy yagmuru
                 break;
             case 1:
             {
-                Vector3 h = angelHaloMuzzle.position;
+                Vector3 h = Pick(angelHaloMuzzle, angelStaff).position;
                 Cone(h, AimFrom(h, 170f, 3f), 14 + phase * 4, 10f, 170f, 1, Random.value * 90f);
                 break;
             }
             case 2:
-                if (phase >= 1) StartBeam(angelStaff, 1.3f, 1.4f);
-                else Fan(angelStaff.position, AimFrom(angelStaff.position, 210f, 4f), 7, 40f, 210f, 1);
+            {
+                Transform staff = Pick(angelStaff, angelHaloMuzzle);
+                if (phase >= 1) StartBeam(staff, 1.3f, 1.4f);
+                else Fan(staff.position, AimFrom(staff.position, 210f, 4f), 7, 40f, 210f, 1);
                 break;
+            }
             default:
                 StartCharge(1.1f, 165f, 1.8f);                       // mizrak dalisi
                 break;
@@ -155,17 +160,19 @@ public partial class BossBrain
         switch (step++ % 5)
         {
             case 0:
-                StartSpray(kiHandR, 1.7f, 1, 3f, 0.05f, 230f);         // hizli ki atesi akisi
+                StartSpray(Pick(kiHandR, kiHandL), 1.7f, 1, 3f, 0.05f, 230f);         // hizli ki atesi akisi
                 break;
             case 1:
             {
-                Vector3 a = kiHandL.position, b = kiHandR.position;
-                Fan(a, AimFrom(a, 210f, 4f), 7, 30f, 210f, 1);
-                Fan(b, AimFrom(b, 210f, 4f), 7, 30f, 210f, 1);
+                // Iki elden yelpaze (kopan kol susar; iki kol da koptuysa govdeden)
+                if (kiHandL != null) Fan(kiHandL.position, AimFrom(kiHandL.position, 210f, 4f), 7, 30f, 210f, 1);
+                if (kiHandR != null) Fan(kiHandR.position, AimFrom(kiHandR.position, 210f, 4f), 7, 30f, 210f, 1);
+                if (kiHandL == null && kiHandR == null)
+                    Fan(transform.position, AimFrom(transform.position, 210f, 4f), 9, 40f, 210f, 1);
                 break;
             }
             case 2:
-                StartBeam(kiHandR, 1.2f, 1.6f);                        // ki isini
+                StartBeam(Pick(kiHandR, kiHandL), 1.2f, 1.6f);                        // ki isini
                 break;
             case 3:
                 StartCharge(0.9f, 195f, 1.7f);                         // atilma
@@ -207,7 +214,9 @@ public partial class BossBrain
 
     private void MagicAttack()
     {
-        Vector3 m = starMuzzle.position;
+        // Degnek koptuysa buyuler gogusteki bros tasindan atilir
+        Transform wand = Pick(starMuzzle, Get("Brooch"));
+        Vector3 m = wand.position;
 
         switch (step++ % 6)
         {
@@ -215,10 +224,10 @@ public partial class BossBrain
                 Cone(m, AimFrom(m, 180f, 3f), 14, 9f, 180f, 1, Random.value * 90f);               // yildiz halkasi
                 break;
             case 1:
-                StartSpray(starMuzzle, 3.0f, 4 + phase, 16f, 0.1f, 160f);                          // kalp/yildiz sarmali
+                StartSpray(wand, 3.0f, 4 + phase, 16f, 0.1f, 160f);                          // kalp/yildiz sarmali
                 break;
             case 2:
-                StartBeam(starMuzzle, 1.2f, 1.6f);                                                // gokkusagi isini
+                StartBeam(wand, 1.2f, 1.6f);                                                // gokkusagi isini
                 break;
             case 3:
                 StartCharge(1.0f, 165f, 1.8f);                                                     // kuyruklu yildiz
