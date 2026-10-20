@@ -197,6 +197,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private Pattern pattern = Pattern.Aimed;
     private int burstSize = 6;
     private float shotGap = 0.12f;
+    private float aimSpread = 1f;   // nisan sapmasi carpani: surunun serisi dagilir, avcinin serisi isabetli
     private float burstCdMin = 2.5f, burstCdMax = 4f;
     private int bulletDamage = 1;
     private float fireRange = 650f;
@@ -346,7 +347,8 @@ public class EnemyPlane : MonoBehaviour, IDamageable
             case EnemyKind.Swarmer:
                 // Hafif avci: dogfight, kisa seriler; kopup tekrar gelir
                 pattern = Pattern.Aimed;
-                burstSize = 4; shotGap = 0.11f; burstCdMin = 3f; burstCdMax = 4.5f;
+                // Suru: uzun, dagilan seri (sikistirir ama kolay kacilir)
+                burstSize = 7; shotGap = 0.065f; burstCdMin = 3.5f; burstCdMax = 5f; aimSpread = 1.9f;
                 bulletDamage = 1; fireRange = 600f; fireCone = 7f; bulletSpeed = 330f;
                 break;
             case EnemyKind.Heavy:
@@ -377,10 +379,10 @@ public class EnemyPlane : MonoBehaviour, IDamageable
                 canPeel = false;
                 break;
             default:
-                // Avci: daha uzun seri, daha hizli mermi
+                // Avci: kisa, hizli ve isabetli seri (yerinde duran oyuncuyu cezalandirir)
                 pattern = Pattern.Aimed;
-                burstSize = 5; shotGap = 0.1f; burstCdMin = 3f; burstCdMax = 5f;
-                bulletDamage = 1; fireRange = 650f; fireCone = 7f; bulletSpeed = 360f;
+                burstSize = 3; shotGap = 0.16f; burstCdMin = 2.8f; burstCdMax = 4.2f; aimSpread = 0.45f;
+                bulletDamage = 1; fireRange = 650f; fireCone = 7f; bulletSpeed = 420f;
                 break;
         }
 
@@ -724,7 +726,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
                 float s = transform.localScale.x;
                 Vector3 muzzle = pos + rot * new Vector3((Random.value < 0.5f ? -0.9f : 0.9f) * s, 0f, 1.6f * s);
                 Vector3 aim = target.position + mgr.PlayerVelocity * (dist / bulletSpeed)
-                              + Random.insideUnitSphere * (mgr.enemyAimError * Difficulty.AimErrorMul);
+                              + Random.insideUnitSphere * (mgr.enemyAimError * Difficulty.AimErrorMul * aimSpread);
                 Spawn(muzzle, (aim - muzzle).normalized, bulletSpeed);
                 Sfx.PlayAt(Sfx.Shot, muzzle, 0.25f);
             }
