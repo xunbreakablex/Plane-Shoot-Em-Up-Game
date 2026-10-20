@@ -756,8 +756,8 @@ public class HangarController : MonoBehaviour
         bool resume = RunState.HasPendingCampaign;
         string goal = resume
             ? $"Operasyon devam ediyor: AŞAMA {RunState.PendingStage + 1} sırada  •  skor {RunState.Score:N0}  •  donanımı değiştirip devam et"
-            : RunState.NextRush ? "BOSS RUSH:  dolgu yok, " + Stages.All.Length + " turda tüm bosslar arka arkaya  •  B: bomba  •  hurda ile mağazadan güçlen"
-            : "HEDEF:  " + Stages.All.Length + " aşamayı geç  •  düşman üssünü bas: komuta merkezini yık  •  rozetli düşmanı vur  •  B: bomba  •  boss'u indir";
+            : RunState.NextRush ? "BOSS RUSH:  dolgu yok, " + Stages.All.Length + " turda tüm bosslar arka arkaya  •  " + ControlSettings.BombKey + ": bomba  •  hurda ile mağazadan güçlen"
+            : "HEDEF:  " + Stages.All.Length + " aşamayı geç  •  düşman üssünü bas: komuta merkezini yık  •  rozetli düşmanı vur  •  " + ControlSettings.BombKey + ": bomba  •  boss'u indir";
         bool owned = Unlocks.OwnsAircraft(model);
 
         int stageIdx = resume ? Mathf.Max(0, RunState.PendingStage) : 0;
@@ -866,7 +866,7 @@ public class HangarController : MonoBehaviour
     {
         Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.8f));
 
-        float pw = 760f, ph = 590f;
+        float pw = 860f, ph = 566f;
         Rect p = new Rect((W - pw) * 0.5f, (H - ph) * 0.5f, pw, ph);
         Hud.Fill(p, new Color(0.06f, 0.09f, 0.14f, 0.98f));
         Hud.Fill(new Rect(p.x, p.y, pw, 5f), Gold);
@@ -876,13 +876,16 @@ public class HangarController : MonoBehaviour
         string[] heads = { "HEDEF", "KONTROLLER", "GÜÇLENME" };
         string[] body =
         {
-            Stages.All.Length + " aşamayı geç. Her aşamada bir düşman üssü var (kıyı, ada, kale ve tapınak üsleri): uçaksavarları, radarı, hangarları ve yakıt depolarını vur, KOMUTA MERKEZİNİ yık; yıkılınca uçaksavarlar susar ve ana boss gelir. Aşamalar arasında denizi geçersin. Ortada bir orta boss, sonda ana boss seni bekler (köpekbalığı, ahtapot, ejderha, ki savaşçısı, yıldız büyücüsü...). Uçağın düşerse oyun biter. Savaşa girmek için donanımının asgari ateş gücüne (silah + taret /sn) sahip olması gerekir.",
-            "FARE  yönlendir        SOL TIK / SPACE  ateş        F  güdümlü füze        B  BOMBA\nW/S  ileri / geri        A/D  sağa-sola kay        SHIFT/CTRL  yukarı-aşağı kay        SAĞ TIK  yakınlaştır\nESC  duraklat, mağaza ve kontrol şeması (Fare / Arcade / Klasik)        H  kontrol ipucu",
+            Stages.All.Length + " aşamayı geç. Her aşamada bir düşman üssü var (kıyı, ada, kale ve tapınak üsleri): uçaksavarları, radarı, hangarları ve yakıt depolarını vur, KOMUTA MERKEZİNİ yık; yıkılınca uçaksavarlar susar ve ana boss gelir. Aşamalar arasında denizi geçersin. Ortada bir orta boss, sonda ana boss seni bekler (köpekbalığı, ahtapot, ejderha, ki savaşçısı, yıldız büyücüsü...). Boss gelince savaş açık denize taşınır: avcılar çekilir, boss'la baş başa kalırsın. Silah taşıyan uzuvlarını koparabilirsin: bonus hasar ve hurda verir, ama ana boss öfkelenip faz değiştirir. Uçağın düşerse oyun biter. Savaşa girmek için donanımının asgari ateş gücüne (silah + taret /sn) sahip olması gerekir.",
+            "FARE  yönlendir        SOL TIK / SPACE  ateş        F  güdümlü füze        " + ControlSettings.BombKey + "  BOMBA        SAĞ TIK  yakınlaştır\n"
+            + (ControlSettings.WsStrafe ? "W/S  ileri / geri" : "W/S  hızlan / yavaşla") + "        A/D  sağa-sola kay        SHIFT/CTRL  yukarı-aşağı kay\n"
+            + "ESC  duraklat, mağaza ve kontrol şeması (Fare / Arcade / Klasik)        H  kontrol ipucu\n"
+            + "BOSS SAVAŞI  W/S kapalı  •  A/D, SHIFT/CTRL ile kay  •  fareyle ±45° nişan  •  mermi duvarında yeşil BOŞLUĞA geç",
             "Rozetli (P, S, M, B, +, O aşırı yük, W yardımcı İHA, $ hurda) düşmanı vur: güçlendirme düşürür, üstünden geçerek topla. Bomba ekrandaki mermileri temizler, bosslara yüzde hasar verir. Başlangıçta yalnızca 2 gövde silahın açık; her boss'u ilk kez yenince yeni bir slot (füze, kalkan, taret, kanat silahı) açılır ve otomatik takılır. Hurda ile mağazadan yükseltme alırsın. Kampanyayı bitirince Sonsuz Savaş açılır; MOD düğmesiyle yalnızca bosslardan oluşan Boss Rush'ı da seçebilirsin. Zorluğu AYARLAR'dan değiştir."
         };
 
         float y = p.y + 66f;
-        float[] hs = { 124f, 82f, 134f };
+        float[] hs = { 124f, 90f, 116f };
         var wrap = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = true };
         wrap.normal.textColor = new Color(0.9f, 0.93f, 0.97f);
 

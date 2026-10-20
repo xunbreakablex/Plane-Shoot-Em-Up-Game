@@ -75,7 +75,7 @@ public static class UpgradeCatalog
         Add(a, UpgradeId.Discount, "İndirim", "Mağaza fiyatları %8 düşer.", UpgradeCategory.Flight, 3, 60);
 
         Add(a, UpgradeId.Magnet, "Mıknatıs", "Düşen güçlendirmeleri %35 daha uzaktan çeker.", UpgradeCategory.Flight, 4, 35);
-        Add(a, UpgradeId.Revive, "Ekstra Can", "Düşersen bir kez tam canla geri döner ve çevrendeki düşmanları patlatırsın.", UpgradeCategory.Defense, 2, 220);
+        Add(a, UpgradeId.Revive, "Ekstra Can", "Düşersen tam canla geri dönersin (seviye başına bir kez) ve çevrendeki düşmanlar patlar; bir güç seviyesi kaybedersin.", UpgradeCategory.Defense, 2, 220);
 
         return a;
     }

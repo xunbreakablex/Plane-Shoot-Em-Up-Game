@@ -54,7 +54,7 @@ public class RunResultUI : MonoBehaviour
         Hud.Text(new Rect(0f, H * 0.08f, W, 70f), won ? "ZAFER!" : "UÇAĞIN DÜŞTÜ", accent, 56, TextAnchor.MiddleCenter);
 
         string sub = won
-            ? (RunState.Rush ? "Tüm bosslar yenildi: Boss Rush tamam." : "Kızıl Komutan'ı yendin ve operasyonu tamamladın.")
+            ? (RunState.Rush ? "Tüm bosslar yenildi: Boss Rush tamam." : "Son boss " + BossBrain.TitleOf(Stages.All[Stages.All.Length - 1].boss) + " düştü: operasyon tamam.")
             : (RunState.Endless ? $"Sonsuz Savaş'ta {RunState.Stage + 1}. aşamada düştün." : $"Aşama {RunState.Stage + 1} / {RunState.StageTotal} içinde düştün.");
         Hud.Text(new Rect(0f, H * 0.08f + 64f, W, 28f), sub, new Color(0.85f, 0.9f, 0.95f), 18, TextAnchor.MiddleCenter, false);
 

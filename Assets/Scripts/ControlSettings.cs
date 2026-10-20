@@ -115,4 +115,8 @@ public static class ControlSettings
             }
         }
     }
+
+    /// <summary>Bomba tusu: klavyede B; kol bagliysa sol yuz dugmesi (Xbox X) de yazilir.</summary>
+    public static string BombKey => PadNav.Connected ? "B / X" : "B";
+    public static string BombLabel => PadNav.Connected ? "BOMBA [B/X]" : "BOMBA [B]";
 }

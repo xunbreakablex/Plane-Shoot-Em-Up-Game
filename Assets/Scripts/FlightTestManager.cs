@@ -214,9 +214,29 @@ public class FlightTestManager : MonoBehaviour
         HelpAutoOn,
     };
 
+    // Boss fazi (rush): ucus kontrolleri yerine bu satirlar; ilk satir altin renkte baslik
+    private const float RushHelpSeconds = 9f;
+    private static readonly string[] rushHelpKeys =
+    {
+        "BOSS SAVAŞI  •  W / S kapalı, boss hep önünde",
+        "A / D  sağa-sola kay        SHIFT / CTRL  yukarı-aşağı kay",
+        "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     F  füze     B  bomba",
+        "Yeşil ok: mermi duvarındaki BOŞLUK, oraya kay",
+    };
+    private static readonly string[] rushHelpPad =
+    {
+        "BOSS SAVAŞI  •  boss hep önünde",
+        "SOL ÇUBUK  hareket        SAĞ ÇUBUK  nişan (±45°)",
+        "SAĞ TETİK  ateş     X  bomba     (klavye: A/D, SHIFT/CTRL, fare)",
+        "Yeşil ok: mermi duvarındaki BOŞLUK, oraya kay",
+    };
+
     private void DrawHelp(PlaneController p)
     {
-        bool auto = Time.timeSinceLevelLoad < AutoHelpSeconds;
+        // Boss fazina girince yardim kendiliginden acilir ve o fazin kontrollerini gosterir
+        CombatManager cm = CombatManager.Instance;
+        bool rush = cm != null && cm.RushActive;
+        bool auto = Time.timeSinceLevelLoad < AutoHelpSeconds || (rush && cm.RushAge < RushHelpSeconds);
         bool open = helpToggled || auto;
 
         float baseY = Hud.H - Hud.Margin - 20f;
@@ -226,22 +246,34 @@ public class FlightTestManager : MonoBehaviour
 
         if (!open) return;
 
-        // Dizi ve metinler tek sefer kurulur; yalniz kontrol semasi ve oto-duzeltme satirlari degisir
-        bool strafeScheme = ControlSettings.MouseSteering && GameSettings.Current.keysStrafe;
-        helpLines[0] = ControlSettings.EffectiveAutoAim ? HelpAimAuto : HelpAimMouse;
-        helpLines[1] = ControlSettings.MouseSteering
-            ? (strafeScheme ? (ControlSettings.WsStrafe ? HelpSteerMouse : HelpSteerMouseGas) : HelpSteerMouseClassic)
-            : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);
-        helpLines[2] = strafeScheme ? HelpKeysMouse : HelpKeysDefault;
-        helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;
-        string[] lines = helpLines;
+        string[] lines;
+        if (rush)
+        {
+            lines = PadNav.Connected ? rushHelpPad : rushHelpKeys;
+        }
+        else
+        {
+            // Dizi ve metinler tek sefer kurulur; yalniz kontrol semasi ve oto-duzeltme satirlari degisir
+            bool strafeScheme = ControlSettings.MouseSteering && GameSettings.Current.keysStrafe;
+            helpLines[0] = ControlSettings.EffectiveAutoAim ? HelpAimAuto : HelpAimMouse;
+            helpLines[1] = ControlSettings.MouseSteering
+                ? (strafeScheme ? (ControlSettings.WsStrafe ? HelpSteerMouse : HelpSteerMouseGas) : HelpSteerMouseClassic)
+                : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);
+            helpLines[2] = strafeScheme ? HelpKeysMouse : HelpKeysDefault;
+            helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;
+            lines = helpLines;
+        }
 
         float w = 520f;
         float h = lines.Length * 19f + 14f;
         Rect panel = new Rect(Hud.Margin, baseY - h - 6f, w, h);
         Hud.Panel(panel, 0.5f);
+        if (rush) Hud.Fill(new Rect(panel.x, panel.y, w, 3f), new Color(1f, 0.8f, 0.35f));
 
         for (int i = 0; i < lines.Length; i++)
-            Hud.Text(new Rect(panel.x + 10f, panel.y + 7f + i * 19f, w - 20f, 19f), lines[i], Color.white, 13, TextAnchor.UpperLeft, false);
+        {
+            Color c = rush && i == 0 ? new Color(1f, 0.85f, 0.45f) : Color.white;
+            Hud.Text(new Rect(panel.x + 10f, panel.y + 7f + i * 19f, w - 20f, 19f), lines[i], c, 13, TextAnchor.UpperLeft, rush && i == 0);
+        }
     }
 }

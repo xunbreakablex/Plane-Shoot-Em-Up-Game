@@ -163,7 +163,7 @@ public partial class CombatManager
         else if (tutorialStage == 2 && t > 24f)
         {
             tutorialStage = 3;
-            Announce("B: bomba — ekranı ve düşman mermilerini temizler", PowerUp.KindColors[3], 4f);
+            Announce(ControlSettings.BombKey + ": bomba — ekranı ve düşman mermilerini temizler", PowerUp.KindColors[3], 4f);
         }
         else if (tutorialStage == 3 && t > 38f && baseDef.enabled && !baseCleared)
         {

@@ -479,7 +479,7 @@ public partial class CombatManager : MonoBehaviour
                 break;
 
             case PickupKind.Bomb:
-                if (RunState.AddBomb()) text = "BOMBA +1  (B)";
+                if (RunState.AddBomb()) text = "BOMBA +1  (" + ControlSettings.BombKey + ")";
                 else { RunState.AddScore(2000); text = "BOMBA MAKSİMUM  +2000"; }
                 break;
 

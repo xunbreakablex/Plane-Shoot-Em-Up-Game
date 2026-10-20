@@ -56,7 +56,6 @@ public partial class CombatManager
         DrawFloatingTexts();
         DrawBanner();
         DrawBottomWarnings();
-        DrawRushHint();
         DrawCrosshair();
         DrawDamageArcs();
         Hud.End();
@@ -166,18 +165,6 @@ public partial class CombatManager
                 Hud.Ring(h, Mathf.Clamp(38f / (sp.z * fovTan) * (Hud.H * 0.5f), 18f, 220f), green);
             }
         }
-    }
-
-    // Boss fazinin ilk saniyelerinde kontrol ipucu
-    private void DrawRushHint()
-    {
-        if (!RushActive || rushEnding || RushAge > 9f) return;
-        bool pad = UnityEngine.InputSystem.Gamepad.current != null;
-        string txt = pad
-            ? "BOSS SAVAŞI  •  sol çubuk: hareket  •  sağ çubuk: nişan (±45°)"
-            : "BOSS SAVAŞI  •  A/D: sağ-sol  •  Shift/Ctrl: yukarı-aşağı  •  fare: nişan (±45°)  •  W/S kapalı";
-        float a = Mathf.Clamp01((9f - RushAge) / 1.5f);
-        Hud.Text(new Rect(Hud.W * 0.5f - 420f, Hud.H - 100f, 840f, 22f), txt, new Color(1f, 0.85f, 0.45f, a), 14, TextAnchor.MiddleCenter);
     }
 
     private void DrawHitFlash()
@@ -299,14 +286,19 @@ public partial class CombatManager
             float bw = 520f;
             Rect br = new Rect(Hud.W * 0.5f - bw * 0.5f, y, bw, 16f);
             float bf = Mathf.Clamp01((float)bar.HitsRemaining / Mathf.Max(1, bar.MaxHits));
-            Hud.Bar(br, bf, info.marker);
+            // Dolgu biraz koyu: acik renkli bosslarda (sari, beyaz) da beyaz yazi okunur
+            Color mk = info.marker;
+            Hud.Bar(br, bf, new Color(mk.r * 0.78f, mk.g * 0.78f, mk.b * 0.78f, 1f));
+            // Cerceve: cubuk azaldikca bos kismin siniri da gorunsun
+            Hud.Outline(new Rect(br.x - 2f, br.y - 2f, br.width + 4f, br.height + 4f), new Color(0f, 0f, 0f, 0.8f), 2f);
             string title = string.IsNullOrEmpty(bar.Title) ? info.title.ToUpper() : bar.Title;
             // Baslik degisirse (yeni boss) metin yeniden kurulur; sayilar degisince de
             bool titleChanged = !ReferenceEquals(bossTitleSource, title);
             if (titleChanged) bossTitleSource = title;
             if (bossText.Update(bar.HitsRemaining, bar.MaxHits) || titleChanged)
                 bossText.Text = $"{title}   {bar.HitsRemaining} / {bar.MaxHits}";
-            Hud.Text(br, bossText.Text, Color.black, 12, TextAnchor.MiddleCenter);
+            // Beyaz + golge: hem dolu (acik renk) hem bos (koyu) kisimda okunur
+            Hud.Text(br, bossText.Text, Color.white, 12, TextAnchor.MiddleCenter);
         }
 
         // Us hedefi (komuta merkezi): boss cubugunun altinda
@@ -347,7 +339,7 @@ public partial class CombatManager
         cy += rowH;
 
         // Bomba sayisi: B tusu
-        Hud.Text(new Rect(x + 10f, cy, 120f, 20f), "BOMBA [B]", PowerUp.KindColors[3], 14);
+        Hud.Text(new Rect(x + 10f, cy, 120f, 20f), ControlSettings.BombLabel, PowerUp.KindColors[3], 14);
         for (int b = 0; b < RunState.MaxBombs; b++)
         {
             Rect br = new Rect(x + w - 10f - (RunState.MaxBombs - b) * 20f, cy + 3f, 16f, 14f);
@@ -402,14 +394,17 @@ public partial class CombatManager
         Vector3 right = Vector3.Cross(Vector3.up, fwd);
         Vector3 origin = t.position;
 
-        // Guclendirmeler
+        // Guclendirmeler: koyu kenarli elmas (dusmanlar yuvarlak nokta; renkleri cakissa da sekilden ayrilir)
         foreach (var p in PowerUp.All)
         {
             if (p == null) continue;
             if (!RadarPoint(p.transform.position, origin, fwd, right, c, R, true, out Vector2 pos, out bool inside)) continue;
             Color col = PowerUp.KindColors[(int)p.Kind];
             if (!inside) col.a = 0.6f;
-            Hud.Disc(pos, 3.4f, col);
+            Hud.RotateAround(45f, pos);
+            Hud.Fill(new Rect(pos.x - 3.8f, pos.y - 3.8f, 7.6f, 7.6f), new Color(0f, 0f, 0f, 0.75f * col.a));
+            Hud.Fill(new Rect(pos.x - 2.6f, pos.y - 2.6f, 5.2f, 5.2f), col);
+            Hud.ClearRotation();
         }
 
         // Dusmanlar (kenarda kirpilir: yon bilgisi her zaman gorunsun)
