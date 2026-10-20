@@ -15,7 +15,7 @@ public static class SettingsPanel
     {
         if (button == null) button = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold, fontSize = 15 };
 
-        focus = PadNav.Move(focus, 10, i => i != 7 || !ControlSettings.MouseSteering);
+        focus = PadNav.Move(focus, 10);
         padStep = PadNav.Horizontal;
         padAccept = PadNav.Accept;
         if (PadNav.Back) { UserSettings.Save(); return true; }
@@ -62,10 +62,14 @@ public static class SettingsPanel
             ControlSettings.Scheme = ControlSettings.Next(ControlSettings.Scheme);
         y += bh + 10f;
 
-        GUI.enabled = !ControlSettings.MouseSteering;
-        if (Click(new Rect(x, y, bw, bh), $"NİŞAN:  {ControlSettings.AimLabel}", 7))
+        // FARE semasinda nisan hep otomatik: dugme farenin calisma bicimini secer (sanal cubuk / dogrudan)
+        if (ControlSettings.MouseSteering)
+        {
+            if (Click(new Rect(x, y, bw, bh), $"FARE:  {ControlSettings.MouseModeLabel}", 7))
+                ControlSettings.MouseStick = !ControlSettings.MouseStick;
+        }
+        else if (Click(new Rect(x, y, bw, bh), $"NİŞAN:  {ControlSettings.AimLabel}", 7))
             ControlSettings.AutoAim = !ControlSettings.AutoAim;
-        GUI.enabled = true;
 
         if (Click(new Rect(x + bw + 12f, y, bw, bh), $"ZORLUK:  {Difficulty.Label}", 8))
             Difficulty.Next();

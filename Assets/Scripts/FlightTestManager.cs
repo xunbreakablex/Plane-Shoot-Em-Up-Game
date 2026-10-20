@@ -202,6 +202,10 @@ public class FlightTestManager : MonoBehaviour
     private const string HelpKeysMouse = "SHIFT  yukarı kay       CTRL  aşağı kay        C  kamera mesafesi";
     private const string HelpKeysDefault = "SHIFT / CTRL  gaz       SPACE (yerde)  fren   C  kamera mesafesi";
     private const string HelpSteerMouseClassic = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  dön";
+    // Sanal cubuk (varsayilan): imlec ortada degilken ucak doner
+    private const string HelpSteerStick = "FARE  imleci it: ortada değilse döner     W / S  ileri / geri     A / D  kay";
+    private const string HelpSteerStickGas = "FARE  imleci it: ortada değilse döner     W / S  hızlan / yavaşla     A / D  kay";
+    private const string HelpKeysStick = "SHIFT / CTRL  yukarı-aşağı kay     ORTA TIK  imleci ortala     C  kamera";
     private const string HelpSteerArcade = "W / S  yunuslama        A / D  sağa-sola dön     Q / E  yatış";
     private const string HelpSteerClassic = "W / S  yunuslama        A / D  yatış        Q / E  dümen";
 
@@ -259,11 +263,15 @@ public class FlightTestManager : MonoBehaviour
         {
             // Dizi ve metinler tek sefer kurulur; yalniz kontrol semasi ve oto-duzeltme satirlari degisir
             bool strafeScheme = ControlSettings.MouseSteering && GameSettings.Current.keysStrafe;
+            bool stick = ControlSettings.MouseSteering && ControlSettings.MouseStick;
             helpLines[0] = ControlSettings.EffectiveAutoAim ? HelpAimAuto : HelpAimMouse;
             helpLines[1] = ControlSettings.MouseSteering
-                ? (strafeScheme ? (ControlSettings.WsStrafe ? HelpSteerMouse : HelpSteerMouseGas) : HelpSteerMouseClassic)
+                ? (strafeScheme
+                    ? (stick ? (ControlSettings.WsStrafe ? HelpSteerStick : HelpSteerStickGas)
+                             : (ControlSettings.WsStrafe ? HelpSteerMouse : HelpSteerMouseGas))
+                    : HelpSteerMouseClassic)
                 : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);
-            helpLines[2] = strafeScheme ? HelpKeysMouse : HelpKeysDefault;
+            helpLines[2] = strafeScheme ? (stick ? HelpKeysStick : HelpKeysMouse) : HelpKeysDefault;
             helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;
             lines = helpLines;
         }

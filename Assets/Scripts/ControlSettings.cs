@@ -82,6 +82,29 @@ public static class ControlSettings
         }
     }
 
+    // ---- FARE semasinda fare: sanal cubuk (Battlefront 2: imlec ortalanmadikca ucak doner) / dogrudan (FPS gibi)
+    private const string MouseModeKey = "PlaneShootEmUp.MouseMode";
+    private static int mouseModeCached = -1;
+
+    /// <summary>true (varsayilan): fare ekrandaki imleci iter, imlec merkezde degilse ucak o yone surekli doner.
+    /// false: fare burnu dogrudan cevirir (FPS gibi).</summary>
+    public static bool MouseStick
+    {
+        get
+        {
+            if (mouseModeCached < 0) mouseModeCached = PlayerPrefs.GetInt(MouseModeKey, 1) != 0 ? 1 : 0;
+            return mouseModeCached == 1;
+        }
+        set
+        {
+            mouseModeCached = value ? 1 : 0;
+            PlayerPrefs.SetInt(MouseModeKey, mouseModeCached);
+            PlayerPrefs.Save();
+        }
+    }
+
+    public static string MouseModeLabel => MouseStick ? "SANAL ÇUBUK" : "DOĞRUDAN (FPS)";
+
     /// <summary>Fare semasinda fare ucagi yonettigi icin nisan her zaman otomatiktir.</summary>
     public static bool EffectiveAutoAim => AutoAim || MouseSteering;
 
@@ -93,7 +116,9 @@ public static class ControlSettings
 
     /// <summary>Ilk oyunlardaki egitim duyurusu: atesin nasil yapildigi (secili semaya gore).</summary>
     public static string FireTutorial => MouseSteering
-        ? "FARE ile yönlendir, W/S ile hızlan-yavaşla, A/D SHIFT CTRL ile kay, SOL TIK ya da SPACE ile ateş et"
+        ? (MouseStick
+            ? "FAREYİ İT: imleç ortada değilken uçak o yöne döner (ortala = düz uç)  •  W/S hızlan-yavaşla  •  A/D SHIFT CTRL kay  •  SOL TIK / SPACE ateş"
+            : "FARE ile yönlendir, W/S ile hızlan-yavaşla, A/D SHIFT CTRL ile kay, SOL TIK ya da SPACE ile ateş et")
         : AutoAim
             ? "SPACE basılı tut: öndeki en yakın düşmana ateş edersin"
             : "FARE ile nişan al, SOL TIK ya da SPACE ile ateş et";
@@ -106,10 +131,13 @@ public static class ControlSettings
             switch (Scheme)
             {
                 case ControlScheme.Mouse:
+                {
+                    string mouse = MouseStick ? "FARE  imleci it (ortada değilse döner)" : "FARE  yönlendir";
                     if (!GameSettings.Current.keysStrafe)
-                        return "FARE  yönlendir     W / S  hızlan / yavaşla     A / D  dön     SAĞ TIK  yakınlaştır";
-                    return (GameSettings.Current.wsForwardStrafe ? "FARE  yönlendir     W / S  ileri / geri" : "FARE  yönlendir     W / S  hızlan / yavaşla")
+                        return mouse + "     W / S  hızlan / yavaşla     A / D  dön     SAĞ TIK  yakınlaştır";
+                    return mouse + (GameSettings.Current.wsForwardStrafe ? "     W / S  ileri / geri" : "     W / S  hızlan / yavaşla")
                         + "     A / D  sağa-sola kay     SHIFT / CTRL  yukarı-aşağı kay     SAĞ TIK  yakınlaştır";
+                }
                 case ControlScheme.Arcade: return "A / D  sağa-sola dön     Q / E  yatış (tonoz)     W / S  yunuslama";
                 default: return "A / D  yatış             Q / E  dümen     W / S  yunuslama";
             }

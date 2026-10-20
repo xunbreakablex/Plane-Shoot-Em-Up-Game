@@ -180,6 +180,14 @@ public class PlaneController : MonoBehaviour
     public bool IsStalling => !crashed && groundedTimer <= 0f && (Mathf.Abs(aoa) > stallAoA * Mathf.Deg2Rad || Speed < stallSpeed * 0.95f);
     public bool IsCrashed => crashed;
     public bool MouseFlight => mouseFlight;
+
+    /// <summary>HUD: FARE semasinda sanal cubuk kullaniliyor mu (boss fazinda degil: orada fare nisan acisini verir).</summary>
+    public bool VirtualStickOn => ControlSettings.MouseSteering && ControlSettings.MouseStick && !rushMode && !crashed;
+    /// <summary>Sanal cubugun konumu (-1..1, x saga, y yukari; buyuklugu en fazla 1).</summary>
+    public Vector2 VirtualStick => virtualStick;
+    /// <summary>Sanal cubuk bu sapmanin altinda ucagi dondurmez (ortalama payi).</summary>
+    public const float StickDeadzone = 0.06f;
+    private const float StickExpo = 1.35f;          // kucuk sapmalarda ince nisan, tam sapmada azami donus
     public Vector3 SpawnPosition => spawnPosition;
     public Quaternion SpawnRotation => spawnRotation;
 
@@ -204,6 +212,8 @@ public class PlaneController : MonoBehaviour
     private bool mouseFlight;
     private Vector2 mouseStick;
     private Vector2 steerStick;      // FARE semasi (fizik modeli): fare hareketinden gelen sanal cubuk
+    private Vector2 virtualStick;    // FARE semasi, sanal cubuk (Battlefront 2): fareyle itilen imlec -1..1 (x saga, y burun yukari)
+    private Vector2 stickRate;       // sanal cubugun olu bolge ve egri sonrasi donus girisi -1..1 (tam = azami donus hizi)
     private Vector2 mouseAimPending; // FARE semasi (arcade): henuz uygulanmamis fare donusu (derece; x saga, y burun yukari)
     private Vector2 mouseAimVel;     // FARE semasi (arcade): birikimin SmoothDamp hizi
     private Vector3 strafeRaw;       // FARE semasi (arcade): kayma girisi -1..1 (x A/D sag, y Shift/Ctrl yukari, z W/S ileri)
@@ -675,23 +685,41 @@ public class PlaneController : MonoBehaviour
         }
 
         // FARE semasi (sag tik kamerayi yakinlastirir, FollowCamera; ucak yonlendirmesi etkilenmez).
-        //  Arcade (varsayilan): fare burnu dogrudan cevirir (FPS gibi); birikim ArcadeFlight'ta yumusakca uygulanir.
-        //  Fizik modeli (arcade kapali ya da yerde): fare hareketi sanal bir cubugu iter, fare durunca cubuk soner.
+        //  Sanal cubuk (varsayilan, Battlefront 2 gibi): fare ekrandaki imleci merkezden iter; imlec ortada degilse
+        //   ucak o yone surekli doner, donus hizi sapmayla artar. Imlec kendiliginden ortalanmaz: duz ucmak icin geri
+        //   getirilir (orta tik ortalar). Menude imlec serbestken cubuk sifirlanir.
+        //  Dogrudan (ayardan): fare burnu dogrudan cevirir (FPS gibi); birikim ArcadeFlight'ta yumusakca uygulanir.
+        //  Fizik modeli (arcade kapali ya da yerde, dogrudan modda): fare hareketi sanal bir cubugu iter, fare durunca soner.
         if (mouseScheme && Mouse.current != null)
         {
             GameSettings gs = GameSettings.Current;
-            Vector2 d = Cursor.lockState != CursorLockMode.Locked
-                ? Vector2.zero
-                : Mouse.current.delta.ReadValue();
+            bool locked = Cursor.lockState == CursorLockMode.Locked;
+            Vector2 d = locked ? Mouse.current.delta.ReadValue() : Vector2.zero;
             if (gs.invertMouseY ^ UserSettings.InvertY) d.y = -d.y;   // varsayilan: fare yukari = burun yukari
 
-            if (arcadeActive)
+            if (ControlSettings.MouseStick)
             {
+                if (!locked || Mouse.current.middleButton.isPressed) virtualStick = Vector2.zero;
+                virtualStick += d * (gs.mouseSensitivity * UserSettings.MouseSens / Mathf.Max(gs.mouseStickPixels, 1f));
+                if (virtualStick.sqrMagnitude > 1f) virtualStick.Normalize();
+                stickRate = StickCurve(virtualStick) * gs.mouseStickRate;
+                steerStick = Vector2.zero;
+                // Arcade ucusta donus hizi olarak ArcadeFlight'ta uygulanir; yerde / fizik modelinde cubuk dogrudan girer
+                if (!arcadeActive)
+                {
+                    pitchRaw += stickRate.y;
+                    turnRaw += stickRate.x;
+                }
+            }
+            else if (arcadeActive)
+            {
+                virtualStick = stickRate = Vector2.zero;
                 mouseAimPending += d * (MouseDegPerPixel * gs.mouseSensitivity * UserSettings.MouseSens);
                 steerStick = Vector2.zero;
             }
             else
             {
+                virtualStick = stickRate = Vector2.zero;
                 mouseAimPending = mouseAimVel = Vector2.zero;
                 float k = 0.008f * gs.mouseSensitivity * UserSettings.MouseSens;
                 steerStick.x = Mathf.Clamp(steerStick.x + d.x * k, -1f, 1f);
@@ -705,6 +733,7 @@ public class PlaneController : MonoBehaviour
         {
             steerStick = Vector2.zero;
             mouseAimPending = mouseAimVel = Vector2.zero;
+            virtualStick = stickRate = Vector2.zero;
         }
 
         if (mouseFlight && !mouseScheme && Mouse.current != null)
@@ -732,6 +761,15 @@ public class PlaneController : MonoBehaviour
         yawRaw = Mathf.Clamp(yawRaw, -1f, 1f);
         turnRaw = Mathf.Clamp(turnRaw, -1f, 1f);
         throttleRaw = Mathf.Clamp(throttleRaw, -1f, 1f);
+    }
+
+    // Sanal cubuk egrisi: olu bolge (ortalama payi) ve ustel egri (kucuk sapmada ince nisan, tam sapmada azami donus)
+    private static Vector2 StickCurve(Vector2 s)
+    {
+        float m = s.magnitude;
+        if (m <= StickDeadzone) return Vector2.zero;
+        float k = Mathf.Pow(Mathf.Clamp01((m - StickDeadzone) / (1f - StickDeadzone)), StickExpo);
+        return s / m * k;
     }
 
     // Analog cubuk olu bolgesi (0,18): kucuk titremeler ucagi surukleme
@@ -989,6 +1027,7 @@ public class PlaneController : MonoBehaviour
     private void ResetArcadeState()
     {
         mouseAimPending = mouseAimVel = Vector2.zero;
+        virtualStick = stickRate = Vector2.zero;
         strafeVel = Vector3.zero;
         strafeWorld = Vector3.zero;
         visualBank = 0f;
@@ -1014,9 +1053,9 @@ public class PlaneController : MonoBehaviour
         float mousePitch = mouseAimPending.y - restY;
         mouseAimPending = new Vector2(restX, restY);
 
-        // Gamepad sol cubuk surekli doner (A/D kayma modunda donmez)
-        float yawStep = Mathf.Clamp(mouseYaw + turnIn * yawCap, -yawCap, yawCap);
-        float pitchStep = Mathf.Clamp(mousePitch + pitchIn * pitchCap, -pitchCap, pitchCap);
+        // Gamepad sol cubuk ve fare sanal cubugu surekli dondurur (A/D kayma modunda donmez)
+        float yawStep = Mathf.Clamp(mouseYaw + (turnIn + stickRate.x) * yawCap, -yawCap, yawCap);
+        float pitchStep = Mathf.Clamp(mousePitch + (pitchIn + stickRate.y) * pitchCap, -pitchCap, pitchCap);
 
         // Nisan cercevesi = gercek donus eksi gorsel yatis
         Quaternion aim = rb.rotation * Quaternion.Euler(0f, 0f, visualBank);

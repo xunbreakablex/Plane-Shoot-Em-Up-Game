@@ -57,6 +57,10 @@ public class GameSettings : ScriptableObject
     [Range(0.02f, 0.5f)] public float mouseSmoothing = 0.16f;
     [Tooltip("Arcade uçuşta fareyle sağa-sola dönerken uçağın görsel yatışı (derece)")]
     [Range(0f, 80f)] public float mouseVisualBank = 25f;
+    [Tooltip("Sanal çubuk (Battlefront 2 tarzı): imleci merkezden kenara itmek için gereken fare hareketi (piksel, hassasiyet 1'de). Küçük = imleç daha hızlı gider.")]
+    [Range(100f, 1500f)] public float mouseStickPixels = 450f;
+    [Tooltip("Sanal çubuk tam saptığında dönüş hızı (uçağın azami dönüş hızının katı)")]
+    [Range(0.3f, 1.5f)] public float mouseStickRate = 1f;
     [Tooltip("Açıksa A/D uçağı sağa-sola, Shift yukarı, Ctrl aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar). Kapalıysa A/D döner, Shift/Ctrl bir şey yapmaz.")]
     public bool keysStrafe = true;
     [Tooltip("Açıksa (ve keysStrafe açıkken) W ileri, S geri KAYAR ve gaz mekaniği yoktur. Kapalıyken (varsayılan, eski düzen) W/S gaz: W hızlanır, S yavaşlar.")]

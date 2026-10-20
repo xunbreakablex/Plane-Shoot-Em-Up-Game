@@ -866,7 +866,7 @@ public class HangarController : MonoBehaviour
     {
         Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.8f));
 
-        float pw = 860f, ph = 566f;
+        float pw = 860f, ph = 586f;
         Rect p = new Rect((W - pw) * 0.5f, (H - ph) * 0.5f, pw, ph);
         Hud.Fill(p, new Color(0.06f, 0.09f, 0.14f, 0.98f));
         Hud.Fill(new Rect(p.x, p.y, pw, 5f), Gold);
@@ -877,7 +877,10 @@ public class HangarController : MonoBehaviour
         string[] body =
         {
             Stages.All.Length + " aşamayı geç. Her aşamada bir düşman üssü var (kıyı, ada, kale ve tapınak üsleri): uçaksavarları, radarı, hangarları ve yakıt depolarını vur, KOMUTA MERKEZİNİ yık; yıkılınca uçaksavarlar susar ve ana boss gelir. Aşamalar arasında denizi geçersin. Ortada bir orta boss, sonda ana boss seni bekler (köpekbalığı, ahtapot, ejderha, ki savaşçısı, yıldız büyücüsü...). Boss gelince savaş açık denize taşınır: avcılar çekilir, boss'la baş başa kalırsın. Silah taşıyan uzuvlarını koparabilirsin: bonus hasar ve hurda verir, ama ana boss öfkelenip faz değiştirir. Uçağın düşerse oyun biter. Savaşa girmek için donanımının asgari ateş gücüne (silah + taret /sn) sahip olması gerekir.",
-            "FARE  yönlendir        SOL TIK / SPACE  ateş        F  güdümlü füze        " + ControlSettings.BombKey + "  BOMBA        SAĞ TIK  yakınlaştır\n"
+            (ControlSettings.MouseStick
+                ? "FARE  imleci it: imleç ortada değilken uçak o yöne döner, ortalayınca düz uçar (ORTA TIK ortalar)\n"
+                : "FARE  burnu doğrudan çevirir (FPS gibi; AYARLAR'dan sanal çubuğa geçilir)\n")
+            + "SOL TIK / SPACE  ateş        F  güdümlü füze        " + ControlSettings.BombKey + "  BOMBA        SAĞ TIK  yakınlaştır\n"
             + (ControlSettings.WsStrafe ? "W/S  ileri / geri" : "W/S  hızlan / yavaşla") + "        A/D  sağa-sola kay        SHIFT/CTRL  yukarı-aşağı kay\n"
             + "ESC  duraklat, mağaza ve kontrol şeması (Fare / Arcade / Klasik)        H  kontrol ipucu\n"
             + "BOSS SAVAŞI  W/S kapalı  •  A/D, SHIFT/CTRL ile kay  •  fareyle ±45° nişan  •  yeşil / pembe oku izleyip BOŞLUĞA geç",
@@ -885,7 +888,7 @@ public class HangarController : MonoBehaviour
         };
 
         float y = p.y + 66f;
-        float[] hs = { 124f, 90f, 116f };
+        float[] hs = { 124f, 110f, 116f };
         var wrap = new GUIStyle(GUI.skin.label) { fontSize = 15, wordWrap = true };
         wrap.normal.textColor = new Color(0.9f, 0.93f, 0.97f);
 

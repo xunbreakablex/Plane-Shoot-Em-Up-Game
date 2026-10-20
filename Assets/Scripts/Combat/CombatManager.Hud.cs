@@ -56,6 +56,7 @@ public partial class CombatManager
         DrawFloatingTexts();
         DrawBanner();
         DrawBottomWarnings();
+        DrawVirtualStick();
         DrawCrosshair();
         DrawDamageArcs();
         Hud.End();
@@ -949,6 +950,48 @@ public partial class CombatManager
             }
             Hud.ClearRotation();
         }
+    }
+
+    // Sanal cubuk (FARE semasi, Battlefront 2 tarzi): nisangahin cevresinde cubugun menzil halkasi ve fareyle itilen
+    // imlec. Imlec merkezden uzaklastikca ucak o yone daha hizli doner; ortadaki olu bolgede duz ucar.
+    private const float StickHudRadius = 118f;
+
+    private void DrawVirtualStick()
+    {
+        if (gun == null) return;
+        PlaneController plane = flight != null ? flight.Current : null;
+        if (plane == null || !plane.VirtualStickOn || Cursor.lockState != CursorLockMode.Locked) return;
+
+        Vector2 c = Hud.ToHud(gun.CrosshairScreenPos);
+        Vector2 s = plane.VirtualStick;
+        float m = s.magnitude;
+        bool turning = m > PlaneController.StickDeadzone;
+
+        Hud.Ring(c, StickHudRadius, new Color(1f, 1f, 1f, turning ? 0.16f + 0.14f * m : 0.08f));
+        Vector2 p = c + new Vector2(s.x, -s.y) * StickHudRadius;
+        Color cur = turning ? new Color(0.6f, 0.95f, 1f, 0.95f) : new Color(0.85f, 0.95f, 1f, 0.55f);
+
+        if (turning)
+        {
+            // Merkezden imlece cizgi (acik gokte de seçilsin diye koyu golgeli): donus yonu ve buyuklugu
+            Vector2 dvec = p - c;
+            float len = dvec.magnitude - 11f;
+            if (len > 2f)
+            {
+                float angle = Mathf.Atan2(dvec.x, -dvec.y) * Mathf.Rad2Deg;
+                Hud.RotateAround(angle, c);
+                Hud.Fill(new Rect(c.x - 2f, c.y - len - 5f, 4f, len), new Color(0f, 0f, 0f, 0.3f));
+                Hud.Fill(new Rect(c.x - 1f, c.y - len - 5f, 2f, len), new Color(0.6f, 0.95f, 1f, 0.45f + 0.4f * m));
+                Hud.ClearRotation();
+            }
+        }
+
+        // Imlec: koyu zemin uzerinde kalin camgobegi halka ve beyaz nokta
+        Hud.Disc(p, 10.5f, new Color(0f, 0f, 0f, 0.35f));
+        Hud.Ring(p, 9f, cur);
+        Hud.Ring(p, 8f, cur);
+        Hud.Ring(p, 7f, cur);
+        Hud.Disc(p, 2.4f, Color.white);
     }
 
     private void DrawCrosshair()
