@@ -125,7 +125,10 @@ public class FlightTestManager : MonoBehaviour
 
     private static void DrawFlightPanel(PlaneController p)
     {
-        float x = Hud.Margin, y = Hud.TopY, w = 330f, h = 104f;
+        // Boss fazinda gaz, stall ve dikey hiz anlamsiz (W/S kapali, cerceve ucurur): yalniz ad, hiz ve irtifa
+        CombatManager cm = CombatManager.Instance;
+        bool rush = cm != null && cm.RushActive;
+        float x = Hud.Margin, y = Hud.TopY, w = 330f, h = rush ? 52f : 104f;
         Hud.Panel(new Rect(x, y, w, h));
 
         float tx = x + 10f;
@@ -141,6 +144,7 @@ public class FlightTestManager : MonoBehaviour
         int kmhI = Mathf.RoundToInt(kmh), altI = Mathf.RoundToInt(alt);
         if (speedText.Update(kmhI, altI)) speedText.Text = $"HIZ {kmhI} km/s     İRTİFA {altI} m";
         Hud.Text(new Rect(tx, y + 27f, w - 20f, 20f), speedText.Text, Color.white, 15);
+        if (rush) return;
 
         int vsI = Mathf.RoundToInt(p.VerticalSpeed * 10f), gI = Mathf.RoundToInt(p.GForce * 10f), aoaI = Mathf.RoundToInt(p.AoADeg);
         if (dynText.Update(vsI, gI, aoaI))
