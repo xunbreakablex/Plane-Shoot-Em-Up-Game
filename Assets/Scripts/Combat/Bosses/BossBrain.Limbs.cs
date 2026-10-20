@@ -277,7 +277,7 @@ public partial class BossBrain
         prb.angularDamping = 0.2f;
         Vector3 outward = center - transform.position;
         outward = outward.sqrMagnitude > 0.01f ? outward.normalized : Random.onUnitSphere;
-        prb.linearVelocity = vel + CombatManager.FrameVelocity + outward * 24f + Vector3.up * 8f;
+        prb.linearVelocity = vel + CombatManager.FrameVelocityAt(center) + outward * 24f + Vector3.up * 8f;
         prb.angularVelocity = Random.onUnitSphere * Random.Range(2.5f, 5f);
 
         if (mgr.SmokeTrailPrefab != null)
@@ -332,7 +332,7 @@ public partial class BossBrain
             var prb = go.AddComponent<Rigidbody>();
             prb.mass = 0.3f;
             prb.linearDamping = 0.35f;
-            prb.linearVelocity = vel + CombatManager.FrameVelocity
+            prb.linearVelocity = vel + CombatManager.FrameVelocityAt(point)
                                  + (outward + Random.insideUnitSphere * 0.7f) * Random.Range(10f, 24f) + Vector3.up * 5f;
             prb.angularVelocity = Random.onUnitSphere * Random.Range(4f, 11f);
             Destroy(go, 4f);

@@ -58,7 +58,7 @@ public partial class CombatManager : MonoBehaviour
     // mermiler cerceveyle birlikte tasindigi icin onde tutma goreli hizla yapilir.
     public float PlayerSpeed => PlayerVelocity.magnitude;
     public Vector3 PlayerVelocity => flight != null && flight.Current != null
-        ? (RushActive ? flight.Current.Velocity - FrameVelocity : flight.Current.Velocity)
+        ? (RushActive ? flight.Current.Velocity - FrameVelocityAt(flight.Current.transform.position) : flight.Current.Velocity)
         : Vector3.zero;
 
     public int Kills => RunState.Kills;
@@ -98,6 +98,7 @@ public partial class CombatManager : MonoBehaviour
     {
         if (Instance == this) Instance = null;
         FrameVelocity = Vector3.zero;
+        FrameYawRate = 0f;
     }
 
     private void Start()

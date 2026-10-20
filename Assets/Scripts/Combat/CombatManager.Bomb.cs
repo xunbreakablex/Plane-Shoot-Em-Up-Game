@@ -144,6 +144,7 @@ public partial class CombatManager
 
             float scale = Mathf.Max(0.1f, radius * 2f);
             r.root.localScale = new Vector3(scale, scale, scale);
+            r.root.position += FrameVelocityAt(r.root.position) * Time.deltaTime;   // boss fazinda halka oyuncuyla birlikte ilerler
 
             Color c = PowerUp.KindColors[(int)PickupKind.Bomb];
             c.a = Mathf.Lerp(0.95f, 0f, radius / BombRadius);

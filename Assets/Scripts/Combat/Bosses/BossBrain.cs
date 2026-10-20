@@ -198,12 +198,20 @@ public partial class BossBrain : MonoBehaviour
         float dt = Time.fixedDeltaTime;
         age += dt;
 
-        // Boss fazi: ilerleyen cerceve boss'u ve onun dunyadaki ara durumlarini (hamle hedefi, uyari cizgileri,
-        // ejderha izi) birlikte tasir; boss mantigi duragan savastaki gibi calisir
-        Vector3 shift = mgr.RushStepDelta();
-        pos = rb.position + shift;
-        rot = rb.rotation;
-        if (shift != Vector3.zero) ApplyFrameShift(shift);
+        // Boss fazi: ilerleyen ve donen cerceve boss'u ve onun dunyadaki ara durumlarini (hamle hedefi, uyari
+        // cizgileri, ejderha izi) birlikte tasir ve dondurur; boss mantigi duragan savastaki gibi calisir
+        mgr.RushStepDelta();
+        if (mgr.RushActive)
+        {
+            pos = mgr.RushMapPoint(rb.position);
+            rot = mgr.RushStepRotation * rb.rotation;
+            ApplyFrameMap();
+        }
+        else
+        {
+            pos = rb.position;
+            rot = rb.rotation;
+        }
 
         // Koruma: bozuk (NaN/sonsuz) konum ya da donus gelirse oyuncunun onune sifirlanir
         if (!IsFinite(pos) || !IsFinite(vel) || float.IsNaN(rot.x) || float.IsNaN(rot.w))
@@ -247,7 +255,13 @@ public partial class BossBrain : MonoBehaviour
 
         if (playerAlive && !overridden && !beamActive && Time.time >= nextAttack)
         {
-            Attack();
+            // Boss fazinda her CurtainEvery saldiridan biri perde (bosluklu mermi duvari)
+            if (CurtainTurn) Curtain();
+            else Attack();
+            attackCount++;
+            // Zorluk: saldirilar arasi sure (Kolay seyrek, Zor sik); Normal'de degismez
+            if (nextAttack > Time.time)
+                nextAttack = Time.time + (nextAttack - Time.time) * Difficulty.FireCooldownMul * (mgr.RushActive ? RushCadence : 1f);
             Sfx.PlayAt(Sfx.BossAttack, pos, 0.7f);
         }
 
@@ -322,8 +336,15 @@ public partial class BossBrain : MonoBehaviour
         anchorFwd = Vector3.Slerp(anchorFwd, f.normalized, 1f - Mathf.Exp(-1.1f * dt)).normalized;
     }
 
+    // Boss fazi ayarlari: oyuncu yalniz kayabildigi icin desenler daha yakindan, daha hizli ve daha sik gelir
+    private const float RushAnchorScale = 0.72f;   // boss oyuncuya bu oranda daha yakin durur (daha buyuk gorunur)
+    private const float RushBulletSpeed = 1.2f;    // mermi hizi carpani
+    private const float RushCadence = 0.8f;        // saldirilar arasi sure carpani
+    private const float RushAimError = 0.7f;       // nisan sapmasi carpani
+
     private Vector3 Anchor(float dist, float side, float height)
     {
+        if (mgr.RushActive) dist *= RushAnchorScale;
         Vector3 right = Vector3.Cross(Vector3.up, anchorFwd);
         return player.position + anchorFwd * dist + right * side + Vector3.up * height;
     }
@@ -392,14 +413,20 @@ public partial class BossBrain : MonoBehaviour
     private Vector3 AimFrom(Vector3 origin, float speed, float error)
     {
         float dist = Vector3.Distance(origin, player.position);
-        Vector3 target = player.position + mgr.PlayerVelocity * (dist / Mathf.Max(speed, 1f)) * 0.85f;
-        target += Random.insideUnitSphere * error;
+        // Onde tutma merminin GERCEK hiziyla (boss mermisi yavaslatma ve boss fazi carpanlari dahil). Boss fazinda tam
+        // onde tutulur: oyuncu yalniz kayabildigi icin rastgele kaymak tek basina yetmesin, yon degistirmek gereksin.
+        float effSpeed = speed * Mathf.Max(0.05f, GameSettings.Current.bossBulletSpeedMultiplier) * (mgr.RushActive ? RushBulletSpeed : 1f);
+        float lead = mgr.RushActive ? 1f : 0.85f;
+        Vector3 target = player.position + mgr.PlayerVelocity * (dist / Mathf.Max(effSpeed, 1f)) * lead;
+        // Zorluk: nisan sapmasi (Normal'e gore; Kolay daha sapmali, Zor daha isabetli)
+        target += Random.insideUnitSphere * error * (Difficulty.AimErrorMul / 0.75f) * (mgr.RushActive ? RushAimError : 1f);
         return (target - origin).normalized;
     }
 
-    private void Shoot(Vector3 origin, Vector3 dir, float speed, int damage, float life = 0f)
+    private Bullet Shoot(Vector3 origin, Vector3 dir, float speed, int damage, float life = 0f)
     {
-        enemy.FireBullet(origin, dir, speed, damage, life);
+        if (mgr.RushActive) speed *= RushBulletSpeed;
+        return enemy.FireBullet(origin, dir, speed, damage, life);
     }
 
     // ----------------------------------------------------------- uyari (telegraf)
@@ -409,19 +436,19 @@ public partial class BossBrain : MonoBehaviour
     private const float ShotWarning = 0.55f;
     private const float WarnLength = 260f;
 
-    // fire: atis aninda cagrilir; parametre, uyari basladigindan beri cercevenin (boss fazi) kaydigi yoldur
-    private struct PendingShot { public float at; public System.Action<Vector3> fire; public Vector3 shiftAt; }
+    // fire: atis aninda cagrilir; parametre, uyari basladigindan beri cercevenin (boss fazi) kayma ve donusudur
+    private struct PendingShot { public float at; public System.Action<CombatManager.RushMap> fire; public CombatManager.RushSnap snap; }
     private readonly List<PendingShot> pendingShots = new List<PendingShot>();
 
     private struct WarnLine { public Vector3 origin; public Vector3 dir; public float until; }
     private readonly List<WarnLine> warns = new List<WarnLine>();
     private readonly List<LineRenderer> warnPool = new List<LineRenderer>();
 
-    private void Telegraphed(Vector3 origin, Vector3 dir, System.Action<Vector3> fire)
+    private void Telegraphed(Vector3 origin, Vector3 dir, System.Action<CombatManager.RushMap> fire)
     {
         Vector3 d = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.forward;
         float at = Time.time + ShotWarning;
-        pendingShots.Add(new PendingShot { at = at, fire = fire, shiftAt = mgr.RushShift });
+        pendingShots.Add(new PendingShot { at = at, fire = fire, snap = mgr.TakeRushSnap() });
         warns.Add(new WarnLine { origin = origin, dir = d, until = at });
         Sfx.PlayAt(Sfx.Lock, origin, 0.5f);
     }
@@ -433,7 +460,7 @@ public partial class BossBrain : MonoBehaviour
             if (Time.time < pendingShots[i].at) continue;
             PendingShot p = pendingShots[i];
             pendingShots.RemoveAt(i);
-            if (enemy != null && !enemy.IsDead && !enemy.IsWreck) p.fire(mgr.RushShift - p.shiftAt);
+            if (enemy != null && !enemy.IsDead && !enemy.IsWreck) p.fire(mgr.MapSince(p.snap));
         }
     }
 
@@ -456,6 +483,7 @@ public partial class BossBrain : MonoBehaviour
             lr.endWidth = width;
         }
         for (int i = used; i < warnPool.Count; i++) warnPool[i].enabled = false;
+        DrawGapLine();
     }
 
     private LineRenderer MakeWarnLine()
@@ -478,29 +506,53 @@ public partial class BossBrain : MonoBehaviour
     {
         warns.Clear();
         pendingShots.Clear();
+        curtainGapUntil = 0f;
+        if (gapLine != null) gapLine.enabled = false;
         foreach (var lr in warnPool) if (lr != null) lr.enabled = false;
+    }
+
+    // Uyarili atis uyari bitince cikar: hedefe donuk yon, oyuncunun bu surede (ayni yonde surerse) gidecegi yere kaydirilir.
+    // Uyari cizgisi bu noktayi gosterir; yonunu degistiren oyuncu kacar, duz kaymaya devam eden vurulur.
+    private Vector3 LeadForWarning(Vector3 origin, Vector3 dir)
+    {
+        if (player == null || dir.sqrMagnitude < 0.0001f) return dir;
+        float dist = Vector3.Distance(origin, player.position);
+        Vector3 to = origin + dir.normalized * dist + mgr.PlayerVelocity * ShotWarning - origin;
+        return to.sqrMagnitude > 0.01f ? to.normalized : dir;
     }
 
     // Yatay yelpaze: merkez mermi tam hedefe
     private void Fan(Vector3 origin, Vector3 dir, int count, float totalDeg, float speed, int damage)
     {
-        Telegraphed(origin, dir, s => FanNow(origin + s, dir, count, totalDeg, speed, damage));
+        dir = LeadForWarning(origin, dir);
+        Telegraphed(origin, dir, m => FanNow(m.Point(origin), m.Dir(dir), count, totalDeg, speed, damage));
     }
+
+    private int fanCount;
 
     private void FanNow(Vector3 origin, Vector3 dir, int count, float totalDeg, float speed, int damage)
     {
+        // Boss fazinda yelpaze sirayla yatay ve dikey gelir: tek bir yukari-asagi kayma ile hepsinden kacilmaz
+        Vector3 axis = Vector3.up;
+        if (mgr.RushActive && (fanCount++ & 1) == 1)
+        {
+            Vector3 side = Vector3.Cross(dir, Vector3.up);
+            if (side.sqrMagnitude > 0.0001f) axis = side.normalized;
+        }
+
         float step = count > 1 ? totalDeg / (count - 1) : 0f;
         for (int i = 0; i < count; i++)
         {
             float off = count > 1 ? -totalDeg * 0.5f + step * i : 0f;
-            Shoot(origin, Quaternion.AngleAxis(off, Vector3.up) * dir, speed, damage);
+            Shoot(origin, Quaternion.AngleAxis(off, axis) * dir, speed, damage);
         }
     }
 
     // Hedefe yonelik konik halka: merkezde bir hedef mermisi + halka katmani
     private void Cone(Vector3 origin, Vector3 dir, int count, float tiltDeg, float speed, int damage, float offsetDeg)
     {
-        Telegraphed(origin, dir, s => ConeNow(origin + s, dir, count, tiltDeg, speed, damage, offsetDeg));
+        dir = LeadForWarning(origin, dir);
+        Telegraphed(origin, dir, m => ConeNow(m.Point(origin), m.Dir(dir), count, tiltDeg, speed, damage, offsetDeg));
     }
 
     private void ConeNow(Vector3 origin, Vector3 dir, int count, float tiltDeg, float speed, int damage, float offsetDeg)
@@ -745,20 +797,27 @@ public partial class BossBrain : MonoBehaviour
 
         // Donus: tur hareketi (Move) hizlandirilmis olarak calisir; oyuncunun onundeki yerine varinca biter
         Vector3 rel = pos - player.position;
-        if (Vector3.Dot(rel, anchorFwd) > 220f || Time.time >= chargeStageEnd) chargeActive = false;
+        float backAt = 220f * (mgr.RushActive ? RushAnchorScale : 1f);
+        if (Vector3.Dot(rel, anchorFwd) > backAt || Time.time >= chargeStageEnd) chargeActive = false;
         return false;
     }
 
-    // Boss fazi: cerceve kaydiginda dunyada sabit tutulan ara noktalar da kayar
-    private void ApplyFrameShift(Vector3 shift)
+    // Boss fazi: cerceve kayip dondugunde, dunyada tutulan ara noktalar ve yonler de cerceveyle birlikte tasinir
+    private void ApplyFrameMap()
     {
-        chargeTarget += shift;
+        vel = mgr.RushMapDir(vel);
+        chargeTarget = mgr.RushMapPoint(chargeTarget);
+        chargeDir = mgr.RushMapDir(chargeDir);
+        beamDir = mgr.RushMapDir(beamDir);
+        crabSweepBase = mgr.RushMapDir(crabSweepBase);
+        curtainGap = mgr.RushMapPoint(curtainGap);
         for (int i = 0; i < warns.Count; i++)
         {
             WarnLine w = warns[i];
-            w.origin += shift;
+            w.origin = mgr.RushMapPoint(w.origin);
+            w.dir = mgr.RushMapDir(w.dir);
             warns[i] = w;
         }
-        for (int i = 0; i < trail.Count; i++) trail[i] += shift;
+        for (int i = 0; i < trail.Count; i++) trail[i] = mgr.RushMapPoint(trail[i]);
     }
 }

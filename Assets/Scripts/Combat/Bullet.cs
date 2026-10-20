@@ -38,6 +38,7 @@ public class Bullet : MonoBehaviour
     private Bullet sourcePrefab;
     private bool pooled;                 // havuzda bekliyor (cift despawn korumasi)
     private float defaultLifetime;
+    private float defaultRadius;     // havuzdan donen mermi baska bir atisin (perde gibi) buyuk yaricapini tasimasin
     private EnemyBulletVisual visual;
 
     private static Bullet Acquire(Bullet prefab, Vector3 position, Quaternion rotation)
@@ -62,6 +63,7 @@ public class Bullet : MonoBehaviour
         Bullet created = Instantiate(prefab, position, rotation);
         created.sourcePrefab = prefab;
         created.defaultLifetime = created.lifetime;
+        created.defaultRadius = created.radius;
         return created;
     }
 
@@ -103,7 +105,7 @@ public class Bullet : MonoBehaviour
         if (ph == null || !ph.ShieldUp) return false;
 
         Vector3 center = ph.ShieldCenter;
-        float r = ph.shieldRadius;
+        float r = ph.shieldRadius + Mathf.Max(0f, radius - 1f);   // buyuk mermi (perde kuresi) kalkana kendi yaricapiyla degir
 
         Vector3 f = start - center;
         float c = f.sqrMagnitude - r * r;
@@ -186,6 +188,7 @@ public class Bullet : MonoBehaviour
         b.lastPierced = null;
         b.age = 0f;
         b.lifetime = b.defaultLifetime > 0f ? b.defaultLifetime : b.lifetime;
+        b.radius = b.defaultRadius > 0f ? b.defaultRadius : b.radius;
         b.easing = false;
         b.flakBurst = false;
 
@@ -301,11 +304,12 @@ public class Bullet : MonoBehaviour
             return;
         }
 
-        // Boss fazi: mermi ilerleyen cerceveyle birlikte tasinir (hizi cerceveye gore)
-        Vector3 frame = CombatManager.FrameVelocity;
+        // Boss fazi: mermi ilerleyen ve donen cerceveyle birlikte tasinir (hizi cerceveye gore)
+        Vector3 frame = CombatManager.FrameVelocityAt(transform.position);
+        velocity = CombatManager.FrameRotate(velocity, dt);
         if (easing)
         {
-            easePoint += frame * dt;
+            easePoint += CombatManager.FrameVelocityAt(easePoint) * dt;
             UpdateEase(dt);
         }
 

@@ -13,10 +13,13 @@ public class EnemyBulletVisual : MonoBehaviour
 
     private static Mesh sphereMesh;
     private static Mesh quadMesh;
-    private static Material rimMat, haloMat, coreMat;
+    private static Material rimMat, haloMat, coreMat, bigCoreMat;
     private static Camera cam;
 
     private Transform core, halo, rim, tracer;
+    private Bullet bullet;
+    private Renderer coreRenderer;
+    private bool coreBig;
     private float phase;
 
     /// <summary>Mermi prefab'indaki ince cubuk izi korur, uzerine top gorunumu ekler.</summary>
@@ -40,12 +43,14 @@ public class EnemyBulletVisual : MonoBehaviour
 
         var v = bullet.gameObject.AddComponent<EnemyBulletVisual>();
         v.tracer = tracerTr;
+        v.bullet = bullet;
         v.phase = Random.value * 6.28f;
 
         // Malzemeler bir kez uretilir ve tum mermilerde paylasilir (mermi basina yeni malzeme sizdirir)
         if (rimMat == null) rimMat = Tinted(softMat, new Color(0.18f, 0f, 0.05f, 0.55f));
         if (haloMat == null) haloMat = Tinted(softMat, new Color(1f, 0.12f, 0.2f, 0.95f));
         if (coreMat == null) coreMat = Tinted(baseMat != null ? baseMat : softMat, new Color(1f, 0.93f, 0.8f, 1f));
+        if (bigCoreMat == null) bigCoreMat = Tinted(baseMat != null ? baseMat : softMat, new Color(1f, 0.42f, 0.22f, 1f));
 
         // Koyu kenar: acik bulut/gokyuzu uzerinde de ayrilsin; hale kirmizi; cekirdek parlak
         v.rim = MakeLayer("Rim", tr, quadMesh, rimMat);
@@ -102,13 +107,25 @@ public class EnemyBulletVisual : MonoBehaviour
 
         float dist = Vector3.Distance(cam.transform.position, transform.position);
         float tanHalf = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
-        float size = Mathf.Clamp(ScreenFraction * 2f * dist * tanHalf, MinCore, MaxCore);
+        // Yakinda cekirdek en az vurus capinin %85'i: buyuk mermi (perde) ekranda da buyuk gorunur, gorunmeyen yerden vurmaz
+        float minCore = Mathf.Max(MinCore, bullet != null ? bullet.radius * 1.7f : MinCore);
+        float size = Mathf.Clamp(ScreenFraction * 2f * dist * tanHalf, minCore, Mathf.Max(MaxCore, minCore));
 
         float pulse = 1f + 0.1f * Mathf.Sin(Time.time * 16f + phase);
 
+        // Buyuk mermide (perde kuresi) hale ve kenar dar: cekirdek zaten buyuk, isilti ekrani kaplamasin
+        bool big = bullet != null && bullet.radius > 1.5f;
+        if (big != coreBig)
+        {
+            // Buyuk kure (perde) turuncu-kirmizi cekirdekle tehlike olarak okunsun; havuzdan donunce normale doner
+            coreBig = big;
+            if (coreRenderer == null) coreRenderer = core.GetComponent<Renderer>();
+            Material m = big ? bigCoreMat : coreMat;
+            if (coreRenderer != null && m != null) coreRenderer.sharedMaterial = m;
+        }
         core.localScale = Vector3.one * size;
-        halo.localScale = Vector3.one * (size * 3.1f * pulse);
-        rim.localScale = Vector3.one * (size * 4.0f * pulse);
+        halo.localScale = Vector3.one * (size * (big ? 1.5f : 3.1f) * pulse);
+        rim.localScale = Vector3.one * (size * (big ? 1.9f : 4.0f) * pulse);
 
         // Top kameraya doner (billboard); izdusumde yuvarlak kalir
         Quaternion face = cam.transform.rotation;

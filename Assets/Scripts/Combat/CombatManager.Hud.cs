@@ -52,6 +52,7 @@ public partial class CombatManager
         DrawRadar();
         DrawMarkers();
         DrawBossLimbBars();
+        DrawCurtainGap();
         DrawFloatingTexts();
         DrawBanner();
         DrawBottomWarnings();
@@ -107,6 +108,63 @@ public partial class CombatManager
             Hud.Fill(new Rect(r.x - 1.5f, r.y - 1.5f, r.width + 3f, r.height + 3f),
                 weapon ? new Color(1f, 0.55f, 0.2f, 0.9f) : new Color(0.85f, 0.88f, 0.92f, 0.65f));
             Hud.Bar(r, frac, fill);
+        }
+    }
+
+    // Perde saldirisi: duvardaki bosluk. Bosluk oyuncunun hizasinda ve cogu zaman ekranin disinda kalir (kamera ucagin
+    // hemen arkasinda): ucaktan bosluga yesil ok cizilir; oyuncu bosluktaysa ucagin cevresinde yesil halka.
+    private void DrawCurtainGap()
+    {
+        if (limbBrain == null || limbBrainOf == null || limbBrainOf.IsDead) return;
+        if (!limbBrain.CurtainGap(out Vector3 gp)) return;
+        PlaneController plane = flight != null ? flight.Current : null;
+        if (plane == null || plane.IsCrashed) return;
+
+        Vector3 pp = plane.transform.position;
+        Vector3 psp = cam.WorldToScreenPoint(pp);
+        if (psp.z <= 0f) return;
+        Vector2 ph = Hud.ToHud(psp);
+
+        float pulse = 0.65f + 0.35f * Mathf.Sin(Time.unscaledTime * 14f);
+        Color green = new Color(0.3f, 1f, 0.45f, pulse);
+
+        // Boslugun oyuncuya gore yeri (cercevenin sag ve yukari eksenlerinde)
+        Vector3 right = Vector3.Cross(Vector3.up, RushHeading).normalized;
+        float dx = Vector3.Dot(gp - pp, right), dy = gp.y - pp.y;
+        if (Mathf.Abs(dx) < 26f && Mathf.Abs(dy) < 26f)
+        {
+            Hud.Ring(ph, 40f, green);
+            Hud.Text(new Rect(ph.x - 70f, ph.y + 44f, 140f, 18f), "BOŞLUKTASIN", green, 13, TextAnchor.UpperCenter);
+            return;
+        }
+
+        // Ucaktan bosluga ok (HUD'da y asagi)
+        Vector2 n = new Vector2(dx, -dy).normalized;
+        float len = Mathf.Clamp(new Vector2(dx, dy).magnitude * 1.1f, 50f, 170f);
+        float angle = Mathf.Atan2(n.x, -n.y) * Mathf.Rad2Deg;
+        Vector2 start = ph + n * 34f;
+        Hud.RotateAround(angle, start);
+        Hud.Fill(new Rect(start.x - 2.5f, start.y - len, 5f, len), green);
+        Hud.ClearRotation();
+
+        Vector2 tip = start + n * len;
+        Hud.RotateAround(angle, tip);
+        GUI.color = green;
+        GUI.DrawTexture(new Rect(tip.x - 14f, tip.y - 14f, 28f, 28f), arrowTexture);
+        GUI.color = Color.white;
+        Hud.ClearRotation();
+        Hud.Text(new Rect(tip.x - 60f, tip.y + (n.y > 0f ? 14f : -32f), 120f, 18f), "BOŞLUK", green, 13, TextAnchor.UpperCenter);
+
+        // Bosluk ekrandaysa orada da halka (boyutu boslugun gercek genisligi kadar)
+        Vector3 sp = cam.WorldToScreenPoint(gp);
+        if (sp.z > 1f)
+        {
+            Vector2 h = Hud.ToHud(sp);
+            if (h.x > 0f && h.x < Hud.W && h.y > 0f && h.y < Hud.H)
+            {
+                float fovTan = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+                Hud.Ring(h, Mathf.Clamp(38f / (sp.z * fovTan) * (Hud.H * 0.5f), 18f, 220f), green);
+            }
         }
     }
 
@@ -445,6 +503,9 @@ public partial class CombatManager
 
         foreach (var e in markerOrder)
         {
+            // Boss fazinda yalniz boss isaretlenir (uzakta kalan us ve yer birimleri ekrani doldurmasin)
+            if (RushActive && !e.IsBoss) continue;
+
             Vector3 wp = e.transform.position;
             Vector3 sp = cam.WorldToScreenPoint(wp);
             float dist = Vector3.Distance(camPos, wp);

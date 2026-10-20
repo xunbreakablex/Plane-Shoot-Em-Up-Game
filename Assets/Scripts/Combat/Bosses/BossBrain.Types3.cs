@@ -25,14 +25,15 @@ public partial class BossBrain
         Vector3 tgt = player.position + mgr.PlayerVelocity * 1.1f;   // hedef uyari basinda sabitlenir
 
         // Uyari: hedef bolgeyi gosteren uc dikey cizgi (orta + iki yan), sonra yagmur
-        Telegraphed(tgt + Vector3.up * WarnLength, Vector3.down, s =>
+        Telegraphed(tgt + Vector3.up * WarnLength, Vector3.down, m =>
         {
-            Vector3 at = tgt + s;   // boss fazinda hedef bolge cerceveyle kayar
+            // Boss fazinda hedef bolge cerceveyle birlikte kayar ve doner
+            Vector3 at = m.Point(tgt), side = m.Dir(right), ahead = m.Dir(fwdAnchor);
             for (int i = 0; i < count; i++)
             {
-                Vector3 origin = at + fwdAnchor * Random.Range(120f, 320f) + Vector3.up * Random.Range(200f, 320f)
-                                 + right * Random.Range(-spread, spread);
-                Vector3 aim = at + right * Random.Range(-45f, 45f) + Vector3.up * Random.Range(-20f, 20f);
+                Vector3 origin = at + ahead * Random.Range(120f, 320f) + Vector3.up * Random.Range(200f, 320f)
+                                 + side * Random.Range(-spread, spread);
+                Vector3 aim = at + side * Random.Range(-45f, 45f) + Vector3.up * Random.Range(-20f, 20f);
                 Shoot(origin, (aim - origin).normalized, speed, 1, 7f);
             }
         });

@@ -4,10 +4,10 @@ using UnityEngine;
 
 // Boss fazi ("rush"): boss gelince diger dusman ucaklar cekilir, yer birimleri susar. Oyuncu ve boss once acik denize,
 // sonra haritanin cevresindeki genis bir cember uzerinde durmadan ilerler (adalar ve ussler sisin otesinde kalir).
-// Ilerleyen bir cerceve (RushOrigin + RushHeading) her fizik adiminda kayar; oyuncu bu cercevede yalnizca sag-sol /
-// yukari-asagi hareket eder (W/S yok), fare nisani cerceve yonune gore sinirlidir (PlaneController). Boss, mermiler,
-// fuzeler ve guclendirmeler cerceveyle birlikte tasinir: goreli savas mantigi (onde tutma, mermi hizi, boss dumeni)
-// duragan savastaki gibi calisir. Boss olunce cerceve durur, ekran kararir ve oyuncu boss'tan onceki yerine doner.
+// Ilerleyen ve donen bir cerceve (RushOrigin + RushHeading) her fizik adiminda kayar ve doner; oyuncu bu cercevede
+// yalnizca sag-sol / yukari-asagi hareket eder (W/S yok), fare nisani cerceve yonune gore sinirlidir (PlaneController).
+// Boss, mermiler, fuzeler, uyari cizgileri ve guclendirmeler cerceveyle birlikte tasinir VE doner: goreli savas mantigi
+// (onde tutma, mermi hizi, boss dumeni) duragan savastaki gibi calisir, cerceve hizla donerken boss geride kalmaz. Boss olunce cerceve durur, ekran kararir ve oyuncu boss'tan onceki yerine doner.
 public partial class CombatManager
 {
     private const float RushCircle = 9500f;      // harita merkezine uzaklik (m): ada ve ussler sisin otesinde kalir
@@ -16,14 +16,50 @@ public partial class CombatManager
     public const float RushDown = 90f;           // cerceve yuksekliginin altina inme siniri (m)
     public const float RushUp = 130f;            // ustune cikma siniri (m)
 
-    /// <summary>Boss fazinda cercevenin hizi (m/s); mermi, fuze ve guclendirmeler bunu kendi hizlarina ekler.</summary>
+    /// <summary>Boss fazinda cercevenin (merkezinin) hizi (m/s).</summary>
     public static Vector3 FrameVelocity { get; private set; }
+    /// <summary>Boss fazinda cercevenin donus hizi (derece/sn, dunya dikeyi etrafinda; Quaternion.AngleAxis isaretiyle).</summary>
+    public static float FrameYawRate { get; private set; }
+    /// <summary>Cercevenin donme merkezi (RushOrigin).</summary>
+    public static Vector3 FrameOrigin { get; private set; }
+
+    /// <summary>
+    /// Cerceveyle birlikte tasinan bir noktanin dunyadaki hizi: merkezin hizi + donusten gelen hiz. Mermi, fuze,
+    /// guclendirme ve bomba halkasi bunu kendi hizlarina ekler (boss fazi yoksa sifir).
+    /// </summary>
+    public static Vector3 FrameVelocityAt(Vector3 p)
+    {
+        if (FrameYawRate == 0f) return FrameVelocity;
+        return FrameVelocity + Vector3.Cross(Vector3.up * (FrameYawRate * Mathf.Deg2Rad), p - FrameOrigin);
+    }
+
+    /// <summary>Cerceveyle birlikte donmesi gereken bir yonu (mermi hizi gibi) dt suresince dondurur.</summary>
+    public static Vector3 FrameRotate(Vector3 v, float dt)
+    {
+        return FrameYawRate == 0f ? v : Quaternion.AngleAxis(FrameYawRate * dt, Vector3.up) * v;
+    }
+
+    /// <summary>Uyarili atis icin cercevenin o anki hali (atis aninda bundan bu yana kayma/donus uygulanir).</summary>
+    public struct RushSnap
+    {
+        public Vector3 origin;
+        public float yaw;
+        public int session;
+    }
+
+    /// <summary>Iki cerceve hali arasindaki donusum: cerceveyle birlikte tasinan noktayi/yonu yeni yerine goturur.</summary>
+    public struct RushMap
+    {
+        public Vector3 from, to;
+        public Quaternion rot;
+        public Vector3 Point(Vector3 p) { return to + rot * (p - from); }
+        public Vector3 Dir(Vector3 d) { return rot * d; }
+        public static RushMap Identity => new RushMap { from = Vector3.zero, to = Vector3.zero, rot = Quaternion.identity };
+    }
 
     public bool RushActive { get; private set; }
     public Vector3 RushHeading { get; private set; } = Vector3.forward;
     public Vector3 RushOrigin => rushOrigin;
-    /// <summary>Boss fazi boyunca cercevenin toplam kaydigi yol (uyarili atislar icin).</summary>
-    public Vector3 RushShift { get; private set; }
     public float RushAge => RushActive ? Time.time - rushStart : 0f;
 
     /// <summary>Boss savasi suruyor mu: diger dusmanlar ates etmez, takviye gelmez.</summary>
@@ -33,6 +69,10 @@ public partial class CombatManager
     private float rushSpeed, rushTargetSpeed, rushStart;
     private float rushStepTime = -1f;
     private Vector3 rushDelta;
+    private Vector3 rushPrevOrigin;
+    private Quaternion rushStepRot = Quaternion.identity;   // bu adimdaki donus
+    private float rushYawTotal;                              // boss fazi boyunca toplam donus (derece)
+    private int rushSession;
     private float rushTangentSign = 1f;
     private bool rushEnding;
     private EnemyPlane rushBoss;
@@ -93,8 +133,13 @@ public partial class CombatManager
         rushStart = Time.time;
         rushStepTime = -1f;
         rushDelta = Vector3.zero;
-        RushShift = Vector3.zero;
+        rushPrevOrigin = rushOrigin;
+        rushStepRot = Quaternion.identity;
+        rushYawTotal = 0f;
+        rushSession++;
         FrameVelocity = Vector3.zero;
+        FrameYawRate = 0f;
+        FrameOrigin = rushOrigin;
         rushEnding = false;
         rushBoss = bossEnemy;
         RushActive = true;
@@ -168,7 +213,9 @@ public partial class CombatManager
         RushActive = false;
         rushEnding = false;
         rushDelta = Vector3.zero;
+        rushStepRot = Quaternion.identity;
         FrameVelocity = Vector3.zero;
+        FrameYawRate = 0f;
         rushBoss = null;
 
         if (flight != null && flight.planes != null)
@@ -238,7 +285,10 @@ public partial class CombatManager
         // Ilk saniyelerde yon hizla denize donulur; sonra cember boyunca yavas yavas
         float err = Vector3.SignedAngle(RushHeading, desired, Vector3.up);
         float maxTurn = (Time.time - rushStart < 8f ? 24f : 6f) * dt;
-        RushHeading = (Quaternion.AngleAxis(Mathf.Clamp(err, -maxTurn, maxTurn), Vector3.up) * RushHeading).normalized;
+        float yawStep = Mathf.Clamp(err, -maxTurn, maxTurn);
+        rushStepRot = Quaternion.AngleAxis(yawStep, Vector3.up);
+        rushYawTotal += yawStep;
+        RushHeading = (rushStepRot * RushHeading).normalized;
 
         // Hiz: seyir hizina yaklasir; boss olunce hizla durur (patlamalar gorus alaninda kalsin)
         float target = rushEnding ? 0f : rushTargetSpeed;
@@ -253,8 +303,39 @@ public partial class CombatManager
         rushOrigin.y = Mathf.MoveTowards(rushOrigin.y, wantY, 28f * dt);
 
         rushDelta = rushOrigin - prev;
-        RushShift += rushDelta;
+        rushPrevOrigin = prev;
         FrameVelocity = dt > 0f ? rushDelta / dt : Vector3.zero;
+        FrameYawRate = dt > 0f ? yawStep / dt : 0f;
+        FrameOrigin = rushOrigin;
+    }
+
+    // ------------------------------------------------- cerceve donusumleri (boss ve uyarili atislar)
+
+    /// <summary>Bu fizik adiminda: onceki adimda cercevede sabit duran noktanin yeni yeri (kayma + donus).</summary>
+    public Vector3 RushMapPoint(Vector3 p)
+    {
+        return RushActive ? rushOrigin + rushStepRot * (p - rushPrevOrigin) : p;
+    }
+
+    /// <summary>Bu fizik adiminda: cercevede sabit yonun yeni hali.</summary>
+    public Vector3 RushMapDir(Vector3 d)
+    {
+        return RushActive ? rushStepRot * d : d;
+    }
+
+    /// <summary>Bu fizik adimindaki cerceve donusu.</summary>
+    public Quaternion RushStepRotation => RushActive ? rushStepRot : Quaternion.identity;
+
+    public RushSnap TakeRushSnap()
+    {
+        return new RushSnap { origin = rushOrigin, yaw = rushYawTotal, session = RushActive ? rushSession : -1 };
+    }
+
+    /// <summary>Verilen andan bu yana cercevenin kayma ve donusu (boss fazi bittiyse ya da yeni fazsa donusum yok).</summary>
+    public RushMap MapSince(RushSnap s)
+    {
+        if (!RushActive || s.session != rushSession) return RushMap.Identity;
+        return new RushMap { from = s.origin, to = rushOrigin, rot = Quaternion.AngleAxis(rushYawTotal - s.yaw, Vector3.up) };
     }
 
     // Onde kara / ada varsa acik denize bakan en yakin yonu secer (disari donmek oncelikli)
