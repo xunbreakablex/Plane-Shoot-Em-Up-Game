@@ -270,6 +270,10 @@ public partial class BossBrain
         if (wallFrameMesh != null) Destroy(wallFrameMesh);
         if (wallMat != null) Destroy(wallMat);
         if (wallFrameMat != null) Destroy(wallFrameMat);
+        // Ki dalgasi hunisi de bagimsiz bir nesne
+        if (kiWaveTube != null) Destroy(kiWaveTube.gameObject);
+        if (kiWaveTubeMesh != null) Destroy(kiWaveTubeMesh);
+        if (kiWaveTubeMat != null) Destroy(kiWaveTubeMat);
     }
 
     /// <summary>Bomba: yaklasan enerji duvarini dagitir.</summary>

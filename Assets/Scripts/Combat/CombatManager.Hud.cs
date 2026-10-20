@@ -117,11 +117,70 @@ public partial class CombatManager
     private void DrawCurtainGap()
     {
         if (limbBrain == null || limbBrainOf == null || limbBrainOf.IsDead) return;
-        if (limbBrain.CurtainGap(out Vector3 gp)) DrawGapArrow(gp, new Color(0.3f, 1f, 0.45f), 38f);
-        else if (limbBrain.WheelGap(out Vector3 wg)) DrawGapArrow(wg, new Color(1f, 0.45f, 0.85f), 24f);
+        if (limbBrain.CurtainGap(out Vector3 gp)) DrawGapArrow(gp, new Color(0.3f, 1f, 0.45f), 38f, "BOŞLUK", "BOŞLUKTASIN");
+        else if (limbBrain.WheelGap(out Vector3 wg)) DrawGapArrow(wg, new Color(1f, 0.45f, 0.85f), 24f, "BOŞLUK", "BOŞLUKTASIN");
+        else if (limbBrain.KiWaveDanger(out Vector3 kc, out float kr, out float kLeft)) DrawKiWaveExit(kc, kr, kLeft);
     }
 
-    private void DrawGapArrow(Vector3 gp, Color color, float gapRadius)
+    // Ki dalgasi: cember kameranin onundeki duzlemde ekrana sigmaz. Oyuncu icindeyse ekran kenarlari kirmizi yanar (ates
+    // yaklastikca guclenir), en yakin cikisa buyuk kirmizi "KAC" oku ve kalan sure; isin icindekini vurunca ekran parlar.
+    // Disaridaysa yesil onay.
+    private void DrawKiWaveExit(Vector3 center, float radius, float timeLeft)
+    {
+        PlaneController plane = flight != null ? flight.Current : null;
+        if (plane == null || plane.IsCrashed) return;
+        Vector3 pp = plane.transform.position;
+        Vector3 right = Vector3.Cross(Vector3.up, RushHeading).normalized;
+        Vector2 rel = new Vector2(Vector3.Dot(pp - center, right), pp.y - center.y);
+        float dist = rel.magnitude;
+        if (dist >= radius)
+        {
+            Vector3 psp = cam.WorldToScreenPoint(pp);
+            if (psp.z > 0f && timeLeft > -0.9f)
+                Hud.Text(new Rect(Hud.ToHud(psp).x - 80f, Hud.ToHud(psp).y + 40f, 160f, 18f), "DIŞARIDASIN", new Color(0.4f, 1f, 0.55f), 13, TextAnchor.UpperCenter);
+            return;
+        }
+
+        bool firing = limbBrain != null && limbBrain.KiWaveFiring;
+        float urgency = firing ? 1f : Mathf.Clamp01(1f - timeLeft / 2f);
+        float beat = 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * Mathf.Lerp(8f, 24f, urgency));
+        DrawVignette(new Color(1f, 0.12f, 0.08f), (0.25f + 0.37f * urgency) * beat);
+        if (firing) Hud.Fill(new Rect(0f, 0f, Hud.W, Hud.H), new Color(0.75f, 0.95f, 1f, 0.18f * beat));
+
+        // En kisa cikis (kayma alaninin kenarina sikismissa kenar boyunca)
+        if (!limbBrain.KiWaveExit(out Vector3 exit))
+        {
+            Vector2 n = dist > 0.5f ? rel / dist : Vector2.right;
+            exit = center + (right * n.x + Vector3.up * n.y) * (radius + 10f);
+        }
+        string label = timeLeft > 0f ? $"KAÇ!  {timeLeft:0.0}" : "KAÇ!";
+        DrawGapArrow(exit, new Color(1f, 0.3f, 0.25f), 10f, label, null, 1.7f);
+    }
+
+    // Ekran kenarlarinda renkli parilti (ortasi saydam); tehlike bolgesindeyken
+    private static Texture2D vignetteTexture;
+
+    private static void DrawVignette(Color color, float alpha)
+    {
+        if (vignetteTexture == null)
+        {
+            const int size = 64;
+            vignetteTexture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float dx = (x + 0.5f) / size * 2f - 1f, dy = (y + 0.5f) / size * 2f - 1f;
+                float r = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) * 0.55f + new Vector2(dx, dy).magnitude * 0.45f;
+                vignetteTexture.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.62f, 1.02f, r))));
+            }
+            vignetteTexture.Apply();
+        }
+        GUI.color = new Color(color.r, color.g, color.b, Mathf.Clamp01(alpha));
+        GUI.DrawTexture(new Rect(0f, 0f, Hud.W, Hud.H), vignetteTexture);
+        GUI.color = Color.white;
+    }
+
+    private void DrawGapArrow(Vector3 gp, Color color, float gapRadius, string label, string insideLabel, float scale = 1f)
     {
         PlaneController plane = flight != null ? flight.Current : null;
         if (plane == null || plane.IsCrashed) return;
@@ -137,10 +196,10 @@ public partial class CombatManager
         // Boslugun oyuncuya gore yeri (cercevenin sag ve yukari eksenlerinde)
         Vector3 right = Vector3.Cross(Vector3.up, RushHeading).normalized;
         float dx = Vector3.Dot(gp - pp, right), dy = gp.y - pp.y;
-        if (Mathf.Abs(dx) < 26f && Mathf.Abs(dy) < 26f)
+        if (insideLabel != null && Mathf.Abs(dx) < 26f && Mathf.Abs(dy) < 26f)
         {
             Hud.Ring(ph, 40f, green);
-            Hud.Text(new Rect(ph.x - 70f, ph.y + 44f, 140f, 18f), "BOŞLUKTASIN", green, 13, TextAnchor.UpperCenter);
+            Hud.Text(new Rect(ph.x - 70f, ph.y + 44f, 140f, 18f), insideLabel, green, 13, TextAnchor.UpperCenter);
             return;
         }
 
@@ -149,17 +208,19 @@ public partial class CombatManager
         float len = Mathf.Clamp(new Vector2(dx, dy).magnitude * 1.1f, 50f, 170f);
         float angle = Mathf.Atan2(n.x, -n.y) * Mathf.Rad2Deg;
         Vector2 start = ph + n * 34f;
+        float shaft = 5f * scale, head = 28f * scale;
         Hud.RotateAround(angle, start);
-        Hud.Fill(new Rect(start.x - 2.5f, start.y - len, 5f, len), green);
+        Hud.Fill(new Rect(start.x - shaft * 0.5f, start.y - len, shaft, len), green);
         Hud.ClearRotation();
 
         Vector2 tip = start + n * len;
         Hud.RotateAround(angle, tip);
         GUI.color = green;
-        GUI.DrawTexture(new Rect(tip.x - 14f, tip.y - 14f, 28f, 28f), arrowTexture);
+        GUI.DrawTexture(new Rect(tip.x - head * 0.5f, tip.y - head * 0.5f, head, head), arrowTexture);
         GUI.color = Color.white;
         Hud.ClearRotation();
-        Hud.Text(new Rect(tip.x - 60f, tip.y + (n.y > 0f ? 14f : -32f), 120f, 18f), "BOŞLUK", green, 13, TextAnchor.UpperCenter);
+        int fontSize = Mathf.RoundToInt(13f * Mathf.Lerp(1f, scale, 0.6f));
+        Hud.Text(new Rect(tip.x - 80f, tip.y + (n.y > 0f ? head * 0.5f : -head * 0.5f - fontSize - 6f), 160f, fontSize + 6f), label, green, fontSize, TextAnchor.UpperCenter);
 
         // Bosluk ekrandaysa orada da halka (boyutu boslugun gercek genisligi kadar)
         Vector3 sp = cam.WorldToScreenPoint(gp);

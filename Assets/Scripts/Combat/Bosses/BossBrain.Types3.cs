@@ -173,7 +173,9 @@ public partial class BossBrain
                 break;
             }
             case 2:
-                StartBeam(Pick(kiHandR, kiHandL), 1.2f, 1.6f);                        // ki isini
+                // Boss fazinda imza saldiri: oyuncunun duzleminde kirmizi cemberli dev ki dalgasi; disarida ki isini
+                if (mgr.RushActive) StartKiWave(phase >= 2 ? 2 : 1);
+                else StartBeam(Pick(kiHandR, kiHandL), 1.2f, 1.6f);
                 break;
             case 3:
                 StartCharge(0.9f, 195f, 1.7f);                         // atilma
