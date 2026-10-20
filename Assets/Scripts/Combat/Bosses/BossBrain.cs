@@ -232,6 +232,7 @@ public partial class BossBrain : MonoBehaviour
         bool overridden = TickCharge(dt);
         if (!overridden) Move(dt);
 
+        TickShots();
         TickSpray();
         TickBeam(dt);
         TickType(dt);
@@ -253,7 +254,9 @@ public partial class BossBrain : MonoBehaviour
 
     private void Update()
     {
-        if (!ready || enemy == null || enemy.IsDead) return;
+        if (!ready || enemy == null) return;
+        if (enemy.IsDead) { ClearWarns(); return; }
+        DrawWarns();
 
         // Hasar parlamasi
         if (enemy.HitsRemaining != lastHits)
@@ -424,8 +427,91 @@ public partial class BossBrain : MonoBehaviour
         enemy.FireBullet(origin, dir, speed, damage, life);
     }
 
+    // ----------------------------------------------------------- uyari (telegraf)
+
+    // Yelpaze, halka ve sarmal atislari bu kadar gecikir; yonu kirmizi-turuncu bir cizgiyle gosterilir.
+    // Atis yonu uyari basladiginda sabitlenir: oyuncu o an hareket ederek kacabilir.
+    private const float ShotWarning = 0.55f;
+    private const float WarnLength = 260f;
+
+    private struct PendingShot { public float at; public System.Action fire; }
+    private readonly List<PendingShot> pendingShots = new List<PendingShot>();
+
+    private struct WarnLine { public Vector3 origin; public Vector3 dir; public float until; }
+    private readonly List<WarnLine> warns = new List<WarnLine>();
+    private readonly List<LineRenderer> warnPool = new List<LineRenderer>();
+
+    private void Telegraphed(Vector3 origin, Vector3 dir, System.Action fire)
+    {
+        Vector3 d = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.forward;
+        float at = Time.time + ShotWarning;
+        pendingShots.Add(new PendingShot { at = at, fire = fire });
+        warns.Add(new WarnLine { origin = origin, dir = d, until = at });
+        Sfx.PlayAt(Sfx.Lock, origin, 0.5f);
+    }
+
+    private void TickShots()
+    {
+        for (int i = pendingShots.Count - 1; i >= 0; i--)
+        {
+            if (Time.time < pendingShots[i].at) continue;
+            System.Action fire = pendingShots[i].fire;
+            pendingShots.RemoveAt(i);
+            if (enemy != null && !enemy.IsDead && !enemy.IsWreck) fire();
+        }
+    }
+
+    private void DrawWarns()
+    {
+        for (int i = warns.Count - 1; i >= 0; i--)
+            if (Time.time >= warns[i].until) warns.RemoveAt(i);
+
+        int used = 0;
+        for (int i = 0; i < warns.Count; i++)
+        {
+            if (used >= warnPool.Count) warnPool.Add(MakeWarnLine());
+            LineRenderer lr = warnPool[used++];
+            WarnLine w = warns[i];
+            float width = 0.7f * (0.75f + 0.25f * Mathf.Sin(Time.time * 28f));
+            lr.enabled = true;
+            lr.SetPosition(0, w.origin);
+            lr.SetPosition(1, w.origin + w.dir * WarnLength);
+            lr.startWidth = width;
+            lr.endWidth = width;
+        }
+        for (int i = used; i < warnPool.Count; i++) warnPool[i].enabled = false;
+    }
+
+    private LineRenderer MakeWarnLine()
+    {
+        var go = new GameObject("BossWarn");
+        go.transform.SetParent(transform, false);
+        var lr = go.AddComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+        lr.positionCount = 2;
+        lr.numCapVertices = 2;
+        lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        lr.sharedMaterial = new Material(mgr.bossGlow != null ? mgr.bossGlow : mgr.fxMaterial);
+        Color c = new Color(1f, 0.45f, 0.15f);
+        lr.sharedMaterial.color = c;
+        if (lr.sharedMaterial.HasProperty("_BaseColor")) lr.sharedMaterial.SetColor("_BaseColor", c);
+        return lr;
+    }
+
+    private void ClearWarns()
+    {
+        warns.Clear();
+        pendingShots.Clear();
+        foreach (var lr in warnPool) if (lr != null) lr.enabled = false;
+    }
+
     // Yatay yelpaze: merkez mermi tam hedefe
     private void Fan(Vector3 origin, Vector3 dir, int count, float totalDeg, float speed, int damage)
+    {
+        Telegraphed(origin, dir, () => FanNow(origin, dir, count, totalDeg, speed, damage));
+    }
+
+    private void FanNow(Vector3 origin, Vector3 dir, int count, float totalDeg, float speed, int damage)
     {
         float step = count > 1 ? totalDeg / (count - 1) : 0f;
         for (int i = 0; i < count; i++)
@@ -437,6 +523,11 @@ public partial class BossBrain : MonoBehaviour
 
     // Hedefe yonelik konik halka: merkezde bir hedef mermisi + halka katmani
     private void Cone(Vector3 origin, Vector3 dir, int count, float tiltDeg, float speed, int damage, float offsetDeg)
+    {
+        Telegraphed(origin, dir, () => ConeNow(origin, dir, count, tiltDeg, speed, damage, offsetDeg));
+    }
+
+    private void ConeNow(Vector3 origin, Vector3 dir, int count, float tiltDeg, float speed, int damage, float offsetDeg)
     {
         Vector3 up = Mathf.Abs(Vector3.Dot(dir, Vector3.up)) > 0.95f ? Vector3.right : Vector3.up;
         Vector3 u = Vector3.Cross(dir, up).normalized;
@@ -455,6 +546,7 @@ public partial class BossBrain : MonoBehaviour
     // ----------------------------------------------------------- sarmal (spray)
 
     private Transform sprayOrigin;
+    private float sprayStart;
     private float sprayEnd;
     private float sprayNext;
     private float sprayAngle;
@@ -469,8 +561,12 @@ public partial class BossBrain : MonoBehaviour
     private void StartSpray(Transform origin, float duration, int arms, float tiltDeg, float interval, float speed, int damage = 1)
     {
         sprayOrigin = origin;
-        sprayEnd = Time.time + duration;
-        sprayNext = Time.time;
+        sprayStart = Time.time + ShotWarning;
+        sprayEnd = sprayStart + duration;
+        sprayNext = sprayStart;
+        Vector3 aim = player != null ? player.position - origin.position : origin.forward;
+        warns.Add(new WarnLine { origin = origin.position, dir = aim.sqrMagnitude > 0.0001f ? aim.normalized : Vector3.forward, until = sprayStart });
+        Sfx.PlayAt(Sfx.Lock, origin.position, 0.5f);
         sprayArms = Mathf.Max(1, arms);
         sprayTilt = tiltDeg;
         sprayInterval = interval;
@@ -481,7 +577,7 @@ public partial class BossBrain : MonoBehaviour
 
     private void TickSpray()
     {
-        if (!Spraying || sprayOrigin == null) return;
+        if (!Spraying || sprayOrigin == null || Time.time < sprayStart) return;
 
         while (Time.time >= sprayNext)
         {
