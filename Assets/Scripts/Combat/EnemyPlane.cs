@@ -543,7 +543,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         if (dist > 700f) speed *= 1.4f;
         else if (dist < 150f) speed *= 0.9f;
         if (Kind == EnemyKind.Kamikaze && dist < 500f) speed *= 1.25f;   // son atilim
-        speed = Mathf.Max(speed, mgr.PlayerSpeed * (IsBoss ? 0.45f : 0.7f));
+        speed = Mathf.Max(speed, mgr.PlayerSpeed * (IsBoss ? 0.45f : 0.95f));
 
         // Onde tutma (lead) ile takip
         float leadTime = Mathf.Clamp(dist / Mathf.Max(speed, 1f), 0f, 2.5f);

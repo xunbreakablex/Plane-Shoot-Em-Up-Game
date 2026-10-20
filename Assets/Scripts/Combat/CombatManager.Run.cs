@@ -425,10 +425,16 @@ public partial class CombatManager
         var rb = go.GetComponent<Rigidbody>();
         if (rb == null) rb = go.AddComponent<Rigidbody>();
 
+        // Dusman hizi oyuncunun ucagina gore: avci, oyuncunun seyir hizinda ucar (yavaslayan oyuncu onlerine gecmesin)
+        float playerCruise = flight.Current != null ? flight.Current.cruiseSpeed : 80f;
         float cruise;
-        if (strafe) cruise = StrafeSpeed(kind);   // formasyon bozulmasin: ayni hiz
-        else cruise = (model < modelCruise.Length ? modelCruise[model] : 55f) * info.speedMul * Random.Range(0.92f, 1.08f);
+        if (strafe) cruise = Mathf.Max(StrafeSpeed(kind), playerCruise * 0.7f);   // formasyon bozulmasin: ayni hiz
+        else cruise = Mathf.Max(model < modelCruise.Length ? modelCruise[model] : 55f, playerCruise)
+            * info.speedMul * Random.Range(0.92f, 1.08f);
         float turn = (model < modelTurn.Length ? modelTurn[model] : 70f) * info.turnMul;
+        // Hizlanan dusman donus capi buyuyup hedefi kacirmasin: donus hizi da kismen artar
+        float speedUp = playerCruise / Mathf.Max(1f, model < modelCruise.Length ? modelCruise[model] : 55f);
+        if (!strafe) turn *= Mathf.Sqrt(Mathf.Clamp(speedUp, 1f, 2.5f));
 
         var enemy = go.AddComponent<EnemyPlane>();
         enemy.Init(this, HitsFor(kind), cruise, turn, kind,

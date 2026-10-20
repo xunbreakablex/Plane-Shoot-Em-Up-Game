@@ -12,7 +12,7 @@ public class GameSettings : ScriptableObject
     [Tooltip("Düşmana çarpınca alınan hasar = düşman türünün çarpma hasarı (Sürü 1, Avcı 2, Ağır 4, boss 4-6) x bu çarpan")]
     [Min(0f)] public float ramDamageMultiplier = 1f;
     [Tooltip("Açıksa çarpma hasarı kalkanı atlar ve doğrudan gövdeye işler (kalkan çarpmayı bedava yapmasın)")]
-    public bool ramIgnoresShield = true;
+    public bool ramIgnoresShield = false;
     [Tooltip("Çarparak düşürülen düşman puan, kombo ve hurda verir mi")]
     public bool ramKillGivesScore = true;
     [Tooltip("Çarpışma menzili: düşmanın çarpma yarıçapı bu çarpanla küçülür (1 = mermi isabet yarıçapı kadar). Küçük = uçaklar birbirine daha çok yaklaşabilir, uzaktan çarpma olmaz.")]
