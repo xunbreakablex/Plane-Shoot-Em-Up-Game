@@ -89,6 +89,12 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     public float HealthFraction => maxHealth > 0 ? (float)Health / maxHealth : 1f;
     public float ShieldFraction => maxShield > 0f ? Shield / maxShield : 1f;
 
+    /// <summary>Kalkana verilen miktar kadar ekler (tavan: maxShield).</summary>
+    public void AddShield(float amount)
+    {
+        Shield = Mathf.Min(maxShield, Shield + Mathf.Max(0f, amount));
+    }
+
     public void RechargeShield()
     {
         Shield = maxShield;

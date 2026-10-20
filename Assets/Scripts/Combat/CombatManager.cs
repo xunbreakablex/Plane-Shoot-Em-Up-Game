@@ -322,6 +322,20 @@ public partial class CombatManager : MonoBehaviour
         }
         RunState.AddScore(points);
 
+        // Vur ve koru: kalkan kirikken indirilen dusman kalkanin bir kismini geri verir (asama basina 4, 1,5 sn aralik)
+        PlayerHealth shieldPh = CurrentPlayerHealth;
+        if (shieldPh != null && shieldPh.maxShield > 0f && !shieldPh.ShieldUp && Time.time - lastShieldRefill > 1.5f)
+        {
+            if (shieldRefillStage != RunState.Stage) { shieldRefillStage = RunState.Stage; shieldRefills = 0; }
+            if (shieldRefills < 4)
+            {
+                shieldRefills++;
+                lastShieldRefill = Time.time;
+                shieldPh.AddShield(shieldPh.maxShield * 0.3f);
+                Announce("+KALKAN", new Color(0.4f, 0.8f, 1f), 1.2f);
+            }
+        }
+
         // Son dalis: yarali ucagi dalisinda dusurmek ekstra odul
         if (enemy.IsDiving)
         {
@@ -419,6 +433,9 @@ public partial class CombatManager : MonoBehaviour
         scatter.y = Mathf.Abs(scatter.y) * 0.3f;
         PowerUp.Spawn(powerUpPrefab, pos, kind, scatter);
     }
+
+    private int shieldRefills, shieldRefillStage = -1;
+    private float lastShieldRefill = -10f;
 
     // 15 vurustan sonra odul yavaslar: sert hedef sonsuz hurda vermesin, ama tek vurusla da kazandirmasin
     private static int SoftHits(int hits)

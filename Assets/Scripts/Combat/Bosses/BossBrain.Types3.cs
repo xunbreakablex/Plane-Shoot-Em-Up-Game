@@ -21,14 +21,22 @@ public partial class BossBrain
     private void RainFromAbove(int count, float speed, float spread)
     {
         Vector3 right = Vector3.Cross(Vector3.up, anchorFwd);
-        Vector3 tgt = player.position + mgr.PlayerVelocity * 1.1f;
-        for (int i = 0; i < count; i++)
+        Vector3 fwdAnchor = anchorFwd;
+        Vector3 tgt = player.position + mgr.PlayerVelocity * 1.1f;   // hedef uyari basinda sabitlenir
+
+        // Uyari: hedef bolgeyi gosteren uc dikey cizgi (orta + iki yan), sonra yagmur
+        Telegraphed(tgt + Vector3.up * WarnLength, Vector3.down, () =>
         {
-            Vector3 origin = tgt + anchorFwd * Random.Range(120f, 320f) + Vector3.up * Random.Range(200f, 320f)
-                             + right * Random.Range(-spread, spread);
-            Vector3 aim = tgt + right * Random.Range(-45f, 45f) + Vector3.up * Random.Range(-20f, 20f);
-            Shoot(origin, (aim - origin).normalized, speed, 1, 7f);
-        }
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 origin = tgt + fwdAnchor * Random.Range(120f, 320f) + Vector3.up * Random.Range(200f, 320f)
+                                 + right * Random.Range(-spread, spread);
+                Vector3 aim = tgt + right * Random.Range(-45f, 45f) + Vector3.up * Random.Range(-20f, 20f);
+                Shoot(origin, (aim - origin).normalized, speed, 1, 7f);
+            }
+        });
+        for (int s = -1; s <= 1; s += 2)
+            warns.Add(new WarnLine { origin = tgt + right * (45f * s) + Vector3.up * WarnLength, dir = Vector3.down, until = Time.time + ShotWarning });
     }
 
     // ================================================================== IBLIS
