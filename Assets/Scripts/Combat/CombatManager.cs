@@ -323,7 +323,9 @@ public partial class CombatManager : MonoBehaviour
         RunState.AddScore(points);
 
         // Hurda odulu: dusman cani x seri carpani x upgrade carpani (bossta sinirli)
-        int reward = RunUpgrades.ComputeReward(Mathf.Min(enemy.MaxHits, 15), Streak);
+        // Bossta hurda sinirli kalsin; diger sert hedefler (agir, as, kara birimi) 15 vurustan sonra azalarak artar
+        int rewardHits = enemy.IsBoss ? Mathf.Min(enemy.MaxHits, 15) : SoftHits(enemy.MaxHits);
+        int reward = RunUpgrades.ComputeReward(rewardHits, Streak);
         RunUpgrades.AddScrap(reward);
 
         // Guclendirme: isaretli dusman birakir; boss bomba + onarim birakir
@@ -410,6 +412,12 @@ public partial class CombatManager : MonoBehaviour
         PowerUp.Spawn(powerUpPrefab, pos, kind, scatter);
     }
 
+    // 15 vurustan sonra odul yavaslar: sert hedef sonsuz hurda vermesin, ama tek vurusla da kazandirmasin
+    private static int SoftHits(int hits)
+    {
+        return hits <= 15 ? hits : 15 + Mathf.RoundToInt(2f * Mathf.Sqrt(hits - 15));
+    }
+
     /// <summary>PowerUp, oyuncu ucagina deydiginde cagirir.</summary>
     public void OnPickup(PowerUp p)
     {
@@ -476,8 +484,10 @@ public partial class CombatManager : MonoBehaviour
 
         if (uiAudio != null)
         {
+            // Buyuk guclendirmeler fanfarla, siradan toplamalar kisa tikla
+            bool big = p.Kind == PickupKind.Power || p.Kind == PickupKind.Overdrive || p.Kind == PickupKind.Wingman;
             uiAudio.pitch = 1f;
-            uiAudio.PlayOneShot(Sfx.LevelUp, 0.5f);
+            uiAudio.PlayOneShot(big ? Sfx.LevelUp : Sfx.Pickup, 0.5f);
         }
     }
 

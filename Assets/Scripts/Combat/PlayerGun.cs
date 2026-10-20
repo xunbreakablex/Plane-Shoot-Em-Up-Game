@@ -67,6 +67,28 @@ public partial class PlayerGun : MonoBehaviour
         return dps;
     }
 
+    /// <summary>
+    /// Donanimin temel DPS'i: guc seviyesi ve yukseltmeler dahil degil. Dusman canini bununla belirlenince
+    /// guclenen oyuncu dusmani daha hizli dusurur; yukseltme dusmani tanklastirmaz.
+    /// </summary>
+    public static float ReferenceDps(PlaneLoadout loadout)
+    {
+        float dps = 0f;
+        foreach (int w in loadout.weapons)
+        {
+            if (w <= 0) continue;
+            PartDef d = PartCatalog.Weapons[w];
+            dps += d.rate * (d.beam > 0 ? d.damage : d.ShotDamage);
+        }
+        foreach (int t in loadout.turrets)
+        {
+            if (t <= 0) continue;
+            PartDef d = PartCatalog.Turrets[t];
+            dps += d.rate * d.damage;
+        }
+        return dps;
+    }
+
     // Model basina: rampa mühimmatı, yenilenme zamanı, takili parca (degisince doldurulur)
     private readonly int[][] missileAmmo = new int[LoadoutStore.ModelCount][];
     private readonly float[][] missileRefill = new float[LoadoutStore.ModelCount][];

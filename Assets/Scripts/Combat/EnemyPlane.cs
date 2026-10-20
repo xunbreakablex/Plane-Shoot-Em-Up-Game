@@ -198,6 +198,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private bool canPeel = true;
 
     private const float MinClearance = 90f;
+    private const float AimWindup = 0.5f;   // dogfight serisinin ilk mermisinden once uyari suresi (kilit sesi + '!')
 
     // Carpma (ram) menzili: mermi isabet yaricapindan (HitRadius) kucuk tutulur; kalkan/carpma "uzaktan" olmasin
     private float RamRange
@@ -663,6 +664,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
             {
                 burstLeft = burstSize;
                 nextBurstTime = Time.time + Random.Range(burstCdMin, burstCdMax);
+                nextShotTime = Time.time + AimWindup;   // ilk mermi bir an sonra: oyuncu tepki verebilsin
                 mgr.OnEnemyTargeting(this, dist);   // "nisan aldi" uyarisi
             }
 

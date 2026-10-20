@@ -460,14 +460,25 @@ public partial class CombatManager
         }
     }
 
+    // Dusman en az bu kadar sure, oyuncunun o anki ates gucunun yarisi isabet ederse duser (buharlasmayi onler)
+    private const float MinKillSeconds = 0.5f;
+
     private int HitsFor(EnemyKind kind)
     {
-        float dps = 12f;
-        if (flight != null) dps = Mathf.Max(8f, PlayerGun.TheoreticalDps(LoadoutStore.Get(flight.CurrentIndex)));
+        // Can, uc donanimin temel DPS'inden: guc seviyesi ve yukseltmeler dusmani tanklastirmaz,
+        // yalniz oldurme suresini kisaltir
+        float baseDps = 12f, curDps = 12f;
+        if (flight != null)
+        {
+            PlaneLoadout loadout = LoadoutStore.Get(flight.CurrentIndex);
+            baseDps = Mathf.Max(8f, PlayerGun.ReferenceDps(loadout));
+            curDps = Mathf.Max(8f, PlayerGun.TheoreticalDps(loadout));
+        }
         // Asama ilerledikce %12 daha dayanikli
         float grow = 1f + 0.12f * RunState.Stage;
-        float hits = dps * 0.5f * TimeToKill(kind) * grow * Difficulty.HitsMul;
-        return Mathf.Max(kind == EnemyKind.Kamikaze ? 2 : 4, Mathf.RoundToInt(hits));
+        float hits = baseDps * 0.5f * TimeToKill(kind) * grow * Difficulty.HitsMul;
+        float floorHits = curDps * 0.5f * MinKillSeconds;
+        return Mathf.Max(kind == EnemyKind.Kamikaze ? 2 : 4, Mathf.RoundToInt(Mathf.Max(hits, floorHits)));
     }
 
     public static void Tint(GameObject go, Color tint, bool carrier)
