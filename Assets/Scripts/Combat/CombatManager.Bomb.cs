@@ -40,8 +40,13 @@ public partial class CombatManager
         FollowCamera.AddShake(1.1f, 0.7f);
         Vector3 center = plane.transform.position;
 
-        // Mermi yagmuru temizlenir; herkes agir hasar alir (boss daha fazla)
+        // Mermi yagmuru (ve bossun enerji duvari) temizlenir; herkes agir hasar alir (boss daha fazla)
         Bullet.ClearEnemyBullets();
+        if (ActiveBoss != null)
+        {
+            BossBrain brain = ActiveBoss.GetComponent<BossBrain>();
+            if (brain != null) brain.OnBomb();
+        }
         var snapshot = new List<EnemyPlane>(enemies);
         foreach (var e in snapshot)
         {

@@ -110,12 +110,18 @@ public partial class CombatManager
         }
     }
 
-    // Perde saldirisi: duvardaki bosluk. Bosluk oyuncunun hizasinda ve cogu zaman ekranin disinda kalir (kamera ucagin
-    // hemen arkasinda): ucaktan bosluga yesil ok cizilir; oyuncu bosluktaysa ucagin cevresinde yesil halka.
+    // Perde saldirisi: duvardaki bosluk; yildiz carki: kollar arasindaki (carkla donen) bosluk. Bosluk oyuncunun
+    // hizasinda ve cogu zaman ekranin disinda kalir (kamera ucagin hemen arkasinda): ucaktan bosluga ok cizilir
+    // (perdede yesil, carkta pembe); oyuncu bosluktaysa ucagin cevresinde halka.
     private void DrawCurtainGap()
     {
         if (limbBrain == null || limbBrainOf == null || limbBrainOf.IsDead) return;
-        if (!limbBrain.CurtainGap(out Vector3 gp)) return;
+        if (limbBrain.CurtainGap(out Vector3 gp)) DrawGapArrow(gp, new Color(0.3f, 1f, 0.45f), 38f);
+        else if (limbBrain.WheelGap(out Vector3 wg)) DrawGapArrow(wg, new Color(1f, 0.45f, 0.85f), 24f);
+    }
+
+    private void DrawGapArrow(Vector3 gp, Color color, float gapRadius)
+    {
         PlaneController plane = flight != null ? flight.Current : null;
         if (plane == null || plane.IsCrashed) return;
 
@@ -125,7 +131,7 @@ public partial class CombatManager
         Vector2 ph = Hud.ToHud(psp);
 
         float pulse = 0.65f + 0.35f * Mathf.Sin(Time.unscaledTime * 14f);
-        Color green = new Color(0.3f, 1f, 0.45f, pulse);
+        Color green = new Color(color.r, color.g, color.b, pulse);
 
         // Boslugun oyuncuya gore yeri (cercevenin sag ve yukari eksenlerinde)
         Vector3 right = Vector3.Cross(Vector3.up, RushHeading).normalized;
@@ -162,7 +168,7 @@ public partial class CombatManager
             if (h.x > 0f && h.x < Hud.W && h.y > 0f && h.y < Hud.H)
             {
                 float fovTan = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
-                Hud.Ring(h, Mathf.Clamp(38f / (sp.z * fovTan) * (Hud.H * 0.5f), 18f, 220f), green);
+                Hud.Ring(h, Mathf.Clamp(gapRadius / (sp.z * fovTan) * (Hud.H * 0.5f), 18f, 220f), green);
             }
         }
     }

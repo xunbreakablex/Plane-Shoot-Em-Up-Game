@@ -164,6 +164,22 @@ public partial class CombatManager : MonoBehaviour
         UpdateBombRings();
 
         texts.RemoveAll(t => Time.time - t.born > 2.2f);
+        // Boss fazinda yuzen yazilar cerceveyle ilerler: yoksa kamera ~100 m/sn ile onlari geride birakip gizliyordu
+        if (RushActive)
+        {
+            for (int i = 0; i < texts.Count; i++)
+            {
+                FloatingText t = texts[i];
+                t.position += FrameVelocityAt(t.position) * Time.deltaTime;
+                texts[i] = t;
+            }
+        }
+    }
+
+    /// <summary>Dunyada bir noktadan yukari suzulen kisa yazi (boss saldirisi geri bildirimi vb.).</summary>
+    public void FloatText(Vector3 position, string text, Color color, float scale = 0.7f)
+    {
+        texts.Add(new FloatingText { position = position, text = text, born = Time.time, color = color, scale = scale });
     }
 
     private float nextBeep;

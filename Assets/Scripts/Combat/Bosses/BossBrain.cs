@@ -250,10 +250,11 @@ public partial class BossBrain : MonoBehaviour
 
         TickShots();
         TickSpray();
+        TickWheel();
         TickBeam(dt);
         TickType(dt);
 
-        if (playerAlive && !overridden && !beamActive && Time.time >= nextAttack)
+        if (playerAlive && !overridden && !beamActive && !WheelBusy && Time.time >= nextAttack)
         {
             // Boss fazinda her CurtainEvery saldiridan biri perde (bosluklu mermi duvari)
             if (CurtainTurn) Curtain();
@@ -278,6 +279,7 @@ public partial class BossBrain : MonoBehaviour
     {
         if (!ready || enemy == null) return;
         if (enemy.IsDead) { ClearWarns(); return; }
+        TickWall();
         DrawWarns();
 
         // Hasar parlamasi
@@ -507,6 +509,8 @@ public partial class BossBrain : MonoBehaviour
         warns.Clear();
         pendingShots.Clear();
         curtainGapUntil = 0f;
+        wheelEnd = 0f;
+        HideWall();
         if (gapLine != null) gapLine.enabled = false;
         foreach (var lr in warnPool) if (lr != null) lr.enabled = false;
     }
@@ -810,7 +814,6 @@ public partial class BossBrain : MonoBehaviour
         chargeDir = mgr.RushMapDir(chargeDir);
         beamDir = mgr.RushMapDir(beamDir);
         crabSweepBase = mgr.RushMapDir(crabSweepBase);
-        curtainGap = mgr.RushMapPoint(curtainGap);
         for (int i = 0; i < warns.Count; i++)
         {
             WarnLine w = warns[i];

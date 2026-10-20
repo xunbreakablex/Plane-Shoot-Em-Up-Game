@@ -225,7 +225,9 @@ public partial class BossBrain
                 Cone(m, AimFrom(m, 180f, 3f), 14, 9f, 180f, 1, Random.value * 90f);               // yildiz halkasi
                 break;
             case 1:
-                StartSpray(wand, 3.0f, 4 + phase, 16f, 0.1f, 160f);                          // kalp/yildiz sarmali
+                // Boss fazinda imza saldiri: alani tarayan donen yildiz carki (sarmal orada ici bos kaliyordu)
+                if (mgr.RushActive) StartWheel(wand, phase >= 2 ? 4 : 3, 34f + 8f * phase, 3.2f + 0.4f * phase);
+                else StartSpray(wand, 3.0f, 4 + phase, 16f, 0.1f, 160f);                     // kalp/yildiz sarmali
                 break;
             case 2:
                 StartBeam(wand, 1.2f, 1.6f);                                                // gokkusagi isini

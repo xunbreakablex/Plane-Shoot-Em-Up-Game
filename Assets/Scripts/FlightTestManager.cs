@@ -221,14 +221,14 @@ public class FlightTestManager : MonoBehaviour
         "BOSS SAVAŞI  •  W / S kapalı, boss hep önünde",
         "A / D  sağa-sola kay        SHIFT / CTRL  yukarı-aşağı kay",
         "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     F  füze     B  bomba",
-        "Yeşil ok: mermi duvarındaki BOŞLUK, oraya kay",
+        "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
     private static readonly string[] rushHelpPad =
     {
         "BOSS SAVAŞI  •  boss hep önünde",
         "SOL ÇUBUK  hareket        SAĞ ÇUBUK  nişan (±45°)",
         "SAĞ TETİK  ateş     X  bomba     (klavye: A/D, SHIFT/CTRL, fare)",
-        "Yeşil ok: mermi duvarındaki BOŞLUK, oraya kay",
+        "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
 
     private void DrawHelp(PlaneController p)

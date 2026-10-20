@@ -89,6 +89,9 @@ public class Bullet : MonoBehaviour
     public float lifetime = 2.8f;
     public float radius = 1.0f;
 
+    /// <summary>Dusman mermisi gorunumu: 0 = yaricapa gore (normal / buyuk turuncu), 1 = pembe yildiz (yildiz carki).</summary>
+    public int look;
+
     private Vector3 velocity;
     private int damage = 1;
     private Transform owner;
@@ -189,6 +192,7 @@ public class Bullet : MonoBehaviour
         b.age = 0f;
         b.lifetime = b.defaultLifetime > 0f ? b.defaultLifetime : b.lifetime;
         b.radius = b.defaultRadius > 0f ? b.defaultRadius : b.radius;
+        b.look = 0;
         b.easing = false;
         b.flakBurst = false;
 
