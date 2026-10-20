@@ -859,6 +859,24 @@ public partial class CombatManager
         float killAge = Time.unscaledTime - killMarkerTime;
         if (killAge < 0.3f) DrawHitMarker(p, 1f - killAge / 0.3f, new Color(1f, 0.25f, 0.2f), 14f, 11f);
         else if (hitAge < 0.14f) DrawHitMarker(p, 1f - hitAge / 0.14f, Color.white, 9f, 7f);
+
+        DrawHeat(p);
+    }
+
+    // Silah isisi: nisangahin altinda; 1'e ulasinca kilitlenir, beyaz isaret ateşe donus esigi
+    private void DrawHeat(Vector2 p)
+    {
+        if (gun.Heat < 0.02f && !gun.Overheated) return;
+
+        const float w = 96f;
+        var r = new Rect(p.x - w * 0.5f, p.y + 28f, w, 6f);
+        Color c = gun.Overheated
+            ? Color.Lerp(new Color(1f, 0.15f, 0.1f), new Color(1f, 0.6f, 0.2f), Mathf.PingPong(Time.unscaledTime * 5f, 1f))
+            : Color.Lerp(new Color(0.4f, 0.9f, 0.4f), new Color(1f, 0.3f, 0.15f), Mathf.Clamp01((gun.Heat - 0.3f) / 0.7f));
+        Hud.Bar(r, gun.Heat, c);
+        Hud.Fill(new Rect(r.x + w * PlayerGun.ReleaseHeat - 1f, r.y - 2f, 2f, r.height + 4f), new Color(1f, 1f, 1f, 0.7f));
+        if (gun.Overheated)
+            Hud.Text(new Rect(p.x - 90f, r.yMax + 3f, 180f, 16f), "AŞIRI ISINDI", new Color(1f, 0.35f, 0.25f), 12, TextAnchor.UpperCenter);
     }
 
     private static void DrawHitMarker(Vector2 p, float k, Color c, float gap, float len)

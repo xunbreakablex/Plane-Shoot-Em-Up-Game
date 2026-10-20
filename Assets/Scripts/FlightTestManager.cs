@@ -110,7 +110,6 @@ public class FlightTestManager : MonoBehaviour
 
         Hud.Begin();
         DrawFlightPanel(p);
-        DrawHorizon(p);
         DrawWarnings(p);
         DrawHelp(p);
         Hud.End();

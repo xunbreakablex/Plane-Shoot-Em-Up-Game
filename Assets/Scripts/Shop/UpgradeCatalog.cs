@@ -5,7 +5,7 @@ public enum UpgradeCategory { Weapon, Defense, Ordnance, Flight }
 public enum UpgradeId
 {
     // Silah
-    Crit, FireRate, BulletSpeed, Pierce,
+    Crit, FireRate, BulletSpeed, Pierce, HeatCap, CoolRate, CoolRelease,
     // Kalkan / govde
     ShieldCap, ShieldRegen, ShieldDelay, Armor, Dodge,
     // Fuze / taret
@@ -50,6 +50,10 @@ public static class UpgradeCatalog
         Add(a, UpgradeId.FireRate, "Atış Hızı", "Tüm silahlar %10 daha hızlı ateş eder.", UpgradeCategory.Weapon, 5, 35);
         Add(a, UpgradeId.BulletSpeed, "Mermi Hızı", "Mermiler %8 daha hızlı uçar (uzak hedeflerde isabet).", UpgradeCategory.Weapon, 3, 30);
         Add(a, UpgradeId.Pierce, "Delici Mermi", "Mermi düşmanı delip arkadaki +1 hedefe de geçer.", UpgradeCategory.Weapon, 2, 80);
+
+        Add(a, UpgradeId.HeatCap, "Isı Dayanımı", "Silahlar %12 daha yavaş ısınır.", UpgradeCategory.Weapon, 5, 35);
+        Add(a, UpgradeId.CoolRate, "Soğutucu", "Silahlar %25 daha hızlı soğur.", UpgradeCategory.Weapon, 5, 35);
+        Add(a, UpgradeId.CoolRelease, "Hızlı Devreye Alma", "Aşırı ısınmadan sonra silah %10 daha sıcakken tekrar ateşe başlar (taban %30).", UpgradeCategory.Weapon, 3, 60);
 
         Add(a, UpgradeId.ShieldCap, "Kalkan Kapasitesi", "+3 kalkan (jeneratör olmasa da çalışır).", UpgradeCategory.Defense, 5, 40);
         Add(a, UpgradeId.ShieldRegen, "Kalkan Yenilenme Hızı", "Kalkan %25 daha hızlı yenilenir.", UpgradeCategory.Defense, 5, 35);

@@ -26,6 +26,36 @@ public partial class PlayerGun : MonoBehaviour
     public EnemyPlane MissileTarget { get; private set; }
     public Vector3 AimPoint { get; private set; }
     public bool IsFiring { get; private set; }
+
+    // Silah isisi: atesle yukselir, birakinca soyur; 1'e ulasirsa silahlar kilitlenir ve esige kadar sogumasi beklenir
+    public float Heat { get; private set; }
+    public bool Overheated { get; private set; }
+    private const float HeatPerSecond = 0.14f;
+    private const float CoolPerSecond = 0.22f;
+    private const float BaseReleaseHeat = 0.30f;
+    public static float ReleaseHeat => Mathf.Min(0.8f, BaseReleaseHeat + RunUpgrades.Mods.coolReleaseAdd);
+
+    private void TickHeat(bool firing)
+    {
+        UpgradeMods m = RunUpgrades.Mods;
+        float dt = Time.deltaTime;
+        if (firing)
+        {
+            Heat += HeatPerSecond * m.heatMul * dt;
+            if (Heat >= 1f)
+            {
+                Heat = 1f;
+                Overheated = true;
+                audioSource.PlayOneShot(Sfx.Warning, 0.6f);
+                FollowCamera.AddShake(0.25f, 0.25f);
+            }
+        }
+        else
+        {
+            Heat = Mathf.Max(0f, Heat - CoolPerSecond * m.coolMul * dt);
+        }
+        if (Overheated && Heat <= ReleaseHeat) Overheated = false;
+    }
     public bool HasWeapons { get; private set; }
     public bool HasMissiles { get; private set; }
     public string MissileStatus { get; private set; } = "";
@@ -135,7 +165,8 @@ public partial class PlayerGun : MonoBehaviour
         bool trigger = (Mouse.current != null && Mouse.current.leftButton.isPressed)
                        || (Keyboard.current != null && Keyboard.current.spaceKey.isPressed)
                        || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > 0.35f);
-        IsFiring = trigger && !plane.IsCrashed && HasWeapons;
+        IsFiring = trigger && !plane.IsCrashed && HasWeapons && !Overheated;
+        TickHeat(IsFiring);
 
         if (IsFiring) FireWeapons(plane, loadout);
         else StopBeams();

@@ -6,6 +6,9 @@ public struct UpgradeMods
 {
     public float critChance;
     public float fireRateMul;
+    public float heatMul;              // silah isinma hizi carpani (kucuk = daha yavas isinir)
+    public float coolMul;              // soguma hizi carpani
+    public float coolReleaseAdd;       // asiri isinmadan sonra ateşe donus esigine eklenen (0-1)
     public float bulletSpeedMul;
     public int pierce;
 
@@ -51,7 +54,7 @@ public static class RunUpgrades
     {
         return new UpgradeMods
         {
-            fireRateMul = 1f, bulletSpeedMul = 1f, shieldRegenMul = 1f,
+            fireRateMul = 1f, heatMul = 1f, coolMul = 1f, bulletSpeedMul = 1f, shieldRegenMul = 1f,
             missileReloadMul = 1f, missileTurnMul = 1f, blastMul = 1f,
             turretRateMul = 1f, turretRangeMul = 1f, thrustMul = 1f, rollMul = 1f, scrapMul = 1f,
             magnetMul = 1f
@@ -184,6 +187,9 @@ public static class RunUpgrades
         m.critChance = 0.08f * Level(UpgradeId.Crit);
         m.fireRateMul = 1f + 0.10f * Level(UpgradeId.FireRate);
         m.bulletSpeedMul = 1f + 0.08f * Level(UpgradeId.BulletSpeed);
+        m.heatMul = Mathf.Max(0.4f, 1f - 0.12f * Level(UpgradeId.HeatCap));
+        m.coolMul = 1f + 0.25f * Level(UpgradeId.CoolRate);
+        m.coolReleaseAdd = 0.10f * Level(UpgradeId.CoolRelease);
         m.pierce = Level(UpgradeId.Pierce);
 
         m.shieldAdd = 3f * Level(UpgradeId.ShieldCap);
