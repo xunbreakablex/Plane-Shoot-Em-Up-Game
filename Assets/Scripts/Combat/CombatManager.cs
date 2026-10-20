@@ -322,6 +322,14 @@ public partial class CombatManager : MonoBehaviour
         }
         RunState.AddScore(points);
 
+        // Son dalis: yarali ucagi dalisinda dusurmek ekstra odul
+        if (enemy.IsDiving)
+        {
+            RunState.AddScore(300);
+            RunUpgrades.AddScrap(30);
+            Announce("SON DALIŞ BOZULDU  +300", new Color(1f, 0.6f, 0.3f), 1.8f);
+        }
+
         // Hurda odulu: dusman cani x seri carpani x upgrade carpani (bossta sinirli)
         // Bossta hurda sinirli kalsin; diger sert hedefler (agir, as, kara birimi) 15 vurustan sonra azalarak artar
         int rewardHits = enemy.IsBoss ? Mathf.Min(enemy.MaxHits, 15) : SoftHits(enemy.MaxHits);

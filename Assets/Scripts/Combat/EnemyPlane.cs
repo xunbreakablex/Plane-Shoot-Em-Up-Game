@@ -185,6 +185,14 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private Vector3 breakDir;
     private float nextRamTime;
 
+    // Son dalis: toplam canin %30'unun altina inen yarali ucak once niyetini gosterir (kirmizi cizgi), sonra oyuncuya dalar
+    private const float DiveTelegraph = 1.0f;
+    private bool diveTriggered;
+    private float diveAt;
+    private LineRenderer diveLine;
+    /// <summary>Dalisa baslamis ucak. Vurularak dusurulurse ekstra odul verir; carpip olmesi vermez.</summary>
+    public bool IsDiving { get; private set; }
+
     // Ates duzeni (turden gelir)
     private Pattern pattern = Pattern.Aimed;
     private int burstSize = 6;
@@ -539,11 +547,22 @@ public class EnemyPlane : MonoBehaviour, IDamageable
             return;
         }
 
+        // Son dalis: yarali ucak (toplam canin %30'unun altinda) niyetini gosterir, sonra oyuncuya dalar
+        if (!diveTriggered && !IsBoss && HitsRemaining * 10 <= MaxHits * 3 && dist < 900f && dist > 220f)
+        {
+            diveTriggered = true;
+            diveAt = Time.time + DiveTelegraph;
+            Sfx.PlayAt(Sfx.Warning, pos, 0.5f);
+        }
+        if (diveTriggered && !IsDiving && Time.time >= diveAt) IsDiving = true;
+        UpdateDiveLine(pos, target.position, diveTriggered && !IsDiving);
+
         // Hiz: uzaktaysa yetis, yakindaysa biraz yavasla
         float speed = cruiseSpeed;
         if (dist > 700f) speed *= 1.4f;
         else if (dist < 150f) speed *= 0.9f;
         if (Kind == EnemyKind.Kamikaze && dist < 500f) speed *= 1.25f;   // son atilim
+        if (IsDiving) speed *= 1.35f;
         speed = Mathf.Max(speed, mgr.PlayerSpeed * (IsBoss ? 0.45f : 0.95f));
 
         // Onde tutma (lead) ile takip
@@ -552,7 +571,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         Vector3 desired = (aim - pos).normalized;
 
         // Yalpalama: nisan almayi zorlastirir
-        if (dist > 250f && !IsBoss)
+        if (dist > 250f && !IsBoss && !IsDiving)
         {
             float weave = Mathf.Sin(Time.time * weaveRate + weavePhase) * 10f;
             desired = Quaternion.AngleAxis(weave, Vector3.up) * desired;
@@ -573,7 +592,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         {
             desired = breakDir;
         }
-        else if (canPeel && dist < peelDist && Vector3.Dot(fwd, toPlayer / Mathf.Max(dist, 0.1f)) > 0.4f)
+        else if (canPeel && !IsDiving && dist < peelDist && Vector3.Dot(fwd, toPlayer / Mathf.Max(dist, 0.1f)) > 0.4f)
         {
             float side = Random.value < 0.5f ? -1f : 1f;
             breakDir = (fwd * 0.5f + Vector3.up * 0.55f + Vector3.Cross(Vector3.up, fwd).normalized * side * 0.9f).normalized;
@@ -598,7 +617,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         flat = flat.normalized * Mathf.Sqrt(1f - desired.y * desired.y);
         desired = new Vector3(flat.x, desired.y, flat.z).normalized;
 
-        Vector3 newFwd = Vector3.RotateTowards(fwd, desired, turnRate * Mathf.Deg2Rad * dt, 0f);
+        Vector3 newFwd = Vector3.RotateTowards(fwd, desired, turnRate * (IsDiving ? 1.4f : 1f) * Mathf.Deg2Rad * dt, 0f);
 
         // Gorsel yatis: donuse gore
         float yawRate = Vector3.SignedAngle(fwd, newFwd, Vector3.up) / dt;
@@ -631,9 +650,38 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         TryShoot(newPos, newRot, newFwd, target, dist);
     }
 
+    private void UpdateDiveLine(Vector3 pos, Vector3 targetPos, bool on)
+    {
+        if (!on) { if (diveLine != null) diveLine.enabled = false; return; }
+        Vector3 to = targetPos - pos;
+        if (to.sqrMagnitude < 1e-4f) return;
+        if (diveLine == null) MakeDiveLine();
+        diveLine.enabled = true;
+        diveLine.SetPosition(0, pos);
+        diveLine.SetPosition(1, pos + to.normalized * Mathf.Min(to.magnitude, 500f));
+    }
+
+    private void MakeDiveLine()
+    {
+        var go = new GameObject("DiveWarn");
+        go.transform.SetParent(transform, false);
+        diveLine = go.AddComponent<LineRenderer>();
+        diveLine.useWorldSpace = true;
+        diveLine.positionCount = 2;
+        diveLine.startWidth = 0.6f;
+        diveLine.endWidth = 0.6f;
+        diveLine.numCapVertices = 2;
+        diveLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        diveLine.sharedMaterial = new Material(mgr.bossGlow != null ? mgr.bossGlow : mgr.fxMaterial);
+        Color c = new Color(1f, 0.2f, 0.15f);
+        diveLine.sharedMaterial.color = c;
+        if (diveLine.sharedMaterial.HasProperty("_BaseColor")) diveLine.sharedMaterial.SetColor("_BaseColor", c);
+    }
+
     private void Ram(Vector3 point)
     {
         DamagePlayerByRam(point);
+        IsDiving = false;   // carpmayla olen ucak son dalis bonusu almaz
 
         // Boss carpmadan etkilenmez; digerleri patlar. Oldurme sayilip sayilmayacagi GameSettings'te.
         if (!IsBoss) Die(GameSettings.Current.ramKillGivesScore, HitZone.Body, false);
@@ -873,6 +921,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     {
         if (dead) return;
         dead = true;
+        if (diveLine != null) diveLine.enabled = false;
 
         mgr.OnEnemyDestroyed(this, byPlayer, cause);
 
