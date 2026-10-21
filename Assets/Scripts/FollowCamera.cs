@@ -31,9 +31,13 @@ public class FollowCamera : MonoBehaviour
     // FOV/uzaklasma/titreme ucagin kendi azami hizina gore olceklenir (hizli ucaklar da kademeli hissettirsin)
     private float RefSpeed => plane != null ? Mathf.Max(plane.maxSpeed * 0.8f, 40f) : maxSpeedForFov;
 
+    private SpeedFx speedFx;
+    private float prevSpeed;
+
     private void Awake()
     {
         cam = GetComponent<Camera>();
+        if (cam != null) speedFx = gameObject.AddComponent<SpeedFx>();
     }
 
     /// <summary>Kamerayi aninda hedefin arkasina oturtur (isinlanma sonrasi savrulma olmasin).</summary>
@@ -210,6 +214,15 @@ public class FollowCamera : MonoBehaviour
             float zoom = Mathf.Lerp(1f, Mathf.Max(GameSettings.Current.aimZoom, 1f), zoomBlend);
             float halfTan = Mathf.Tan(smoothedFov * 0.5f * Mathf.Deg2Rad) / zoom;
             cam.fieldOfView = 2f * Mathf.Atan(halfTan) * Mathf.Rad2Deg;
+
+            // Hiz hissi: hiz cizgileri + hareket bulanikligi (hizlanirken daha belirgin)
+            if (speedFx != null)
+            {
+                float accel = dt > 0f ? (speed - prevSpeed) / dt : 0f;
+                prevSpeed = speed;
+                bool crashed = plane != null && plane.IsCrashed;
+                speedFx.Set(crashed ? 0f : t, crashed ? 0f : Mathf.Clamp01(accel / 16f), dt);
+            }
         }
     }
 }

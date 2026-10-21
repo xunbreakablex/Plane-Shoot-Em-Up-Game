@@ -234,10 +234,11 @@ public partial class BossBrain
         float sp = 1f + phase * 0.25f;
         Vector3 right = Vector3.Cross(Vector3.up, anchorFwd);
         Vector3 center = Anchor(360f, 0f, 25f);
+        float amp = mgr.RushActive ? RushSideScale : 1f;   // boss fazinda ekranin ortasinda kalir
         Vector3 target = center
-                         + right * Mathf.Sin(age * 0.5f * sp) * 200f
-                         + Vector3.up * Mathf.Sin(age * 0.9f * sp + 1f) * 75f
-                         + anchorFwd * Mathf.Cos(age * 0.35f * sp) * 130f;
+                         + right * Mathf.Sin(age * 0.5f * sp) * 200f * amp
+                         + Vector3.up * Mathf.Sin(age * 0.9f * sp + 1f) * 75f * amp
+                         + anchorFwd * Mathf.Cos(age * 0.35f * sp) * 130f * amp;
 
         Steer(target, 105f + phase * 20f, 75f, dt);
 

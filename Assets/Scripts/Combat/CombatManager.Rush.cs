@@ -165,7 +165,11 @@ public partial class CombatManager
 
     private IEnumerator RushEndRoutine()
     {
-        yield return new WaitForSeconds(1.8f);
+        // Boss'un asamali patlamasi bitene kadar bekle (govde uclardan iceri dagilir), sonra kisa bir nefes
+        float wait = 1.8f;
+        BossBrain brain = rushBoss != null ? rushBoss.GetComponent<BossBrain>() : null;
+        if (brain != null && brain.Dying) wait = Mathf.Max(wait, brain.DeathTimeLeft + 1.1f);
+        yield return new WaitForSeconds(wait);
         EnsureFader();
         yield return StartCoroutine(fader.Fade(1f, 0.45f));
         ReturnFromRush();

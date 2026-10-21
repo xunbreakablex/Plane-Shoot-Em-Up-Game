@@ -24,6 +24,8 @@ public class RunResultUI : MonoBehaviour
         // Patlamayi gorsun diye kisa bir bekleme (zaferde daha uzun)
         float wait = RunState.Phase == RunPhase.Won ? 3f : 1.8f;
         if (Time.unscaledTime - RunState.EndedAt < wait) return;
+        CombatManager cm = CombatManager.Instance;
+        if (RunState.Phase == RunPhase.Won && cm != null && Time.unscaledTime < cm.StageClearNotBefore) return;   // son boss'un patlamasi izlensin
 
         IsOpen = true;
         GameState.UiOpen = true;

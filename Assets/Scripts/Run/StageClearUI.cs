@@ -44,6 +44,7 @@ public class StageClearUI : MonoBehaviour
         CombatManager cm = CombatManager.Instance;
         float delay = cm != null ? cm.stageClearDelay : 2.8f;
         if (Time.unscaledTime - RunState.EndedAt < delay) return;
+        if (cm != null && Time.unscaledTime < cm.StageClearNotBefore) return;   // boss patlamasi ve donus bitsin
 
         IsOpen = true;
         GameState.UiOpen = true;

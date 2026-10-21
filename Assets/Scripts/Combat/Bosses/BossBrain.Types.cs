@@ -67,6 +67,7 @@ public partial class BossBrain
             case BossType.Shark: SharkTick(); break;
             case BossType.Crab: CrabTick(); break;
             case BossType.Zeppelin: ZepTick(dt); break;
+            case BossType.Golem: TickFists(dt); break;
         }
     }
 
@@ -193,7 +194,19 @@ public partial class BossBrain
 
         Vector3 toPlayer = player.position - pos;
         toPlayer.y *= 0.35f;
-        FaceDir(toPlayer, 70f, dt);
+        // Isirip gectikten sonra hizla oyuncuya doner (isirik alip geri donmus gibi)
+        FaceDir(toPlayer, ChargeReturning ? 360f : 70f, dt);
+    }
+
+    private float sharkBiteAt = -10f;
+
+    // Hamle oyuncuyu gecti: cene SAK diye kapanir
+    private void OnChargePassed()
+    {
+        if (type != BossType.Shark) return;
+        sharkBiteAt = Time.time;
+        Sfx.PlayAt(Sfx.Crack, pos, 1f);
+        FollowCamera.AddShake(0.5f, 0.3f);
     }
 
     private void SharkAttack()
@@ -240,8 +253,9 @@ public partial class BossBrain
 
     private void SharkAnimate()
     {
-        bool open = sharkPending != 0 || beamActive || Charging;
-        sharkJawOpen = Mathf.MoveTowards(sharkJawOpen, open ? 1f : 0f, 3f * Time.deltaTime);
+        bool open = sharkPending != 0 || beamActive || (Charging && !ChargeReturning);
+        bool bite = Time.time - sharkBiteAt < 0.35f;
+        sharkJawOpen = Mathf.MoveTowards(sharkJawOpen, open ? 1f : 0f, (bite ? 14f : 3f) * Time.deltaTime);
 
         if (sharkJaw != null) sharkJaw.localRotation = Quaternion.Euler(40f * sharkJawOpen, 0f, 0f);
         if (sharkTail != null) sharkTail.localRotation = Quaternion.Euler(0f, Mathf.Sin(age * 3.2f) * 24f, 0f);

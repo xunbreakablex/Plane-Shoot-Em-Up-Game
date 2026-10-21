@@ -497,10 +497,17 @@ public partial class CombatManager
 
     // --------------------------------------------------------------- sonuclar
 
+    /// <summary>Asama tamam / zafer ekrani bu andan once acilmaz: boss'un asamali patlamasi ve boss fazindan donus izlensin.</summary>
+    public float StageClearNotBefore { get; private set; }
+
     // Boss yenildi: son asamaysa zafer, degilse asama tamam
     private void OnBossDefeated(EnemyPlane defeated)
     {
         if (RunState.Ended || RunState.StageIsClear) return;
+
+        BossBrain brain = defeated != null ? defeated.GetComponent<BossBrain>() : null;
+        float show = brain != null && brain.Dying ? brain.DeathTimeLeft : 0.8f;
+        StageClearNotBefore = Time.unscaledTime + show + (RushActive ? 3.0f : 0.9f);
 
         // Ekrani temizle: kalan dusmanlar ve mermiler yok olur
         Bullet.ClearEnemyBullets();

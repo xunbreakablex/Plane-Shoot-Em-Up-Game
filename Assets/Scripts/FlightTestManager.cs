@@ -188,7 +188,7 @@ public class FlightTestManager : MonoBehaviour
 
         if (p.IsCrashed)
             Hud.Text(new Rect(cx - 300f, y, 600f, 60f), "ÇARPTI!", new Color(1f, 0.3f, 0.2f), 44, TextAnchor.MiddleCenter);
-        else if (p.IsStalling)
+        else if (p.IsStalling && !p.InRush)   // boss fazinda cerceve durunca stall uyarisi anlamsiz
             Hud.Text(new Rect(cx - 300f, y, 600f, 60f), "STALL!", new Color(1f, 0.3f, 0.2f), 44, TextAnchor.MiddleCenter);
     }
 

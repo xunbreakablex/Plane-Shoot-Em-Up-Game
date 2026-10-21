@@ -187,6 +187,7 @@ public partial class BossBrain : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (dying && mgr != null && enemy != null) { StepDeath(Time.fixedDeltaTime); return; }
         if (!ready || mgr == null || enemy == null || enemy.IsDead) return;
 
         player = mgr.PlayerTransform;
@@ -255,7 +256,7 @@ public partial class BossBrain : MonoBehaviour
         TickBeam(dt);
         TickType(dt);
 
-        if (playerAlive && !overridden && !beamActive && !WheelBusy && !KiWaveBusy && Time.time >= nextAttack)
+        if (playerAlive && !overridden && !beamActive && !WheelBusy && !KiWaveBusy && !FistBusy && Time.time >= nextAttack)
         {
             // Boss fazinda her CurtainEvery saldiridan biri perde (bosluklu mermi duvari)
             if (CurtainTurn) Curtain();
@@ -282,6 +283,7 @@ public partial class BossBrain : MonoBehaviour
         if (enemy.IsDead) { ClearWarns(); return; }
         TickWall();
         DrawKiWave();
+        DrawFistLines();
         DrawWarns();
 
         // Hasar parlamasi
@@ -346,9 +348,17 @@ public partial class BossBrain : MonoBehaviour
     private const float RushCadence = 0.8f;        // saldirilar arasi sure carpani
     private const float RushAimError = 0.7f;       // nisan sapmasi carpani
 
+    private const float RushSideScale = 0.4f;      // boss fazinda yana salinim bu oranda kucuk: boss hep tam karsida
+    private const float RushHeightScale = 0.65f;   // yukari-asagi salinim
+
     private Vector3 Anchor(float dist, float side, float height)
     {
-        if (mgr.RushActive) dist *= RushAnchorScale;
+        if (mgr.RushActive)
+        {
+            dist *= RushAnchorScale;
+            side *= RushSideScale;
+            height *= RushHeightScale;
+        }
         Vector3 right = Vector3.Cross(Vector3.up, anchorFwd);
         return player.position + anchorFwd * dist + right * side + Vector3.up * height;
     }
@@ -359,8 +369,14 @@ public partial class BossBrain : MonoBehaviour
         maxSpeed *= wingSpeedMul;
         if (ChargeReturning)
         {
-            maxSpeed *= 2.4f;
-            accel *= 3f;
+            maxSpeed *= 3.4f;
+            accel *= 5f;
+        }
+        else if (mgr.RushActive)
+        {
+            // Boss fazinda yerini hizli alir, sonra (kucuk salinimla) sabit durur
+            maxSpeed *= 1.3f;
+            accel *= 1.6f;
         }
 
         // Oyuncu hizli ucuyorsa boss geride kalmasin: azami hiz oyuncununkinin ustunde tutulur
@@ -514,6 +530,7 @@ public partial class BossBrain : MonoBehaviour
         wheelEnd = 0f;
         HideWall();
         EndKiWave();
+        EndFists();
         if (gapLine != null) gapLine.enabled = false;
         foreach (var lr in warnPool) if (lr != null) lr.enabled = false;
     }
@@ -750,13 +767,16 @@ public partial class BossBrain : MonoBehaviour
 
     private void StartCharge(float telegraph, float speed, float duration)
     {
+        // Vurkac hizli olsun: boss fazinda hazirlik kisa, dalis hizli; disarida da eskisinden cevik
+        if (mgr.RushActive) { telegraph *= 0.7f; speed *= 1.5f; }
+        else { telegraph *= 0.85f; speed *= 1.25f; }
         chargeActive = true;
         chargeStage = 0;
         chargeStart = Time.time;
         chargeTelegraph = telegraph;
         chargeSpeed = speed;
         chargeDuration = duration;
-        nextAttack = Mathf.Max(nextAttack, Time.time + telegraph + duration + 3f);
+        nextAttack = Mathf.Max(nextAttack, Time.time + telegraph + duration + 2.2f);
     }
 
     // true: hareketi bu kare hamle yonetiyor (donus asamasinda normal hareket hizlandirilmis calisir)
@@ -795,9 +815,10 @@ public partial class BossBrain : MonoBehaviour
             if (Vector3.Dot(chargeTarget - pos, chargeDir) <= 0f || Time.time >= chargeStageEnd)
             {
                 chargeStage = 2;
-                chargeStageEnd = Time.time + 3.2f;
+                chargeStageEnd = Time.time + 2.0f;
                 vel = -chargeDir * chargeSpeed * 0.45f;   // carpinca geri seker: oyuncunun ustunde beklemez
-                nextAttack = Mathf.Max(nextAttack, chargeStageEnd + 0.4f);
+                nextAttack = Mathf.Max(nextAttack, chargeStageEnd + 0.3f);
+                OnChargePassed();
             }
             return true;
         }
@@ -817,6 +838,9 @@ public partial class BossBrain : MonoBehaviour
         chargeDir = mgr.RushMapDir(chargeDir);
         beamDir = mgr.RushMapDir(beamDir);
         crabSweepBase = mgr.RushMapDir(crabSweepBase);
+        fistPosL = mgr.RushMapPoint(fistPosL); fistPosR = mgr.RushMapPoint(fistPosR);
+        fistAimL = mgr.RushMapPoint(fistAimL); fistAimR = mgr.RushMapPoint(fistAimR);
+        fistDirL = mgr.RushMapDir(fistDirL); fistDirR = mgr.RushMapDir(fistDirR);
         for (int i = 0; i < warns.Count; i++)
         {
             WarnLine w = warns[i];

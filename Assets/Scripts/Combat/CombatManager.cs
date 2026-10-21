@@ -301,7 +301,9 @@ public partial class CombatManager : MonoBehaviour
             var brain = enemy.GetComponent<BossBrain>();
             if (brain != null)
             {
-                brain.SpawnDeathExplosions(10);
+                // Asamali olum gosterisi varsa patlamalar oradan gelir; yoksa eski toplu patlama
+                if (!brain.Dying) brain.SpawnDeathExplosions(10);
+                else brain.SpawnDeathExplosions(2);
 
                 // Ilk kez yenilen boss yeni ucak ve/veya slot acar (Unlocks.RegisterBossDefeat otomatik takar)
                 Unlocks.RegisterBossDefeat(brain.type);

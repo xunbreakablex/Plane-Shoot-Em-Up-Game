@@ -567,20 +567,41 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         if (IsDiving) speed *= 1.35f;
         speed = Mathf.Max(speed, mgr.PlayerSpeed * (IsBoss ? 0.45f : 0.95f));
 
-        // Onde tutma (lead) ile takip
-        float leadTime = Mathf.Clamp(dist / Mathf.Max(speed, 1f), 0f, 2.5f);
+        // Onde tutma (lead) ile takip: kapanma hiziyla (karsidan gelirken kisa, kuyruktan takipte uzun)
+        float closing = Mathf.Max(20f, speed - Vector3.Dot(mgr.PlayerVelocity, toPlayer / Mathf.Max(dist, 0.1f)));
+        float leadTime = Mathf.Clamp(dist / closing, 0f, 2.5f);
         Vector3 aim = target.position + mgr.PlayerVelocity * leadTime * 0.8f;
         Vector3 desired = (aim - pos).normalized;
 
+        // Arkadan sinsice vurmak yok: oyuncunun arkasina dusen ucak once onune gecer (hizlanir, yandan asar),
+        // sonra karsidan dalis yapar. Boyle ucaklarin nereye gittigi bellidir ve hep gorus alaninda vurusurlar.
+        Vector3 pf = PlayerForward(target);
+        float along = Vector3.Dot(pos - target.position, pf);
+        // Histerezis: arkaya dusunce one gecme baslar, oyuncunun yeterince onune varinca biter (esikte titremesin)
+        if (!IsBoss && !IsDiving && along < OvertakeBehind) overtaking = true;
+        else if (overtaking && (along > OvertakeDone || IsDiving))
+        {
+            overtaking = false;
+            nextBurstTime = Mathf.Min(nextBurstTime, Time.time + 0.2f);   // karsidan dalisa hazir: seri bekletilmez
+        }
+        if (overtaking)
+        {
+            Vector3 pr = Vector3.Cross(Vector3.up, pf);
+            float sideSign = Vector3.Dot(pos - target.position, pr) >= 0f ? 1f : -1f;
+            Vector3 passPoint = target.position + pf * OvertakeAhead + pr * (sideSign * OvertakeSide) + Vector3.up * 50f;
+            desired = (passPoint - pos).normalized;
+            speed = Mathf.Max(speed * 1.35f, mgr.PlayerSpeed * 1.8f + 20f);
+        }
+
         // Yalpalama: nisan almayi zorlastirir
-        if (dist > 250f && !IsBoss && !IsDiving)
+        if (dist > 250f && !IsBoss && !IsDiving && !overtaking)
         {
             float weave = Mathf.Sin(Time.time * weaveRate + weavePhase) * 10f;
             desired = Quaternion.AngleAxis(weave, Vector3.up) * desired;
         }
 
         // Nisanci: mesafeyi korur (yakinsa uzaklasir, orta mesafede etrafinda doner, uzaksa yaklasir)
-        if (Kind == EnemyKind.Sniper && dist > 1f)
+        if (Kind == EnemyKind.Sniper && dist > 1f && !overtaking)
         {
             Vector3 dirTo = toPlayer / dist;
             Vector3 side = Vector3.Cross(Vector3.up, dirTo) * (Mathf.Sin(weavePhase) > 0f ? 1f : -1f);
@@ -702,20 +723,45 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
     // -------------------------------------------------------------- ates
 
+    // Oyuncunun arkasi: bu cizginin gerisindeki ucak ates etmez, one gecmeye calisir
+    private bool overtaking;                     // one gecme modunda (histerezisli)
+    private const float OvertakeBehind = -70f;
+    private const float OvertakeDone = 600f;     // bu kadar one gecince yeniden oyuncuya doner (karsidan dalis)
+    private const float OvertakeAhead = 800f;    // one gecis noktasi: oyuncunun bu kadar onunde (yakin olursa yaninda yorungeye giriyor)
+    private const float OvertakeSide = 350f;     // ve bu kadar yaninda (sonra donup karsidan dalis: hep gorus alaninda)
+
+    private Vector3 PlayerForward(Transform target)
+    {
+        Vector3 v = mgr.PlayerVelocity;
+        Vector3 f = v.sqrMagnitude > 25f ? v : target.forward;
+        f = Vector3.ProjectOnPlane(f, Vector3.up);
+        return f.sqrMagnitude > 0.01f ? f.normalized : Vector3.forward;
+    }
+
     private void TryShoot(Vector3 pos, Quaternion rot, Vector3 fwd, Transform target, float dist)
     {
         if (!mgr.enemiesShoot || mgr.EnemyBulletPrefab == null || pattern == Pattern.None) return;
         if (!IsBoss && mgr.BossFightActive) return;   // boss savasinda yalniz boss ates eder
+        // Arkadan ates yok: oyuncu goremedigi ucaktan vurulmaz (kamikaze zaten ates etmez)
+        if (!IsBoss && Vector3.Dot(pos - target.position, PlayerForward(target)) < OvertakeBehind) return;
 
         if (pattern == Pattern.Aimed)
         {
-            // Dogfight: nisan alinca kisa seri
+            // Karsidan dalis (oyuncunun onunde, ona dogru): gecis kisa surdugu icin koni genis, hazirlik kisa.
+            // Kuyruktan takipte (gorus icinde ama arkada) eski dar koni ve uyarili hazirlik kalir.
+            bool headOn = Vector3.Dot(pos - target.position, PlayerForward(target)) > 0f;
+            float cone = headOn ? fireCone * 3.5f : fireCone;
+            float windup = headOn ? 0.1f : AimWindup;
+
+            // Dogfight: nisan alinca kisa seri. Aci, oyuncunun SU ANKI yerine degil merminin varacagi noktaya gore
+            // olculur: karsidan gecen ucak burnunu onde tutma noktasina ceviriyordu ve hic ates edemiyordu.
+            Vector3 predicted = target.position + mgr.PlayerVelocity * (dist / bulletSpeed);
             if (burstLeft <= 0 && Time.time >= nextBurstTime && dist < fireRange
-                && Vector3.Angle(fwd, target.position - pos) < fireCone)
+                && Vector3.Angle(fwd, predicted - pos) < cone)
             {
                 burstLeft = burstSize;
                 nextBurstTime = Time.time + Random.Range(burstCdMin, burstCdMax);
-                nextShotTime = Time.time + AimWindup;   // ilk mermi bir an sonra: oyuncu tepki verebilsin
+                nextShotTime = Time.time + windup;   // ilk mermi bir an sonra: oyuncu tepki verebilsin
                 mgr.OnEnemyTargeting(this, dist);   // "nisan aldi" uyarisi
             }
 
@@ -936,7 +982,16 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         dead = true;
         if (diveLine != null) diveLine.enabled = false;
 
+        // Boss: govde hemen yok olmaz, uclardan iceri asamali patlar (BossBrain.Death.cs)
+        BossBrain brain = IsBoss ? GetComponent<BossBrain>() : null;
+        bool staged = brain != null && brain.BeginDeath();
+
         mgr.OnEnemyDestroyed(this, byPlayer, cause);
+        if (staged)
+        {
+            ReleaseSmoke();
+            return;
+        }
 
         // Hava ucagi oyuncu tarafindan indirildiyse yanarak duser; yere carpan / bindiren / yer birimi hemen gider
         if (wreckage && !IsGround && !scripted)

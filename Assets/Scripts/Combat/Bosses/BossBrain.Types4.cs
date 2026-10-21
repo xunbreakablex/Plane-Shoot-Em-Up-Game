@@ -90,7 +90,8 @@ public partial class BossBrain
                 StartBeam(golemMuzzleCore, 1.3f, 1.5f);
                 break;
             case 3:
-                StartCharge(1.0f, 170f, 1.9f);                                                           // ezme
+                if (FistL || FistR) StartFists();                                                        // yumruklar takip edip vurur
+                else StartCharge(1.0f, 170f, 1.9f);                                                      // ezme
                 break;
             default:
                 Cone(golemMuzzleCore.position, AimFrom(golemMuzzleCore.position, 150f, 0f), 16 + phase * 4, 12f, 150f, 2, Random.value * 90f);
@@ -102,9 +103,10 @@ public partial class BossBrain
 
     private void GolemAnimate()
     {
-        // Yumruklar havada salinir, cekirdek atar
-        if (golemFistL != null) golemFistL.localPosition = golemFistLBase + new Vector3(0f, Mathf.Sin(age * 1.8f) * 1.6f, Mathf.Sin(age * 1.1f) * 1.2f);
-        if (golemFistR != null) golemFistR.localPosition = golemFistRBase + new Vector3(0f, Mathf.Sin(age * 1.8f + 2f) * 1.6f, Mathf.Sin(age * 1.1f + 1f) * 1.2f);
+        // Yumruklar havada salinir (saldirida TickFists yonetir), cekirdek atar
+        if (FistBusy) { }
+        else if (golemFistL != null) golemFistL.localPosition = golemFistLBase + new Vector3(0f, Mathf.Sin(age * 1.8f) * 1.6f, Mathf.Sin(age * 1.1f) * 1.2f);
+        if (!FistBusy && golemFistR != null) golemFistR.localPosition = golemFistRBase + new Vector3(0f, Mathf.Sin(age * 1.8f + 2f) * 1.6f, Mathf.Sin(age * 1.1f + 1f) * 1.2f);
         if (golemCore != null)
         {
             float p = 1f + 0.15f * Mathf.Sin(age * 6f);

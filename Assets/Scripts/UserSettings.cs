@@ -8,9 +8,17 @@ public static class UserSettings
     private const string InvertKey = "PlaneShootEmUp.Pref.InvertY";
     private const string ShakeKey = "PlaneShootEmUp.Pref.Shake";
     private const string DistKey = "PlaneShootEmUp.Pref.CamDist";
+    private const string SpeedFxKey = "PlaneShootEmUp.Pref.SpeedFx";
 
     private static float sens = -1f, shake = -1f, dist = -1f;
-    private static int invert = -1;
+    private static int invert = -1, speedFx = -1;
+
+    /// <summary>Hiz cizgileri ve hareket bulanikligi (hiz hissi) acik mi.</summary>
+    public static bool SpeedFx
+    {
+        get { if (speedFx < 0) speedFx = PlayerPrefs.GetInt(SpeedFxKey, 1); return speedFx == 1; }
+        set { speedFx = value ? 1 : 0; PlayerPrefs.SetInt(SpeedFxKey, speedFx); }
+    }
 
     /// <summary>Fare hassasiyeti carpani (GameSettings.mouseSensitivity ile carpilir).</summary>
     public static float MouseSens

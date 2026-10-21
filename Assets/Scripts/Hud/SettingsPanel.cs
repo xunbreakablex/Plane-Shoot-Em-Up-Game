@@ -6,7 +6,7 @@ public static class SettingsPanel
 {
     private static GUIStyle button;
 
-    // Gamepad odagi: 0-4 sliderlar, 5 fare Y, 6 kontrol, 7 nisan, 8 zorluk, 9 geri
+    // Gamepad odagi: 0-4 sliderlar, 5 fare Y, 6 kontrol, 7 nisan, 8 zorluk, 9 hiz efekti, 10 geri
     private static int focus;
     private static int padStep;        // bu karede sol/sag (slider ayari / dugme degistirme)
     private static bool padAccept;
@@ -15,7 +15,7 @@ public static class SettingsPanel
     {
         if (button == null) button = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold, fontSize = 15 };
 
-        focus = PadNav.Move(focus, 10);
+        focus = PadNav.Move(focus, 11);
         padStep = PadNav.Horizontal;
         padAccept = PadNav.Accept;
         if (PadNav.Back) { UserSettings.Save(); return true; }
@@ -23,7 +23,7 @@ public static class SettingsPanel
         float W = Hud.W, H = Hud.H;
         Hud.Fill(new Rect(0f, 0f, W, H), new Color(0f, 0f, 0f, 0.8f));
 
-        float pw = 640f, ph = 520f;
+        float pw = 640f, ph = 570f;
         Rect panel = new Rect((W - pw) * 0.5f, (H - ph) * 0.5f, pw, ph);
         Hud.Fill(panel, new Color(0.06f, 0.09f, 0.14f, 0.98f));
         Hud.Fill(new Rect(panel.x, panel.y, pw, 4f), new Color(0.35f, 0.7f, 1f));
@@ -75,7 +75,11 @@ public static class SettingsPanel
             Difficulty.Next();
         y += bh + 10f;
 
-        bool close = Click(new Rect(x, y, w, bh), "GERİ", 9);
+        if (Click(new Rect(x, y, w, bh), "HIZ EFEKTİ (çizgiler + bulanıklık):  " + (UserSettings.SpeedFx ? "AÇIK" : "KAPALI"), 9))
+            UserSettings.SpeedFx = !UserSettings.SpeedFx;
+        y += bh + 10f;
+
+        bool close = Click(new Rect(x, y, w, bh), "GERİ", 10);
         y += bh + 12f;
         Hud.Text(new Rect(panel.x, y, pw, 20f), ControlSettings.SteerHint, new Color(1f, 0.9f, 0.55f), 12, TextAnchor.MiddleCenter, false);
         Hud.Text(new Rect(panel.x, y + 20f, pw, 20f), "Gamepad: sol çubuk kayma/gaz, sağ çubuk yönlendirme, RT ateş, LT zoom, LB/RB aşağı/yukarı, X bomba, Y füze, menüde dpad/A/B",
