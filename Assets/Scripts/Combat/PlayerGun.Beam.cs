@@ -106,7 +106,7 @@ public partial class PlayerGun
         Transform t = plane.transform;
         GameSettings gs = GameSettings.Current;
         UpgradeMods mods = RunUpgrades.Mods;
-        float rateMul = mods.fireRateMul * (1f + PowerRateStep * RunState.PowerLevel);
+        float rateMul = mods.fireRateMul * (1f + PowerRateStep * RunState.PowerLevel) * AircraftCatalog.Get(flight.CurrentIndex).fireRateMul;
 
         // Kaynak: portal ya da namlu ucu
         Vector3 origin;
@@ -293,7 +293,7 @@ public partial class PlayerGun
 
         // Vurus
         UpgradeMods mods = RunUpgrades.Mods;
-        float rateMul = mods.fireRateMul * (1f + PowerRateStep * RunState.PowerLevel);
+        float rateMul = mods.fireRateMul * (1f + PowerRateStep * RunState.PowerLevel) * AircraftCatalog.Get(flight.CurrentIndex).fireRateMul;
         if (Time.time >= b.nextTick)
         {
             b.nextTick = Time.time + 1f / Mathf.Max(def.rate * rateMul, 0.1f);

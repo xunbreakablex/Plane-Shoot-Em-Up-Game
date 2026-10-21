@@ -60,6 +60,10 @@ public class AircraftDef
     // Zirh parcalarinin verdigi cana carpan (kirilgan jet < 1 < agir ucak)
     public float hpMul = 1f;
 
+    // Atis hizi carpani: az silah yuvasi olan ucaklar / kahramanlar her silahi daha hizli atar; boylece tam donanimla
+    // ileri asamalarin ates gucu kapisini (Stages.minFirepower) gecebilirler ve yuva azligi ceza olmaz
+    public float fireRateMul = 1f;
+
     // Ucagin kendisini acma sarti (None = baslangicta acik)
     public Requirement unlock;
 
@@ -143,9 +147,9 @@ public static class AircraftCatalog
         // ---- Yeni ucaklar: jetler ve yavru kopekbaligi
         new AircraftDef
         {
-            name = "Atmaca", tagline = "Hafif av jeti: çok çevik, ama kırılgan ve az slotlu.",
+            name = "Atmaca", tagline = "Hafif av jeti: çok çevik, ama kırılgan ve az slotlu (silahları %20 hızlı atar).",
             preset = PlaneController.PlanePreset.LightJet,
-            weapons = 3, missiles = 1, shields = 1, turrets = 0, hpMul = 0.7f,
+            weapons = 3, missiles = 1, shields = 1, turrets = 0, hpMul = 0.7f, fireRateMul = 1.2f,
             unlock = Requirement.Boss(BossType.Jet),
             rules = new[]
             {
@@ -173,9 +177,9 @@ public static class AircraftCatalog
         },
         new AircraftDef
         {
-            name = "Yavru Köpekbalığı", tagline = "Minik mekanik balık: en çevik, en hafif, en az canlı.",
+            name = "Yavru Köpekbalığı", tagline = "Minik mekanik balık: en çevik, en hafif, en az canlı (silahları %45 hızlı atar).",
             preset = PlaneController.PlanePreset.MiniShark,
-            weapons = 2, missiles = 1, shields = 1, turrets = 1, hpMul = 0.55f,
+            weapons = 2, missiles = 1, shields = 1, turrets = 1, hpMul = 0.55f, fireRateMul = 1.45f,
             unlock = Requirement.Boss(BossType.Shark),
             rules = new[]
             {
@@ -188,9 +192,9 @@ public static class AircraftCatalog
         // ---- Asama 4-5 uçaklari
         new AircraftDef
         {
-            name = "Uzay Jeti", tagline = "Gelecekten gelen jet: en çevik, ama zırhı ince.",
+            name = "Uzay Jeti", tagline = "Gelecekten gelen jet: en çevik, ama zırhı ince (silahları %20 hızlı atar).",
             preset = PlaneController.PlanePreset.SpaceJet,
-            weapons = 3, missiles = 2, shields = 1, turrets = 0, hpMul = 0.65f,
+            weapons = 3, missiles = 2, shields = 1, turrets = 0, hpMul = 0.65f, fireRateMul = 1.2f,
             unlock = Requirement.Boss(BossType.Demon),
             rules = new[]
             {
@@ -201,9 +205,9 @@ public static class AircraftCatalog
         },
         new AircraftDef
         {
-            name = "Roket", tagline = "Uzay roketi: çok hızlı ve dayanıklı, geniş dönemez.",
+            name = "Roket", tagline = "Uzay roketi: çok hızlı ve dayanıklı, geniş dönemez (silahları %45 hızlı atar).",
             preset = PlaneController.PlanePreset.Rocket,
-            weapons = 2, missiles = 2, shields = 2, turrets = 1, hpMul = 1.5f,
+            weapons = 2, missiles = 2, shields = 2, turrets = 1, hpMul = 1.5f, fireRateMul = 1.45f,
             unlock = Requirement.Boss(BossType.Angel),
             rules = new[]
             {
@@ -233,7 +237,7 @@ public static class AircraftCatalog
         {
             name = "Ay Savaşçısı", tagline = "Sihirli değnekli kahraman kız: yıldız büyüleri ve AY IŞIĞI yeteneği; çok çevik, narin.",
             preset = PlaneController.PlanePreset.MagicGirl,
-            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 0.8f,
+            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 0.8f, fireRateMul = 1.35f,
             character = true, weaponGroup = 1, special = HeroSpecial.Kind.MoonBeam, specialName = "AY IŞIĞI",
             unlock = Requirement.Boss(BossType.MagicalGirl),
             rules = new[]
@@ -246,7 +250,7 @@ public static class AircraftCatalog
         {
             name = "Ki Kahramanı", tagline = "Ki savaşçısı: yumruklarından ki ateşi, KAMEHAMEHA yeteneği; en hızlı ivme.",
             preset = PlaneController.PlanePreset.KiHero,
-            weapons = 2, missiles = 0, shields = 1, turrets = 2, hpMul = 1.1f,
+            weapons = 2, missiles = 0, shields = 1, turrets = 2, hpMul = 1.1f, fireRateMul = 1.3f,
             character = true, weaponGroup = 2, special = HeroSpecial.Kind.Kamehameha, specialName = "KAMEHAMEHA",
             unlock = Requirement.Boss(BossType.KiWarrior),
             rules = new[]
@@ -258,7 +262,7 @@ public static class AircraftCatalog
         {
             name = "İmparator", tagline = "Karanlık lord: parmaklarından yıldırım, YILDIRIM FIRTINASI yeteneği; yavaş ama dayanıklı.",
             preset = PlaneController.PlanePreset.DarkLord,
-            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 1.3f,
+            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 1.3f, fireRateMul = 1.5f,
             character = true, weaponGroup = 3, special = HeroSpecial.Kind.LightningStorm, specialName = "YILDIRIM",
             unlock = Requirement.Boss(BossType.Demon),
             rules = new[]

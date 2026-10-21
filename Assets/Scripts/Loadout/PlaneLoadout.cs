@@ -132,6 +132,8 @@ public static class LoadoutMath
             s.weaponDps += d.rate * d.ShotDamage;
             s.weaponCount++;
         }
+        s.weaponDps *= AircraftCatalog.Get(l.model).fireRateMul;   // ucaga ozgu atis hizi
+
         foreach (int i in l.shields)
         {
             if (i <= 0) continue;
