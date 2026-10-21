@@ -7,28 +7,55 @@ public static class PlaneBuilder
     public const string Prefix = "Cust_";
 
     // Modele gore sabitler: 0 = WW1 cift kanat, 1 = WW2 avci, 2 = planor, 3 = Atmaca, 4 = Kartal, 5 = Yavru Kopekbaligi
-    private const int Models = 9;
-    private static readonly float[] WingHalfSpan = { 3.2f, 4.0f, 3.5f, 2.7f, 3.3f, 2.5f, 2.8f, 1.9f, 3.6f };
-    private static readonly float[] WingY = { -0.35f, -0.15f, 0.1f, -0.05f, 0f, -0.15f, -0.05f, -0.1f, -0.05f };
-    private static readonly float[] PropRadius = { 0.85f, 1.05f, 0.7f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
+    private const int Models = 12;
+    private static readonly float[] WingHalfSpan = { 3.2f, 4.0f, 3.5f, 2.7f, 3.3f, 2.5f, 2.8f, 1.9f, 3.6f, 1.6f, 1.2f, 1.2f };
+    private static readonly float[] WingY = { -0.35f, -0.15f, 0.1f, -0.05f, 0f, -0.15f, -0.05f, -0.1f, -0.05f, 0.15f, 0f, 0.2f };
+    private static readonly float[] PropRadius = { 0.85f, 1.05f, 0.7f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f };
     // Ic silah x'i: jetlerde hava girisi / govde disinda (govde yaricapi 0,4-0,5; giris 0,7'ye kadar)
-    private static readonly float[] InnerGunX = { 1.1f, 1.1f, 1.1f, 0.95f, 0.85f, 0.75f, 0.8f, 0.7f, 0.9f };
+    private static readonly float[] InnerGunX = { 1.1f, 1.1f, 1.1f, 0.95f, 0.85f, 0.75f, 0.8f, 0.7f, 0.9f, 0.45f, 0.45f, 0.5f };
     private static readonly Vector3[] DorsalMount =
     {
         new Vector3(0f, 0.42f, -0.95f), new Vector3(0f, 0.42f, -0.95f), new Vector3(0f, 0.32f, -0.7f),
         new Vector3(0f, 0.5f, -0.9f), new Vector3(0f, 0.52f, -1.0f), new Vector3(0f, 0.62f, -0.35f),
-        new Vector3(0f, 0.5f, -0.9f), new Vector3(0f, 0.75f, -1.0f), new Vector3(0f, 0.38f, -0.6f)
+        new Vector3(0f, 0.5f, -0.9f), new Vector3(0f, 0.75f, -1.0f), new Vector3(0f, 0.38f, -0.6f),
+        new Vector3(0f, 0.5f, 0f), new Vector3(0f, 0.5f, 0f), new Vector3(0f, 1.2f, 0f)
     };
     private static readonly Vector3[] VentralMount =
     {
         new Vector3(0f, -0.34f, 0.35f), new Vector3(0f, -0.4f, 0.35f), new Vector3(0f, -0.28f, 0.25f),
         new Vector3(0f, -0.3f, 0.3f), new Vector3(0f, -0.36f, 0.3f), new Vector3(0f, -0.4f, 0.2f),
-        new Vector3(0f, -0.3f, 0.3f), new Vector3(0f, -0.6f, 0.3f), new Vector3(0f, -0.3f, 0.2f)
+        new Vector3(0f, -0.3f, 0.3f), new Vector3(0f, -0.6f, 0.3f), new Vector3(0f, -0.3f, 0.2f),
+        new Vector3(0f, -0.4f, 0f), new Vector3(0f, -0.4f, 0f), new Vector3(0f, -1f, 0f)
     };
 
     // Namlu ucunun (mermi cikis noktasi) z konumu; her ucagin kanat/hava girisi on kenarinin onunde.
-    private static readonly float[] InnerTipZ = { 1.7f, 1.7f, 1.7f, 2.2f, 2.3f, 1.9f, 2.4f, 3.0f, 1.6f };
-    private static readonly float[] OuterTipZ = { 1.25f, 1.25f, 1.25f, 1.2f, 1.4f, 1.5f, 1.3f, 1.0f, 0.4f };
+    private static readonly float[] InnerTipZ = { 1.7f, 1.7f, 1.7f, 2.2f, 2.3f, 1.9f, 2.4f, 3.0f, 1.6f, 1.6f, 1.8f, 0.8f };
+    private static readonly float[] OuterTipZ = { 1.25f, 1.25f, 1.25f, 1.2f, 1.4f, 1.5f, 1.3f, 1.0f, 0.4f, 1f, 1f, 0.5f };
+
+    // Kahramanlar (model HeroStart'tan itibaren): silah = el / degnek ucu, "taret" = omuzdaki ucan yardimci.
+    // Dik dururlar; govde "Body" pivotunda HeroLean kadar one egiktir (CreateHeroes ayni degeri kullanir).
+    // Noktalar govde-yerel (dik poz) verilir, HeroPoint egimi uygulayip kok-yerel noktayi dondurur.
+    public const int HeroStart = 9;
+    public static readonly float[] HeroLean = { 15f, 12f, 22f };
+    private static readonly Vector3[][] HeroMuzzle =
+    {
+        new[] { new Vector3(0.33f, 0.6f, 2.0f), new Vector3(-0.33f, 0.6f, 0.98f) },   // Ay Savascisi: degnek ucu, sol el
+        new[] { new Vector3(0.33f, 0.6f, 1.14f), new Vector3(-0.33f, 0.6f, 1.14f) }, // Ki Kahramani: yumruklar
+        new[] { new Vector3(0.42f, 0.45f, 0.84f), new Vector3(-0.42f, 0.45f, 0.84f) }, // Imparator: parmak uclari
+    };
+    private static readonly Vector3[][] HeroShoulder =
+    {
+        new[] { new Vector3(-0.85f, 0.95f, 0.1f), new Vector3(0.85f, 0.95f, 0.1f) },
+        new[] { new Vector3(-0.85f, 0.95f, 0.1f), new Vector3(0.85f, 0.95f, 0.1f) },
+        new[] { new Vector3(-0.95f, 1.2f, 0f), new Vector3(0.95f, 1.2f, 0f) },
+    };
+
+    public static bool IsHero(int model) => model >= HeroStart && model < HeroStart + HeroMuzzle.Length;
+
+    private static Vector3 HeroPoint(int model, Vector3 bodyLocal)
+    {
+        return Quaternion.Euler(HeroLean[model - HeroStart], 0f, 0f) * bodyLocal;
+    }
     private const float BarrelLength = 1f;
     private const float TurretTipZ = 0.8f;     // taret namlusunun ucu (kafa ekseninde)
 
@@ -36,6 +63,7 @@ public static class PlaneBuilder
     public static Vector3 WeaponOffset(int model, int slot, float span)
     {
         model = Mathf.Clamp(model, 0, Models - 1);
+        if (IsHero(model)) return HeroPoint(model, HeroMuzzle[model - HeroStart][Mathf.Clamp(slot, 0, 1)]);
         bool left = slot % 2 == 0;
         float side = left ? -1f : 1f;
         bool outer = slot >= 2;
@@ -55,6 +83,7 @@ public static class PlaneBuilder
     public static Vector3 TurretOffset(int model, int slot)
     {
         model = Mathf.Clamp(model, 0, Models - 1);
+        if (IsHero(model)) return HeroPoint(model, HeroShoulder[model - HeroStart][Mathf.Clamp(slot, 0, 1)]);
         return slot == 0 ? DorsalMount[model] : VentralMount[model];
     }
 
@@ -290,6 +319,13 @@ public static class PlaneBuilder
             PartDef def = PartCatalog.Weapons[type];
             float thick = (def.damage > 1f || def.pellets > 1 ? 0.15f : (def.rate > 15f ? 0.1f : 0.075f)) * 1.5f;
 
+            // Kahraman: namlu yok (el / degnek silahtir); yalniz namlu noktasi + parlama
+            if (IsHero(model))
+            {
+                if (forGame) MuzzleFlash.Create(root.transform, GunFlashName(i), WeaponOffset(model, i, span), 0.9f);
+                continue;
+            }
+
             // Namlu ucu WeaponOffset'tedir: silindir merkezi uctan yarim boy geride
             GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             barrel.name = Prefix + "Gun" + i;
@@ -318,6 +354,13 @@ public static class PlaneBuilder
             PartDef def = PartCatalog.Turrets[type];
             bool heavy = def.damage > 1f;
             bool ventral = i == 1;
+
+            // Kahraman: taret yerine omuzda ucan kucuk yardimci
+            if (IsHero(model))
+            {
+                BuildCompanion(root, model, i, def, forGame);
+                continue;
+            }
 
             var mount = new GameObject(Prefix + "Turret" + i);
             mount.transform.SetParent(root.transform, false);
@@ -363,6 +406,24 @@ public static class PlaneBuilder
                 turret.muzzle = MuzzleFlash.Create(head.transform, Prefix + "TurretFlash" + i,
                     new Vector3(0f, 0f, TurretTipZ), heavy ? 0.9f : 0.65f);
             }
+        }
+    }
+
+    private static void BuildCompanion(GameObject root, int model, int i, PartDef def, bool forGame)
+    {
+        var mount = new GameObject(Prefix + "Turret" + i);
+        mount.transform.SetParent(root.transform, false);
+        mount.transform.localPosition = TurretOffset(model, i);
+        var comp = mount.AddComponent<Companion>();
+        comp.Build(model - HeroStart, def.damage > 1f);
+
+        if (forGame)
+        {
+            var turret = mount.AddComponent<AutoTurret>();
+            turret.def = def;
+            turret.head = comp.Head;
+            turret.owner = root.transform;
+            turret.muzzle = MuzzleFlash.Create(comp.Head, Prefix + "TurretFlash" + i, new Vector3(0f, 0f, 0.45f), 0.6f);
         }
     }
 

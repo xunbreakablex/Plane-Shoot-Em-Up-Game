@@ -211,6 +211,13 @@ public class PlayerHealth : MonoBehaviour, IDamageable
             hullHit = true;
         }
 
+        // Kahraman: vurulunca kisa ciglik
+        if (hullHit && CombatManager.Instance != null && CombatManager.Instance.flight != null)
+        {
+            int hero = HeroVoice.HeroOf(CombatManager.Instance.flight.CurrentIndex);
+            if (hero >= 0) HeroVoice.Hurt(hero, transform.position);
+        }
+
         if (CombatManager.Instance != null)
             CombatManager.Instance.OnPlayerHit(point, hullHit);
 

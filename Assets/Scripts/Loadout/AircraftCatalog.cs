@@ -63,6 +63,13 @@ public class AircraftDef
     // Ucagin kendisini acma sarti (None = baslangicta acik)
     public Requirement unlock;
 
+    // Oynanabilir KAHRAMAN (ucak degil): silahlari kendi grubundan (PartDef.group) secilir, "taret" yerine omuzda
+    // ucan kucuk yardimci, bomba tusu yerine ozel yetenek. Modeli PlaneBuilder.HeroStart'tan itibaren indekslidir.
+    public bool character;
+    public int weaponGroup;              // 0 ucak silahlari, 1 buyu, 2 ki, 3 karanlik guc
+    public HeroSpecial.Kind special;     // bomba tusunun yaptigi yetenek
+    public string specialName;           // HUD etiketi (kisa)
+
     // Sartli slotlar; listede olmayan mevcut slotlar baslangicta aciktir
     public SlotRule[] rules = new SlotRule[0];
 
@@ -90,7 +97,7 @@ public class AircraftDef
 // Yeni ucak eklerken: buraya satir + PlaneBuilder dizilerine hardpoint + sahneye prefab (Tools/Create New Aircraft).
 public static class AircraftCatalog
 {
-    public const int Count = 9;
+    public const int Count = 12;
 
     // Ilk uc model (WW1, WW2, planor) eski global kurallari kullanir
     private static SlotRule[] ClassicRules()
@@ -218,6 +225,46 @@ public static class AircraftCatalog
                 new SlotRule(SlotKind.Missile, 1, Requirement.Boss(BossType.Demon)),
                 new SlotRule(SlotKind.Shield,  1, Requirement.Boss(BossType.Angel)),
                 new SlotRule(SlotKind.Turret,  0, Requirement.Wins(1)),
+            }
+        },
+
+        // ---- Kahramanlar (model 9-11): anime karakterleri; ucak gibi hissettirmezler (kendi silahlari, yetenekleri, yardimcilari)
+        new AircraftDef
+        {
+            name = "Ay Savaşçısı", tagline = "Sihirli değnekli kahraman kız: yıldız büyüleri ve AY IŞIĞI yeteneği; çok çevik, narin.",
+            preset = PlaneController.PlanePreset.MagicGirl,
+            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 0.8f,
+            character = true, weaponGroup = 1, special = HeroSpecial.Kind.MoonBeam, specialName = "AY IŞIĞI",
+            unlock = Requirement.Boss(BossType.MagicalGirl),
+            rules = new[]
+            {
+                new SlotRule(SlotKind.Shield, 1, Requirement.Score(30000)),
+                new SlotRule(SlotKind.Turret, 1, Requirement.Wins(1)),
+            }
+        },
+        new AircraftDef
+        {
+            name = "Ki Kahramanı", tagline = "Ki savaşçısı: yumruklarından ki ateşi, KAMEHAMEHA yeteneği; en hızlı ivme.",
+            preset = PlaneController.PlanePreset.KiHero,
+            weapons = 2, missiles = 0, shields = 1, turrets = 2, hpMul = 1.1f,
+            character = true, weaponGroup = 2, special = HeroSpecial.Kind.Kamehameha, specialName = "KAMEHAMEHA",
+            unlock = Requirement.Boss(BossType.KiWarrior),
+            rules = new[]
+            {
+                new SlotRule(SlotKind.Turret, 1, Requirement.Wins(1)),
+            }
+        },
+        new AircraftDef
+        {
+            name = "İmparator", tagline = "Karanlık lord: parmaklarından yıldırım, YILDIRIM FIRTINASI yeteneği; yavaş ama dayanıklı.",
+            preset = PlaneController.PlanePreset.DarkLord,
+            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 1.3f,
+            character = true, weaponGroup = 3, special = HeroSpecial.Kind.LightningStorm, specialName = "YILDIRIM",
+            unlock = Requirement.Boss(BossType.Demon),
+            rules = new[]
+            {
+                new SlotRule(SlotKind.Shield, 1, Requirement.Boss(BossType.Angel)),
+                new SlotRule(SlotKind.Turret, 1, Requirement.Wins(1)),
             }
         },
     };

@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 public class PlaneController : MonoBehaviour
 {
-    public enum PlanePreset { Glider, Fighter, Biplane, LightJet, HeavyJet, MiniShark, SpaceJet, Rocket, Stealth }
+    public enum PlanePreset { Glider, Fighter, Biplane, LightJet, HeavyJet, MiniShark, SpaceJet, Rocket, Stealth, MagicGirl, KiHero, DarkLord }
 
     /// <summary>Ucus ozellikleri paketi: ApplyPreset bunu uygular, hangar puanlari da buradan okur.</summary>
     public struct PresetData
@@ -103,6 +103,33 @@ public class PlaneController : MonoBehaviour
                     cruiseAoA = 1.6f, stallAoA = 26f, liftSlope = 5.4f, maxG = 13f,
                     roll = 330f, yaw = 40f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.5f,
                     arcadeTurn = 120f
+                };
+            case PlanePreset.MagicGirl:
+                // Ay Savascisi: ucan kahraman; hafif, cok cevik, orta hiz, stall etmez gibi (yuksek stall AoA)
+                return new PresetData
+                {
+                    name = "Ay Savascisi", cruise = 92f, maxSpeed = 165f, thrust = 27f,
+                    cruiseAoA = 1.4f, stallAoA = 30f, liftSlope = 5.6f, maxG = 16f,
+                    roll = 420f, yaw = 55f, pitchGain = 11f, responsiveness = 15f, inputResponse = 1.9f,
+                    arcadeTurn = 150f
+                };
+            case PlanePreset.KiHero:
+                // Ki Kahramani: en hizli ivme, cok cevik
+                return new PresetData
+                {
+                    name = "Ki Kahramani", cruise = 112f, maxSpeed = 205f, thrust = 40f,
+                    cruiseAoA = 1.4f, stallAoA = 30f, liftSlope = 5.6f, maxG = 17f,
+                    roll = 460f, yaw = 55f, pitchGain = 11f, responsiveness = 15f, inputResponse = 2.0f,
+                    arcadeTurn = 148f
+                };
+            case PlanePreset.DarkLord:
+                // Imparator: suzulen karanlik lord; yavas, agir, dayanikli
+                return new PresetData
+                {
+                    name = "Imparator", cruise = 84f, maxSpeed = 150f, thrust = 24f,
+                    cruiseAoA = 1.6f, stallAoA = 30f, liftSlope = 5.4f, maxG = 13f,
+                    roll = 300f, yaw = 45f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.5f,
+                    arcadeTurn = 118f
                 };
             default:
                 // WW1: ~90 derece/sn

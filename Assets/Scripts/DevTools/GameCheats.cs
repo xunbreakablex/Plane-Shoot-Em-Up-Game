@@ -179,7 +179,7 @@ public static class GameCheats
         }
     }
 
-    [AtomicCommand("", "plane", "Savaşta uçağı değiştirir (1-8; açık olmalı)")]
+    [AtomicCommand("", "plane", "Savaşta uçağı/kahramanı değiştirir (1-12; açık olmalı)")]
     public static void Plane(int number)
     {
         if (!InBattle()) return;

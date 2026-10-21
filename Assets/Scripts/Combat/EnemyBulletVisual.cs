@@ -14,6 +14,8 @@ public class EnemyBulletVisual : MonoBehaviour
     private static Mesh sphereMesh;
     private static Mesh quadMesh;
     private static Material rimMat, haloMat, coreMat, bigCoreMat, starCoreMat, starHaloMat;
+    private static Material kiCoreMat, kiHaloMat, yellowCoreMat, yellowHaloMat, darkCoreMat, darkHaloMat;
+    private bool visible = true;
     private static Camera cam;
 
     private Transform core, halo, rim, tracer;
@@ -53,6 +55,12 @@ public class EnemyBulletVisual : MonoBehaviour
         if (bigCoreMat == null) bigCoreMat = Tinted(baseMat != null ? baseMat : softMat, new Color(1f, 0.42f, 0.22f, 1f));
         if (starCoreMat == null) starCoreMat = Tinted(baseMat != null ? baseMat : softMat, new Color(1f, 0.38f, 0.82f, 1f));
         if (starHaloMat == null) starHaloMat = Tinted(softMat, new Color(0.95f, 0.1f, 0.62f, 0.95f));
+        if (kiCoreMat == null) kiCoreMat = Tinted(baseMat != null ? baseMat : softMat, new Color(0.75f, 0.95f, 1f, 1f));
+        if (kiHaloMat == null) kiHaloMat = Tinted(softMat, new Color(0.2f, 0.55f, 1f, 0.95f));
+        if (yellowCoreMat == null) yellowCoreMat = Tinted(baseMat != null ? baseMat : softMat, new Color(1f, 0.98f, 0.7f, 1f));
+        if (yellowHaloMat == null) yellowHaloMat = Tinted(softMat, new Color(1f, 0.75f, 0.1f, 0.95f));
+        if (darkCoreMat == null) darkCoreMat = Tinted(baseMat != null ? baseMat : softMat, new Color(0.85f, 0.55f, 1f, 1f));
+        if (darkHaloMat == null) darkHaloMat = Tinted(softMat, new Color(0.45f, 0.1f, 0.8f, 0.95f));
 
         // Koyu kenar: acik bulut/gokyuzu uzerinde de ayrilsin; hale kirmizi; cekirdek parlak
         v.rim = MakeLayer("Rim", tr, quadMesh, rimMat);
@@ -97,8 +105,24 @@ public class EnemyBulletVisual : MonoBehaviour
         DestroyImmediate(q);
     }
 
+    /// <summary>Oyuncu mermisi havuzdan standart olarak donunce top katmanlari gizlenir, iz geri gelir.</summary>
+    public void SetVisible(bool on)
+    {
+        if (visible == on && core != null && core.gameObject.activeSelf == on) return;
+        visible = on;
+        if (core != null) core.gameObject.SetActive(on);
+        if (halo != null) halo.gameObject.SetActive(on);
+        if (rim != null) rim.gameObject.SetActive(on);
+        if (!on)
+        {
+            look = -1;
+            if (tracer != null) tracer.gameObject.SetActive(true);
+        }
+    }
+
     private void LateUpdate()
     {
+        if (!visible) return;
         Resize();
     }
 
@@ -117,7 +141,8 @@ public class EnemyBulletVisual : MonoBehaviour
 
         // Buyuk mermide (perde kuresi) hale ve kenar dar: cekirdek zaten buyuk, isilti ekrani kaplamasin
         bool big = bullet != null && bullet.radius > 1.5f;
-        int want = bullet != null && bullet.look == 1 ? 2 : (big ? 1 : 0);
+        // 0 normal, 1 buyuk kure (perde), 2 pembe yildiz, 3 mavi ki, 4 sari ki, 5 mor kure (kahraman mermileri de bunlari kullanir)
+        int want = bullet != null && bullet.look == 1 ? 2 : (bullet != null && bullet.look >= 2 ? bullet.look : (big ? 1 : 0));
         if (want != look)
         {
             // Buyuk kure (perde) turuncu-kirmizi cekirdekle tehlike olarak okunsun, yildiz carki pembe; havuzdan
@@ -125,15 +150,24 @@ public class EnemyBulletVisual : MonoBehaviour
             look = want;
             if (coreRenderer == null) coreRenderer = core.GetComponent<Renderer>();
             if (haloRenderer == null) haloRenderer = halo.GetComponent<Renderer>();
-            Material cm = want == 2 ? starCoreMat : (want == 1 ? bigCoreMat : coreMat);
-            Material hm = want == 2 ? starHaloMat : haloMat;
+            Material cm, hm;
+            switch (want)
+            {
+                case 2: cm = starCoreMat; hm = starHaloMat; break;
+                case 3: cm = kiCoreMat; hm = kiHaloMat; break;
+                case 4: cm = yellowCoreMat; hm = yellowHaloMat; break;
+                case 5: cm = darkCoreMat; hm = darkHaloMat; break;
+                case 1: cm = bigCoreMat; hm = haloMat; break;
+                default: cm = coreMat; hm = haloMat; break;
+            }
             if (coreRenderer != null && cm != null) coreRenderer.sharedMaterial = cm;
             if (haloRenderer != null && hm != null) haloRenderer.sharedMaterial = hm;
-            if (tracer != null) tracer.gameObject.SetActive(want != 2);   // yildizin izi yok: kol duz bir dizi gibi okunsun
+            if (tracer != null) tracer.gameObject.SetActive(want < 2);   // yildiz/kurenin izi yok
         }
+        bool magic = want >= 2;
         core.localScale = Vector3.one * size;
-        halo.localScale = Vector3.one * (size * (big ? 1.5f : 3.1f) * pulse);
-        rim.localScale = Vector3.one * (size * (big ? 1.9f : 4.0f) * pulse);
+        halo.localScale = Vector3.one * (size * (big ? 1.5f : (magic ? 2.4f : 3.1f)) * pulse);
+        rim.localScale = Vector3.one * (size * (big ? 1.9f : (magic ? 2.9f : 4.0f)) * pulse);
 
         // Top kameraya doner (billboard); izdusumde yuvarlak kalir
         Quaternion face = cam.transform.rotation;

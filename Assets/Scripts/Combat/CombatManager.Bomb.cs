@@ -30,6 +30,10 @@ public partial class CombatManager
         if (plane == null || plane.IsCrashed) return false;
         if (Time.time < nextBombTime) return false;
 
+        // Kahraman: bomba yerine ozel yetenek (ayni stogu harcar)
+        AircraftDef craft = AircraftCatalog.Get(flight.CurrentIndex);
+        if (craft.special != HeroSpecial.Kind.None) return TrySpecial(plane, craft);
+
         if (!RunState.UseBomb())
         {
             Announce("BOMBA YOK", new Color(1f, 0.5f, 0.4f), 1.2f);
@@ -65,6 +69,44 @@ public partial class CombatManager
         Sfx.PlayAt(Sfx.Pulse, center, 1f);
         bombFlash = 1f;
         SpawnBombRing(center);
+        return true;
+    }
+
+    /// <summary>HUD etiketi: ucakta "BOMBA [B]", kahramanda yetenek adi.</summary>
+    public string BombLabel
+    {
+        get
+        {
+            AircraftDef craft = flight != null ? AircraftCatalog.Get(flight.CurrentIndex) : null;
+            return craft != null && craft.special != HeroSpecial.Kind.None
+                ? craft.specialName + " [" + ControlSettings.BombKey + "]"
+                : ControlSettings.BombLabel;
+        }
+    }
+
+    // Kahraman yetenegi: mermileri temizler, kisa dokunulmazlik, yetenek gorseli ve hasari HeroSpecial'da
+    private bool TrySpecial(PlaneController plane, AircraftDef craft)
+    {
+        if (!RunState.UseBomb())
+        {
+            Announce(craft.specialName + " İÇİN ENERJİ YOK (bomba stoğu)", new Color(1f, 0.5f, 0.4f), 1.4f);
+            return false;
+        }
+
+        nextBombTime = Time.time + 1.5f;
+        Bullet.ClearEnemyBullets();
+        if (ActiveBoss != null)
+        {
+            BossBrain brain = ActiveBoss.GetComponent<BossBrain>();
+            if (brain != null) brain.OnBomb();
+        }
+        PlayerHealth ph = CurrentPlayerHealth;
+        if (ph != null) ph.GrantInvulnerability(3.4f);
+
+        HeroSpecial.Begin(this, plane, gun, craft.special);
+        Announce(craft.specialName + "!", new Color(1f, 0.85f, 0.4f), 1.6f, true);
+        Sfx.PlayAt(Sfx.Pulse, plane.transform.position, 0.8f);
+        bombFlash = 0.5f;
         return true;
     }
 

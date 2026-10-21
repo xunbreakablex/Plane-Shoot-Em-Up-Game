@@ -47,6 +47,12 @@ public class PartDef
     public float beamOn = 0.45f;
     public float beamOff = 0.55f;
 
+    // Kahraman silahlari: group = AircraftDef.weaponGroup (0 ucak); look = oyuncu mermisi gorunumu
+    // (0 standart iz, 2 pembe yildiz, 3 mavi ki kuresi, 4 sari ki, 5 mor kure). Yardimcilar icin ozel ad.
+    public int group;
+    public int look;
+    public string heroName;
+
     // Fuze
     public int ammo;           // rampa basina azami fuze
     public float reload;       // bir fuzeyi yenileme suresi (sn)
@@ -101,33 +107,33 @@ public static class PartCatalog
 
     public static readonly PartDef[] Engines =
     {
-        new PartDef { name = "Standart Motor", description = "Dengeli motor. 2 kanatlı pervane. Güç kapasitesi 10.",
+        new PartDef { name = "Standart Motor", heroName = "Sıradan Büyü Çekirdeği", description = "Dengeli motor. 2 kanatlı pervane. Güç kapasitesi 10.",
                       power = 10f, weight = 0f, thrust = 1f, maxSpeed = 1f, blades = 2 },
-        new PartDef { name = "Turbo Motor", description = "Daha fazla itki ve hız. 4 kanatlı pervane. Güç kapasitesi 14 ama ağır.",
+        new PartDef { name = "Turbo Motor", heroName = "Güçlü Büyü Çekirdeği", description = "Daha fazla itki ve hız. 4 kanatlı pervane. Güç kapasitesi 14 ama ağır.",
                       power = 14f, weight = 14f, thrust = 1.3f, maxSpeed = 1.12f, blades = 4 },
-        new PartDef { name = "Hafif Motor", description = "Hafif ve ekonomik. 3 kanatlı pervane. Güç kapasitesi sadece 8.",
+        new PartDef { name = "Hafif Motor", heroName = "Hafif Büyü Çekirdeği", description = "Hafif ve ekonomik. 3 kanatlı pervane. Güç kapasitesi sadece 8.",
                       power = 8f, weight = -8f, thrust = 0.9f, maxSpeed = 0.97f, blades = 3 },
-        new PartDef { name = "Jet Motoru", description = "Çok güçlü itki ve yüksek hız. Güç kapasitesi 17; ağır ve pahalı.",
+        new PartDef { name = "Jet Motoru", heroName = "Efsanevi Büyü Çekirdeği", description = "Çok güçlü itki ve yüksek hız. Güç kapasitesi 17; ağır ve pahalı.",
                       power = 17f, weight = 22f, thrust = 1.45f, maxSpeed = 1.2f, blades = 4 },
     };
 
     public static readonly PartDef[] Wings =
     {
-        new PartDef { name = "Standart Kanat", description = "Dengeli kaldırma ve yatış.",
+        new PartDef { name = "Standart Kanat", heroName = "Dengeli Uçuş Büyüsü", description = "Dengeli kaldırma ve yatış.",
                       span = 1f, cruise = 1f, roll = 1f, maxG = 1f, maxSpeed = 1f, weight = 0f },
-        new PartDef { name = "Uzun Kanat", description = "Düşük stall hızı, kolay süzülme. Yatış yavaş, G sınırı düşük.",
+        new PartDef { name = "Uzun Kanat", heroName = "Süzülme Büyüsü", description = "Düşük stall hızı, kolay süzülme. Yatış yavaş, G sınırı düşük.",
                       span = 1.3f, cruise = 0.85f, roll = 0.8f, maxG = 0.9f, maxSpeed = 0.95f, weight = 6f },
-        new PartDef { name = "Kısa Kanat", description = "Çok çevik ve hızlı; ama yüksek stall hızı.",
+        new PartDef { name = "Kısa Kanat", heroName = "Çeviklik Büyüsü", description = "Çok çevik ve hızlı; ama yüksek stall hızı.",
                       span = 0.78f, cruise = 1.12f, roll = 1.35f, maxG = 1.1f, maxSpeed = 1.06f, weight = -2f },
-        new PartDef { name = "Delta Kanat", description = "Yüksek hızda kararlı ve çevik; düşük hızda süzülmez (yüksek stall hızı).",
+        new PartDef { name = "Delta Kanat", heroName = "Hız Büyüsü", description = "Yüksek hızda kararlı ve çevik; düşük hızda süzülmez (yüksek stall hızı).",
                       span = 0.9f, cruise = 1.2f, roll = 1.15f, maxG = 1.25f, maxSpeed = 1.1f, weight = 4f },
     };
 
     public static readonly PartDef[] Armors =
     {
-        new PartDef { name = "Hafif Gövde", description = "Standart gövde. 12 can.", hp = 12f, weight = 0f },
-        new PartDef { name = "Çelik Zırh", description = "Daha dayanıklı: 18 can. Ağırlık +14.", hp = 18f, weight = 14f },
-        new PartDef { name = "Ağır Zırh", description = "Çok dayanıklı: 28 can. Ağırlık +30, çevikliği düşürür.", hp = 28f, weight = 30f },
+        new PartDef { name = "Hafif Gövde", heroName = "Sıradan Tılsım", description = "Standart gövde. 12 can.", hp = 12f, weight = 0f },
+        new PartDef { name = "Çelik Zırh", heroName = "Koruyucu Tılsım", description = "Daha dayanıklı: 18 can. Ağırlık +14.", hp = 18f, weight = 14f },
+        new PartDef { name = "Ağır Zırh", heroName = "Kutsal Zırh Tılsımı", description = "Çok dayanıklı: 28 can. Ağırlık +30, çevikliği düşürür.", hp = 28f, weight = 30f },
     };
 
     // Index 0 = bos
@@ -152,7 +158,28 @@ public static class PartCatalog
                       rate = 2.5f, damage = 4f, speed = 300f, spread = 0.3f, range = 700f, splash = 14f, power = 3f, weight = 10f },
         new PartDef { name = "Ray Tüfeği", description = "Yavaş ama devasa: mermi başına 8 hasar, hızlı mermi, 3 düşmanı delip geçer (1,4 atış/sn). Güç 4.",
                       rate = 1.4f, damage = 8f, speed = 900f, spread = 0f, range = 1500f, pierce = 3, power = 4f, weight = 12f },
+
+        // ---- Kahraman silahlari (yalniz o karakter takar; group = AircraftDef.weaponGroup)
+        new PartDef { name = "Yıldız Değneği", description = "Değnekten pembe yıldızlar (6/sn, 2 hasar); çarpınca 8 m'lik yıldız tozu patlaması. Güç 2.",
+                      rate = 6f, damage = 2f, speed = 320f, spread = 0.2f, range = 700f, splash = 8f, power = 2f, weight = 3f, group = 1, look = 2 },
+        new PartDef { name = "Ay Işını", description = "Değnekten kesintisiz pembe ışın: anında vurur, önündeki herkesi deler (6 vuruş/sn, 2 hasar). Güç 3.",
+                      rate = 6f, damage = 2f, range = 750f, beam = 1, power = 3f, weight = 4f, group = 1 },
+        new PartDef { name = "Ki Topu", description = "Avuçtan mavi ki küresi: yavaş ama 5 hasar, 12 m patlama (2,5 atış/sn). Güç 3.",
+                      rate = 2.5f, damage = 5f, speed = 260f, spread = 0.2f, range = 650f, splash = 12f, power = 3f, weight = 4f, group = 2, look = 3 },
+        new PartDef { name = "Ki Yağmuru", description = "Hızlı sarı ki ateşi (14/sn, 1 hasar), dağınık. Güç 2.",
+                      rate = 14f, damage = 1f, speed = 400f, spread = 0.9f, range = 600f, power = 2f, weight = 3f, group = 2, look = 4 },
+        new PartDef { name = "Güç Yıldırımı", description = "Parmak uçlarından yıldırım: önündeki en yakın düşmana kendiliğinden atlar, oradan 2 düşmana daha sıçrar (5 vuruş/sn, 2 hasar). Güç 3.",
+                      rate = 5f, damage = 2f, range = 520f, beam = 4, power = 3f, weight = 4f, group = 3 },
+        new PartDef { name = "Karanlık Küre", description = "Mor karanlık enerji küresi: 1,2 atış/sn, 7 hasar, 16 m patlama. Güç 4.",
+                      rate = 1.2f, damage = 7f, speed = 220f, spread = 0f, range = 700f, splash = 16f, power = 4f, weight = 6f, group = 3, look = 5 },
     };
+
+    /// <summary>Grubun ilk silahi (kahramanin varsayilan silahi); yoksa makineli tufek.</summary>
+    public static int FirstWeaponOfGroup(int group)
+    {
+        for (int i = 1; i < Weapons.Length; i++) if (Weapons[i].group == group) return i;
+        return 1;
+    }
 
     public static readonly PartDef[] Shields =
     {
@@ -178,9 +205,9 @@ public static class PartCatalog
     public static readonly PartDef[] Turrets =
     {
         new PartDef { name = "— Boş —", description = "Bu slotta taret yok." },
-        new PartDef { name = "Otomatik Taret", description = "En yakın düşmana kendiliğinden ateş eder (5/sn, 450 m). Güç 2.",
+        new PartDef { name = "Otomatik Taret", heroName = "Minik Yardımcı", description = "En yakın düşmana kendiliğinden ateş eder (5/sn, 450 m). Güç 2.",
                       rate = 5f, damage = 1f, speed = 360f, spread = 1.2f, range = 450f, power = 2f, weight = 8f },
-        new PartDef { name = "Ağır Taret", description = "Yavaş ama 2 hasar verir (2/sn, 600 m). Güç 3.",
+        new PartDef { name = "Ağır Taret", heroName = "Güçlü Yardımcı", description = "Yavaş ama 2 hasar verir (2/sn, 600 m). Güç 3.",
                       rate = 2f, damage = 2f, speed = 340f, spread = 0.6f, range = 600f, power = 3f, weight = 14f },
     };
 }

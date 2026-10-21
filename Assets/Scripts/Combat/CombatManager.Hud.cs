@@ -407,7 +407,7 @@ public partial class CombatManager
         cy += rowH;
 
         // Bomba sayisi: B tusu
-        Hud.Text(new Rect(x + 10f, cy, 120f, 20f), ControlSettings.BombLabel, PowerUp.KindColors[3], 14);
+        Hud.Text(new Rect(x + 10f, cy, 140f, 20f), BombLabel, PowerUp.KindColors[3], 14);
         for (int b = 0; b < RunState.MaxBombs; b++)
         {
             Rect br = new Rect(x + w - 10f - (RunState.MaxBombs - b) * 20f, cy + 3f, 16f, 14f);

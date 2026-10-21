@@ -198,6 +198,9 @@ public class Bullet : MonoBehaviour
 
         if (fromPlayer)
         {
+            // Havuzdan donen kahraman mermisi (yildiz/kure) standart ize doner
+            if (b.visual != null) b.visual.SetVisible(false);
+
             // Mermi sert bir cubuk: ucu (nesnenin konumu) onde, tam boy iz arkasina uzanir. Yalniz bir kez kurulur.
             if (b.tracer == null)
             {
@@ -231,8 +234,26 @@ public class Bullet : MonoBehaviour
                     b.visual = b.GetComponent<EnemyBulletVisual>();
                 }
             }
+            if (b.visual != null) b.visual.SetVisible(true);
         }
         return b;
+    }
+
+    /// <summary>Oyuncu mermisine ozel gorunum (kahraman silahlari: 2 yildiz, 3 ki kuresi, 4 sari ki, 5 mor kure); 0 = standart iz.</summary>
+    public void ApplyLook(int newLook)
+    {
+        look = newLook;
+        if (newLook <= 0)
+        {
+            if (visual != null) visual.SetVisible(false);
+            return;
+        }
+        if (visual == null)
+        {
+            EnemyBulletVisual.Attach(this);
+            visual = GetComponent<EnemyBulletVisual>();
+        }
+        if (visual != null) visual.SetVisible(true);
     }
 
     /// <summary>Merminin anlik hizi (m/s): yaklasan tehdit uyarisi icin.</summary>

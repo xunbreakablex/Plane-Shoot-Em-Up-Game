@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // PlayerGun'in lazer kismi. Lazer silahlari (PartDef.beam > 0) mermi atmaz: ates tusu basili tutuldukca bir isin cizilir,
@@ -99,6 +100,8 @@ public partial class PlayerGun
     {
         BeamVisual b = EnsureBeam(slot);
         if (b == null) return;
+        if (def.beam == 4) { LightningStep(slot, def, plane, span, b); return; }
+        if (b.core.positionCount != 2) { b.core.positionCount = 2; b.glow.positionCount = 2; }
 
         Transform t = plane.transform;
         GameSettings gs = GameSettings.Current;
@@ -213,6 +216,120 @@ public partial class PlayerGun
         b.core.SetPosition(1, endPoint);
         b.glow.SetPosition(0, origin);
         b.glow.SetPosition(1, endPoint);
+        b.core.enabled = true;
+        b.glow.enabled = true;
+    }
+
+    // ------------------------------------------------------------------ yildirim (beam 4)
+    // Imparator'un silahi: parmak ucundan nisan konisindeki en yakin dusmana yildirim atlar, oradan en yakin iki
+    // dusmana daha sicrar. Kirik cizgi her kare yeniden cizilir; vurus def.rate/sn, zincirdeki herkese.
+
+    private const float LightningCone = 32f;
+    private const float LightningHop = 170f;
+    private const int LightningSegments = 9;
+    private readonly List<EnemyPlane> zapChain = new List<EnemyPlane>(3);
+    private static readonly Color ZapCore = new Color(0.92f, 0.85f, 1f, 1f);
+    private static readonly Color ZapGlow = new Color(0.6f, 0.25f, 1f, 0.7f);
+
+    private void LightningStep(int slot, PartDef def, PlaneController plane, float span, BeamVisual b)
+    {
+        Transform t = plane.transform;
+        CombatManager mgr = CombatManager.Instance;
+        if (mgr == null) return;
+
+        MuzzleFlash mp = MuzzleFor(t, slot);
+        Vector3 origin = mp != null
+            ? PlayerShot.MuzzlePoint(mp)
+            : t.TransformPoint(PlaneBuilder.WeaponOffset(flight.CurrentIndex, slot, span));
+        Vector3 aimDir = (AimPoint - origin).normalized;
+
+        b.active = true;
+        b.clock += Time.deltaTime;
+        if (b.ring != null) b.ring.enabled = false;
+
+        // Zincir: koni icindeki en yakin dusman, sonra ona en yakin dusmanlar
+        zapChain.Clear();
+        EnemyPlane first = null;
+        float best = def.range;
+        foreach (var e in mgr.Enemies)
+        {
+            if (e == null || e.IsDead) continue;
+            Vector3 to = e.transform.position - origin;
+            float d = to.magnitude;
+            if (d > best || d < 1f || Vector3.Angle(aimDir, to) > LightningCone) continue;
+            best = d;
+            first = e;
+        }
+        if (first == null)
+        {
+            // Hedef yok: parmak ucunda kisa kivilcim
+            b.core.positionCount = 2;
+            b.glow.positionCount = 2;
+            Vector3 tip = origin + aimDir * (2.5f + Random.value * 2f) + Random.insideUnitSphere * 0.6f;
+            SetLine(b.core, 0.12f, ZapCore);
+            SetLine(b.glow, 0.4f, ZapGlow);
+            b.core.SetPosition(0, origin); b.core.SetPosition(1, tip);
+            b.glow.SetPosition(0, origin); b.glow.SetPosition(1, tip);
+            b.core.enabled = b.glow.enabled = true;
+            if (b.hum != null && b.hum.isPlaying) b.hum.Pause();
+            return;
+        }
+        zapChain.Add(first);
+        for (int hop = 0; hop < 2; hop++)
+        {
+            EnemyPlane last = zapChain[zapChain.Count - 1];
+            EnemyPlane next = null;
+            float nd = LightningHop;
+            foreach (var e in mgr.Enemies)
+            {
+                if (e == null || e.IsDead || zapChain.Contains(e)) continue;
+                float d = Vector3.Distance(last.transform.position, e.transform.position);
+                if (d < nd) { nd = d; next = e; }
+            }
+            if (next == null) break;
+            zapChain.Add(next);
+        }
+        if (b.hum != null && !b.hum.isPlaying) b.hum.Play();
+
+        // Vurus
+        UpgradeMods mods = RunUpgrades.Mods;
+        float rateMul = mods.fireRateMul * (1f + PowerRateStep * RunState.PowerLevel);
+        if (Time.time >= b.nextTick)
+        {
+            b.nextTick = Time.time + 1f / Mathf.Max(def.rate * rateMul, 0.1f);
+            int dmg = Mathf.RoundToInt(def.damage) + (Random.value < mods.critChance ? 1 : 0);
+            foreach (var e in zapChain)
+            {
+                e.TakeHit(dmg, e.transform.position);
+                mgr.SpawnHitSpark(e.transform.position + Random.insideUnitSphere * 1.5f, 1.2f);
+            }
+            if (Random.value < 0.5f) Sfx.PlayAt(Sfx.Zap, origin, 0.22f);
+        }
+
+        // Cizim: her hop icin kirik cizgi parcalari (her kare yeni titreme)
+        int points = zapChain.Count * LightningSegments + 1;
+        b.core.positionCount = points;
+        b.glow.positionCount = points;
+        Vector3 from = origin;
+        int idx = 0;
+        b.core.SetPosition(idx, from); b.glow.SetPosition(idx, from); idx++;
+        for (int h = 0; h < zapChain.Count; h++)
+        {
+            Vector3 to = zapChain[h].transform.position;
+            float len = Vector3.Distance(from, to);
+            for (int i = 1; i <= LightningSegments; i++)
+            {
+                float f = (float)i / LightningSegments;
+                Vector3 p = Vector3.Lerp(from, to, f);
+                if (i < LightningSegments) p += Random.insideUnitSphere * len * 0.05f;
+                b.core.SetPosition(idx, p);
+                b.glow.SetPosition(idx, p);
+                idx++;
+            }
+            from = to;
+        }
+        SetLine(b.core, 0.55f, ZapCore);
+        SetLine(b.glow, 2.2f, ZapGlow);
         b.core.enabled = true;
         b.glow.enabled = true;
     }

@@ -51,7 +51,7 @@ public class HangarController : MonoBehaviour
     private LoadoutStats cur, prev;
     private bool hasPrev;
 
-    private const float TopH = 64f;
+    private const float TopH = 104f;   // iki sira sekme: ucaklar + kahramanlar
     private const float BottomH = 96f;
     private const float LeftW = 392f;
     private const float RightW = 340f;
@@ -233,6 +233,8 @@ public class HangarController : MonoBehaviour
             case "Çift Kanatlı (WW1)": return "WW1 Çift Kanat";
             case "Avcı (WW2)": return "WW2 Avcı";
             case "Yavru Köpekbalığı": return "Yavru Köpekb.";
+            case "Ay Savaşçısı": return "Ay Savaşçısı";
+            case "Ki Kahramanı": return "Ki Kahramanı";
             default: return name;
         }
     }
@@ -263,6 +265,8 @@ public class HangarController : MonoBehaviour
         {
             int candidate = ((s.current + dir * step) % count + count) % count;
             if (candidate == s.current) break;
+            // Silah grubu: kahraman yalniz kendi buyu/ki silahlarini, ucak yalniz ucak silahlarini gorur
+            if (s.kind == SlotKind.Weapon && candidate > 0 && PartCatalog.Weapons[candidate].group != Craft().weaponGroup) continue;
             if (LoadoutMath.FitsPower(loadout, s.kind, s.index, candidate))
             {
                 next = candidate;
@@ -294,13 +298,16 @@ public class HangarController : MonoBehaviour
         switch (tab)
         {
             case Tab.Body:
-                list.Add(new Slot { title = "Motor / Pervane", kind = SlotKind.Engine, index = 0, parts = PartCatalog.Engines, current = loadout.engine });
-                list.Add(new Slot { title = "Kanatlar", kind = SlotKind.Wings, index = 0, parts = PartCatalog.Wings, current = loadout.wings });
-                list.Add(new Slot { title = "Zırh", kind = SlotKind.Armor, index = 0, parts = PartCatalog.Armors, current = loadout.armor });
+                // Kahramanlarda motor/kanat/zirh yok: ayni mekanik, buyu kavramlariyla (cekirdek = guc, ucus buyusu = ceviklik, tilsim = can)
+                bool hero = Craft().character;
+                list.Add(new Slot { title = hero ? "Büyü Çekirdeği (güç)" : "Motor / Pervane", kind = SlotKind.Engine, index = 0, parts = PartCatalog.Engines, current = loadout.engine });
+                list.Add(new Slot { title = hero ? "Uçuş Büyüsü" : "Kanatlar", kind = SlotKind.Wings, index = 0, parts = PartCatalog.Wings, current = loadout.wings });
+                list.Add(new Slot { title = hero ? "Tılsım (can)" : "Zırh", kind = SlotKind.Armor, index = 0, parts = PartCatalog.Armors, current = loadout.armor });
                 break;
             case Tab.Weapons:
                 for (int i = 0; i < Craft().weapons; i++)
-                    list.Add(MakeSlot($"Silah {i + 1}  •  {(i < 2 ? "gövde" : "kanat")}", SlotKind.Weapon, i, PartCatalog.Weapons, loadout.weapons[i]));
+                    list.Add(MakeSlot(Craft().character ? $"Silah {i + 1}  •  {(i == 0 ? "sağ el" : "sol el")}" : $"Silah {i + 1}  •  {(i < 2 ? "gövde" : "kanat")}",
+                        SlotKind.Weapon, i, PartCatalog.Weapons, loadout.weapons[i]));
                 break;
             case Tab.Missiles:
                 string[] pylon = { "sol kanat altı", "sağ kanat altı" };
@@ -313,8 +320,10 @@ public class HangarController : MonoBehaviour
                 break;
             default:
                 string[] mount = { "sırt (üst)", "karın (alt)" };
+                string[] shoulder = { "sol omuz", "sağ omuz" };
                 for (int i = 0; i < Craft().turrets; i++)
-                    list.Add(MakeSlot($"Taret {i + 1}  •  {mount[i]}", SlotKind.Turret, i, PartCatalog.Turrets, loadout.turrets[i]));
+                    list.Add(MakeSlot(Craft().character ? $"Yardımcı {i + 1}  •  {shoulder[i]}" : $"Taret {i + 1}  •  {mount[i]}",
+                        SlotKind.Turret, i, PartCatalog.Turrets, loadout.turrets[i]));
                 break;
         }
         return list;
@@ -474,20 +483,26 @@ public class HangarController : MonoBehaviour
         Hud.Fill(new Rect(0f, 0f, W, TopH), new Color(0.03f, 0.05f, 0.08f, 0.85f));
         Hud.Text(new Rect(Gap + 4f, 12f, 220f, 40f), "HANGAR", Color.white, 30, TextAnchor.MiddleLeft);
 
-        // Ucak sekmeleri (kilitli ucaklar sonu kilit isaretiyle gorunur; secilip incelenebilir)
+        // Ucak sekmeleri iki sirada: ustte ucaklar, altta kahramanlar (kilitliler kilit isaretiyle gorunur; secilip incelenebilir)
         string[] names = PartCatalog.ModelNames;
         float gap = 4f;
         float x = 244f;      // "HANGAR" basligi ile boya secicisi arasinda
-        float bh = 42f;
+        float bh = 38f;
+        int planeCount = PlaneBuilder.HeroStart;
         // Sekme genisligi ucak sayisina gore daralir (boya secicisine tasmasin)
-        float bw = Mathf.Min(108f, (W - Gap - 330f - 8f - x) / names.Length - gap);
+        float bw = Mathf.Min(108f, (W - Gap - 330f - 8f - x) / Mathf.Max(planeCount, 1) - gap);
+        Hud.Text(new Rect(x, 56f, 130f, bh), "KAHRAMANLAR", Gold, 13, TextAnchor.MiddleLeft, false);
         for (int i = 0; i < names.Length; i++)
         {
             bool owned = Unlocks.OwnsAircraft(i);
             string label = ShortName(names[i]);
-            Rect r = new Rect(x + i * (bw + gap), 11f, bw, bh);
+            bool heroRow = i >= planeCount;
+            int col = heroRow ? i - planeCount : i;
+            float rowX = heroRow ? x + 130f : x;
+            float rowBw = heroRow ? 118f : bw;
+            Rect r = new Rect(rowX + col * (rowBw + gap), heroRow ? 56f : 11f, rowBw, bh);
 
-            if (Btn(r, label, bw < 110f ? 11 : 13, i == model, owned ? Gold : new Color(1f, 0.4f, 0.35f)) && i != model)
+            if (Btn(r, label, rowBw < 110f ? 11 : 13, i == model, owned ? Gold : new Color(1f, 0.4f, 0.35f)) && i != model)
                 lastDesc = CycleModel(i);
 
             if (!owned)
@@ -597,7 +612,8 @@ public class HangarController : MonoBehaviour
         Hud.Fill(new Rect(r.x, r.y, 5f, r.height), empty ? new Color(1f, 1f, 1f, 0.15f) : accent);
 
         Hud.Text(new Rect(r.x + 56f, r.y + 7f, r.width - 112f, 16f), s.title, Dim, 12, TextAnchor.UpperLeft, false);
-        Hud.Text(new Rect(r.x + 56f, r.y + 24f, r.width - 112f, 28f), part.name,
+        string partName = Craft().character && !string.IsNullOrEmpty(part.heroName) ? part.heroName : part.name;
+        Hud.Text(new Rect(r.x + 56f, r.y + 24f, r.width - 112f, 28f), partName,
             empty ? new Color(1f, 1f, 1f, 0.45f) : Color.white, 20, TextAnchor.UpperLeft);
         Hud.Text(new Rect(r.x + 56f, r.y + 56f, r.width - 112f, 24f), Summary(s.kind, part, s.current),
             empty ? Dim : new Color(1f, 0.92f, 0.65f), 12, TextAnchor.UpperLeft, false);

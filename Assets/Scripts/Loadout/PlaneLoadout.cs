@@ -39,6 +39,11 @@ public class PlaneLoadout
         for (int i = 0; i < shields.Length; i++) if (!Unlocks.IsOpen(model, SlotKind.Shield, i)) shields[i] = 0;
         for (int i = 0; i < turrets.Length; i++) if (!Unlocks.IsOpen(model, SlotKind.Turret, i)) turrets[i] = 0;
         for (int i = 0; i < missiles.Length; i++) if (!Unlocks.IsOpen(model, SlotKind.Missile, i)) missiles[i] = 0;
+
+        // Kahramanlar yalniz kendi silah grubunu takar, ucaklar yalniz ucak silahlarini (yanlis grup -> grubun ilk silahi)
+        int group = AircraftCatalog.Get(model).weaponGroup;
+        for (int i = 0; i < weapons.Length; i++)
+            if (weapons[i] > 0 && PartCatalog.Weapons[weapons[i]].group != group) weapons[i] = PartCatalog.FirstWeaponOfGroup(group);
     }
 
     private static int[] Fix(int[] src, int length, int optionCount)
@@ -189,7 +194,7 @@ public static class LoadoutMath
 public static class LoadoutStore
 {
     private const string Key = "PlaneShootEmUp.Loadouts.v1";
-    public const int ModelCount = 9;   // AircraftCatalog.Count ile ayni olmali
+    public const int ModelCount = 12;  // AircraftCatalog.Count ile ayni olmali
 
     [Serializable]
     private class SaveData

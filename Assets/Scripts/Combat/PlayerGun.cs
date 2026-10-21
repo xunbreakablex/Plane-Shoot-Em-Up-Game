@@ -169,7 +169,13 @@ public partial class PlayerGun : MonoBehaviour
         IsFiring = trigger && !plane.IsCrashed && HasWeapons && !Overheated;
         TickHeat(IsFiring);
 
-        if (IsFiring) FireWeapons(plane, loadout);
+        if (IsFiring)
+        {
+            FireWeapons(plane, loadout);
+            // Kahraman: saldirirken ara ara unlem ("ha!", "ya!")
+            int hero = HeroVoice.HeroOf(flight.CurrentIndex);
+            if (hero >= 0) HeroVoice.Attack(hero, plane.transform.position);
+        }
         else StopBeams();
 
         UpdateMissiles(plane, loadout);
@@ -617,6 +623,7 @@ public partial class PlayerGun : MonoBehaviour
                 {
                     shot.splash = def.splash;
                     if (def.splash > 0f) shot.lifetime = def.range / Mathf.Max(bulletSpd, 1f);
+                    if (def.look > 0) shot.ApplyLook(def.look);   // kahraman mermisi: yildiz / ki kuresi
                 }
             }
 
