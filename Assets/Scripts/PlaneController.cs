@@ -1215,6 +1215,8 @@ public class PlaneController : MonoBehaviour
 
     private bool rushMode;
     private Vector2 rushOffset;       // cercevede konum (m): x sag, y yukari
+    private Vector2 rushWind;         // dis surukleme (m/s, cercevede); SetRushWind her adim yeniler
+    private float rushWindUntil;
     private Vector2 rushVel;          // kayma hizi (m/s)
     private Vector2 rushMove;         // kayma girisi -1..1
     private Vector2 rushAim;          // burun acisi (derece): x saga, y yukari
@@ -1312,7 +1314,8 @@ public class PlaneController : MonoBehaviour
 
         // Kayma: hiz hedefe yumusakca yaklasir; cercevenin kenarinda durur
         rushVel = Vector2.Lerp(rushVel, rushMove * RushStrafeSpeed, 1f - Mathf.Exp(-RushStrafeResponse * dt));
-        rushOffset += rushVel * dt;
+        Vector2 wind = Time.time < rushWindUntil ? rushWind : Vector2.zero;
+        rushOffset += (rushVel + wind) * dt;
         if (Mathf.Abs(rushOffset.x) > CombatManager.RushHalfWidth)
         {
             rushOffset.x = Mathf.Sign(rushOffset.x) * CombatManager.RushHalfWidth;
@@ -1375,6 +1378,16 @@ public class PlaneController : MonoBehaviour
         rb.position = to;
         transform.position = to;
         return meters;
+    }
+
+    /// <summary>
+    /// Boss fazinda dis surukleme (Kartal ruzgari): ucak cercevede bu hizla (m/s) itilir, kendi kaymasi ustune biner.
+    /// Her fizik adiminda yenilenmezse 0,1 sn sonra kendiliginden durur.
+    /// </summary>
+    public void SetRushWind(Vector2 velocity)
+    {
+        rushWind = velocity;
+        rushWindUntil = Time.time + 0.1f;
     }
 
     /// <summary>Boss fazinda yeniden dogus: ucak cercevenin ortasina konur.</summary>

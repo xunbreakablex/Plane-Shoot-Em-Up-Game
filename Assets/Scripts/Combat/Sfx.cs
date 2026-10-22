@@ -145,6 +145,31 @@ public static class Sfx
     public static AudioClip KillDing => killDing != null ? killDing : (killDing = MakeKillDing());
     public static AudioClip BossAttack => bossAttack != null ? bossAttack : (bossAttack = MakeBossAttack());
 
+    // Ruzgar ugultusu (Kartal firtina kanadi): yavasca dalgalanan suzgecli gurultu, kabarip diner
+    private static AudioClip wind;
+    public static AudioClip Wind => wind != null ? wind : (wind = MakeWind());
+
+    private static AudioClip MakeWind()
+    {
+        const float len = 4f;
+        int n = (int)(Rate * len);
+        var d = new float[n];
+        var rng = new System.Random(77);
+        float y = 0f, y2 = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            float noise = (float)rng.NextDouble() * 2f - 1f;
+            // Suzgec acikligi yavasca dalgalanir: "vuuuu" ugultusu
+            float cut = 0.02f + 0.05f * (0.5f + 0.5f * Mathf.Sin(t * 2.3f) * Mathf.Sin(t * 0.9f + 1f));
+            y += (noise - y) * cut;
+            y2 += (y - y2) * 0.3f;
+            float env = Mathf.Clamp01(t / 0.9f) * Mathf.Clamp01((len - t) / 1.2f);
+            d[i] = Mathf.Clamp(y2 * 7f * env, -1f, 1f);
+        }
+        return Create("wind", d);
+    }
+
     // Lazer uguldamasi: 0,5 sn dikisiz dongu (frekanslar tam periyot icin 100 Hz'in katlari)
     private static AudioClip MakeBeamHum()
     {

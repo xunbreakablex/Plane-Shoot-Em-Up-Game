@@ -128,6 +128,12 @@ public partial class CombatManager
             DrawVignette(new Color(1f, 0.25f, 0.08f), (0.2f + 0.3f * urgency) * (0.8f + 0.2f * Mathf.Sin(Time.unscaledTime * 18f)));
             DrawGapArrow(zx, new Color(1f, 0.45f, 0.2f), 6f, $"KAÇ!  {Mathf.Max(0f, zLeft):0.0}", null, 1.4f);
         }
+        else if (limbBrain.GaleDanger(out Vector3 up, out float gk))
+        {
+            // Kartal ruzgari: ekran kenari soluk mavi-beyaz, ruzgarin tersine "KARSI KAY" oku
+            DrawVignette(new Color(0.75f, 0.92f, 1f), 0.12f + 0.12f * gk);
+            DrawGapArrow(up, new Color(0.75f, 0.95f, 1f), 6f, "RÜZGÂRA KARŞI KAY!", null, 1.3f);
+        }
     }
 
     // Supurme: oyuncu kilitli seritteyse en yakin kenara buyuk "KAC" oku (yatay taramada yukari/asagi, dikeyde saga/sola)

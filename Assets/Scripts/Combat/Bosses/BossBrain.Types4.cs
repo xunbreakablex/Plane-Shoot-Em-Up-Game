@@ -21,7 +21,8 @@ public partial class BossBrain
         switch (step++ % 5)
         {
             case 0:
-                Fan(eagleBeak.position, AimFrom(eagleBeak.position, 215f, 4f), 7, 40f, 215f, 1);          // tuy yagmuru
+                if (mgr.RushActive) StartGale();                                                         // boss fazi imza: firtina kanadi
+                else Fan(eagleBeak.position, AimFrom(eagleBeak.position, 215f, 4f), 7, 40f, 215f, 1);     // tuy yagmuru
                 break;
             case 1:
             {
@@ -50,6 +51,13 @@ public partial class BossBrain
     private void EagleAnimate()
     {
         float flap = Mathf.Sin(age * (5f + phase)) * 22f;
+        // Firtina kanadi: once kanatlar yukari acilir, ruzgar boyunca hizli ve genis cirpar
+        if (GaleBusy)
+        {
+            float since = Time.time - galeStart;
+            flap = since < GaleWarn ? Mathf.Lerp(flap, -55f, Mathf.Clamp01(since / GaleWarn * 2f))
+                                    : Mathf.Sin(age * 16f) * 48f;
+        }
         if (eagleWingL != null) eagleWingL.localRotation = Quaternion.Euler(0f, 0f, -flap);
         if (eagleWingR != null) eagleWingR.localRotation = Quaternion.Euler(0f, 0f, flap);
     }

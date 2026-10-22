@@ -18,13 +18,14 @@ public partial class BossBrain
         public float born, fireAt;
         public float chaseSpeed;      // > 0: kilitlenene kadar oyuncuyu kovalar
         public float lockAt;
-        public int style;             // 0 isik, 1 bomba, 2 ates, 3 kiskac
+        public int style;             // 0 isik, 1 bomba, 2 ates, 3 kiskac, 4 tuy firtinasi
         public bool fired;
     }
 
     private const float ZoneAhead = 80f;          // halkalarin cizildigi derinlik (oyuncunun onunde)
     private const float ZoneLinger = 0.35f;       // patlamadan sonra gorsel kalma suresi
     private const int ZoneRingPoints = 40;
+    private const float ZoneFeatherShow = 1.7f;    // tuy firtinasi halkalarinin patlamadan once gorunme suresi
 
     private readonly List<Zone> zones = new List<Zone>();
     private readonly List<LineRenderer> zoneRings = new List<LineRenderer>();
@@ -40,6 +41,7 @@ public partial class BossBrain
             case 0: return new Color(1f, 0.92f, 0.45f);
             case 1: return new Color(1f, 0.55f, 0.2f);
             case 2: return new Color(1f, 0.25f, 0.1f);
+            case 4: return new Color(0.9f, 0.97f, 1f);
             default: return new Color(0.4f, 0.9f, 1f);
         }
     }
@@ -194,6 +196,11 @@ public partial class BossBrain
                     mgr.SpawnHitSpark(world, 3f);
                     Sfx.PlayAt(Sfx.Zap, world, 0.6f);
                 }
+                else if (z.style == 4)
+                {
+                    mgr.SpawnHitSpark(world, 3.5f);
+                    Sfx.PlayAt(Sfx.Crack, world, 0.5f);
+                }
                 else
                 {
                     mgr.SpawnExplosion(world, z.style == 2 ? 2.2f : 1.8f);
@@ -227,6 +234,13 @@ public partial class BossBrain
             Vector3 c = OverlayPoint(z.center, ZoneAhead);
             Color col = ZoneColor(z.style);
             float u = Mathf.Clamp01((Time.time - z.born) / Mathf.Max(z.fireAt - z.born, 0.01f));
+            if (z.style == 4 && !z.fired)
+            {
+                // Tuy firtinasi: sonraki dalgalarin halkasi patlamadan kisa sure once belirir (kenar ust uste halka dolmasin)
+                float shown = Time.time - (z.fireAt - ZoneFeatherShow);
+                if (shown < 0f) { ring.enabled = false; fill.enabled = false; continue; }
+                u = Mathf.Clamp01(shown / ZoneFeatherShow);
+            }
 
             if (!z.fired)
             {
