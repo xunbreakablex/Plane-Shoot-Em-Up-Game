@@ -31,6 +31,8 @@ public partial class BossBrain
         dieVel = vel * 0.25f;
         chargeActive = false;
         ClearWarns();
+        // Havadaki mermiler de gider: orta boss oldukten sonra (asama sonu temizligi yalniz ana boss'ta) vurmasin
+        Bullet.ClearEnemyBullets();
         if (beamLine != null) beamLine.enabled = false;
         if (beamGlow != null) beamGlow.enabled = false;
         beamActive = false;
