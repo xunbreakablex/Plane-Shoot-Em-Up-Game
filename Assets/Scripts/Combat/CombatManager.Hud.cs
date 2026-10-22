@@ -942,7 +942,8 @@ public partial class CombatManager
         }
     }
 
-    // Boss, asama ve ipuclari: tek satirlik buyuk duyuru
+    // Boss, asama ve ipuclari: tek satirlik duyuru. Ekranin altinda, ucagin altinda durur (Ace Combat telsiz alt yazisi
+    // gibi): ust-ortadayken nisangahin hemen ustunu, yani dusmanlarin ve hedef oklarinin goruldugu yeri kapatiyordu.
     private void DrawBanner()
     {
         if (!bannerActive || string.IsNullOrEmpty(currentBanner.text)) return;
@@ -952,17 +953,20 @@ public partial class CombatManager
         float fadeOut = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(currentBanner.duration - 0.5f, currentBanner.duration, age));
         float a = fadeIn * fadeOut;
 
-        // Sag kolona ve sol panele binmemesi icin orta seritte kalir; uzun metin kuculur
-        float bandW = Hud.W - 2f * (Hud.RightColumnWidth + 40f);
+        // Alt kenarda solda yardim paneli (acikken), sagda radar var: serit aralarinda kalir; uzun metin kuculur
+        float left = Mathf.Max(Hud.RightColumnWidth + 40f, FlightTestManager.HelpPanelRight + 16f);
+        float right = Hud.W - Mathf.Max(Hud.RightColumnWidth + 40f, 2f * RadarRadius + Hud.Margin + 24f);
+        if (FlightTestManager.HelpPanelRight <= 0f) right = Hud.W - left;   // yardim kapali: ortada simetrik
+        float bandW = Mathf.Max(200f, right - left);
         float fit = bandW / Mathf.Max(1f, currentBanner.text.Length * 0.56f);
-        float baseSize = Mathf.Min(32f, fit);
+        float baseSize = Mathf.Min(27f, fit);
 
-        float punch = 1f + 0.3f * Mathf.Exp(-age * 7f);
+        float punch = 1f + 0.25f * Mathf.Exp(-age * 7f);
         int size = Mathf.RoundToInt(baseSize * punch);
-        float y = 176f;
+        float y = Hud.H - 150f;   // alt uyarilarin (YUKSEL!, silah yok: H-62..H-92) ustunde
 
-        Rect band = new Rect(Hud.W * 0.5f - bandW * 0.5f, y - 6f, bandW, 32f * 1.35f + 12f);
-        Hud.Fill(band, new Color(0f, 0f, 0f, 0.4f * a));
+        Rect band = new Rect(left, y - 6f, bandW, 27f * 1.35f + 12f);
+        Hud.Fill(band, new Color(0f, 0f, 0f, 0.32f * a));
 
         Color col = currentBanner.color;
         col.a = a;

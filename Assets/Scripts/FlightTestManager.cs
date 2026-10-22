@@ -263,6 +263,9 @@ public class FlightTestManager : MonoBehaviour
         "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
 
+    /// <summary>Acik yardim panelinin sag kenari (HUD birimi); kapaliyken 0. Alttaki duyuru seridi buna binmez.</summary>
+    public static float HelpPanelRight { get; private set; }
+
     private void DrawHelp(PlaneController p)
     {
         // Boss fazina girince yardim kendiliginden acilir ve o fazin kontrollerini gosterir
@@ -272,6 +275,7 @@ public class FlightTestManager : MonoBehaviour
         bool open = helpToggled || auto;
 
         float baseY = Hud.H - Hud.Margin - 20f;
+        HelpPanelRight = 0f;
         Hud.Text(new Rect(Hud.Margin, baseY, 500f, 20f),
             open ? "H: kontrolleri gizle" : "H: kontroller   •   ESC: duraklat / mağaza",
             new Color(0.8f, 0.85f, 0.9f), 12, TextAnchor.UpperLeft, false);
@@ -305,6 +309,7 @@ public class FlightTestManager : MonoBehaviour
         float w = 520f;
         float h = lines.Length * 19f + 14f;
         Rect panel = new Rect(Hud.Margin, baseY - h - 6f, w, h);
+        HelpPanelRight = panel.xMax;
         Hud.Panel(panel, 0.5f);
         if (rush) Hud.Fill(new Rect(panel.x, panel.y, w, 3f), new Color(1f, 0.8f, 0.35f));
 
