@@ -315,13 +315,14 @@ public partial class PlayerGun
         b.core.SetPosition(idx, from); b.glow.SetPosition(idx, from); idx++;
         for (int h = 0; h < zapChain.Count; h++)
         {
-            Vector3 to = zapChain[h].transform.position;
+            Vector3 to = zapChain[h].AimPoint;   // korunan boss'ta hedef uzuv; merkezdeki cekirdegi ortmesin
             float len = Vector3.Distance(from, to);
             for (int i = 1; i <= LightningSegments; i++)
             {
                 float f = (float)i / LightningSegments;
                 Vector3 p = Vector3.Lerp(from, to, f);
-                if (i < LightningSegments) p += Random.insideUnitSphere * len * 0.05f;
+                // Titreme ortada en buyuk, uclarda sifir: hedefin ustunde mor karalama olmasin (eskiden uca kadar %5)
+                if (i < LightningSegments) p += Random.insideUnitSphere * len * 0.05f * Mathf.Sin(f * Mathf.PI);
                 b.core.SetPosition(idx, p);
                 b.glow.SetPosition(idx, p);
                 idx++;
@@ -330,6 +331,8 @@ public partial class PlayerGun
         }
         SetLine(b.core, 0.55f, ZapCore);
         SetLine(b.glow, 2.2f, ZapGlow);
+        b.core.endWidth = 0.3f;   // hedefe dogru incelir
+        b.glow.endWidth = 0.8f;
         b.core.enabled = true;
         b.glow.enabled = true;
     }
