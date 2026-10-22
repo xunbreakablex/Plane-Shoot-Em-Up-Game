@@ -97,9 +97,11 @@ public partial class BossBrain : MonoBehaviour
         }
     }
 
+    // Boss carpma (temas) hasari: eskiden 3-4 ile oyundaki en buyuk tek vurustu; dalis artik uyarili ve kacilabilir,
+    // yine de tek temas en fazla 2
     public static int RamOf(BossType t)
     {
-        return t == BossType.Dragon || t == BossType.Zeppelin ? 4 : 3;
+        return 2;
     }
 
     // Boss cani (vurus). Her boss, o noktada acik olan donanima gore ayarli (isabet ~%50 varsayimi):
@@ -287,6 +289,7 @@ public partial class BossBrain : MonoBehaviour
         TickWall();
         DrawKiWave();
         DrawFistLines();
+        DrawChargeWarn();
         DrawSweep();
         DrawZones();
         DrawGale();
@@ -540,6 +543,7 @@ public partial class BossBrain : MonoBehaviour
         EndSweep();
         ClearZones();
         EndGale();
+        HideChargeWarn();
         if (gapLine != null) gapLine.enabled = false;
         foreach (var lr in warnPool) if (lr != null) lr.enabled = false;
     }
@@ -838,6 +842,15 @@ public partial class BossBrain : MonoBehaviour
     // ----------------------------------------------------------- hamle (charge)
     // Hazirlik (yavaslar, oyuncuya doner) -> kilitlenen noktaya dalis (oyuncu yerinde kalirsa carpar, temas hasari
     // EnemyPlane.ScriptedStep'te) -> eski yerine, oyuncunun onundeki konumuna hizla geri donus. Arkaya gecip kaybolmaz.
+    // Boss fazinda uyarili: hazirlik boyunca hedefte sari halka oyuncuyu izler; dalistan ChargeLockTime once hedef
+    // oyuncunun o anki yerine KILITLENIR (halka kizarir, boss'tan hedefe kirmizi cizgi, HUD "DALIS! KAC" oku).
+    // Halka boss govdesinin dalis yonune dik yaricapi kadardir: disina cikan oyuncuya carpmaz.
+
+    private const float ChargeLockTime = 0.65f;
+    private const float ChargeMinTelegraphRush = 1.05f;
+    private bool chargeLocked;
+    private float chargeRadius;
+    private LineRenderer chargeRing, chargeLine;
 
     private bool chargeActive;
     private int chargeStage;            // 0 hazirlik, 1 dalis, 2 donus
@@ -855,7 +868,7 @@ public partial class BossBrain : MonoBehaviour
     private void StartCharge(float telegraph, float speed, float duration)
     {
         // Vurkac hizli olsun: boss fazinda hazirlik kisa, dalis hizli; disarida da eskisinden cevik
-        if (mgr.RushActive) { telegraph *= 0.7f; speed *= 1.5f; }
+        if (mgr.RushActive) { telegraph = Mathf.Max(ChargeMinTelegraphRush, telegraph * 0.9f); speed *= 1.5f; }
         else { telegraph *= 0.85f; speed *= 1.25f; }
         chargeActive = true;
         chargeStage = 0;
@@ -863,7 +876,23 @@ public partial class BossBrain : MonoBehaviour
         chargeTelegraph = telegraph;
         chargeSpeed = speed;
         chargeDuration = duration;
+        chargeLocked = false;
+        chargeRadius = 0f;
         nextAttack = Mathf.Max(nextAttack, Time.time + telegraph + duration + 2.2f);
+    }
+
+    /// <summary>Govdenin (tum collider'lar) verilen yone dik en buyuk yaricapi + temas payi (m).</summary>
+    private float BodyRadiusAcross(Vector3 dir)
+    {
+        float r = 6f;
+        foreach (var c in GetComponentsInChildren<Collider>())
+        {
+            if (c == null || !c.enabled) continue;
+            Bounds b = c.bounds;
+            Vector3 off = Vector3.ProjectOnPlane(b.center - pos, dir);
+            r = Mathf.Max(r, off.magnitude + Mathf.Max(b.extents.x, Mathf.Max(b.extents.y, b.extents.z)));
+        }
+        return r + GameSettings.Current.ramPlayerRadius + 1f;
     }
 
     // true: hareketi bu kare hamle yonetiyor (donus asamasinda normal hareket hizlandirilmis calisir)
@@ -873,6 +902,14 @@ public partial class BossBrain : MonoBehaviour
 
         if (chargeStage == 0)
         {
+            // Boss fazi: dalistan ChargeLockTime once hedef kilitlenir (yerinde kalan carpar, kayan kurtulur)
+            if (mgr.RushActive && !chargeLocked && Time.time - chargeStart >= chargeTelegraph - ChargeLockTime)
+            {
+                chargeLocked = true;
+                chargeTarget = player.position;
+                chargeRadius = BodyRadiusAcross((chargeTarget - pos).normalized);
+                Sfx.PlayAt(Sfx.Lock, player.position, 1f);
+            }
             if (Time.time - chargeStart < chargeTelegraph)
             {
                 // Hazirlik: yavasca durur, hedefe doner (parcalar parlar)
@@ -882,8 +919,8 @@ public partial class BossBrain : MonoBehaviour
                 return true;
             }
 
-            // Kilit: oyuncunun o anki yeri (biraz onde tutma). Dalis bu noktaya gider; oyuncu kayarak kacabilir
-            chargeTarget = player.position + mgr.PlayerVelocity * 0.3f;
+            // Kilit: oyuncunun o anki yeri (boss disinda biraz onde tutma; boss fazinda erken kilitlendi)
+            if (!chargeLocked) chargeTarget = player.position + mgr.PlayerVelocity * 0.3f;
             Vector3 to = chargeTarget - pos;
             float d = to.magnitude;
             chargeDir = d > 0.1f ? to / d : transform.forward;
@@ -915,6 +952,61 @@ public partial class BossBrain : MonoBehaviour
         float backAt = 220f * (mgr.RushActive ? RushAnchorScale : 1f);
         if (Vector3.Dot(rel, anchorFwd) > backAt || Time.time >= chargeStageEnd) chargeActive = false;
         return false;
+    }
+
+    // Dalis uyarisi (Update): hazirlikta oyuncuyu izleyen sari halka, kilitte yanip sonen kirmizi halka + boss'tan
+    // hedefe cizgi. Halka bolge halkalari gibi oyuncunun onundeki duzlemde (OverlayPoint) cizilir.
+    private void DrawChargeWarn()
+    {
+        bool show = chargeActive && chargeStage == 0 && mgr.RushActive && player != null;
+        if (!show) { HideChargeWarn(); return; }
+        if (chargeRing == null) { chargeRing = MakeZoneLine("ChargeRing", true); chargeLine = MakeZoneLine("ChargeLine", false); }
+        Vector3 right = Vector3.Cross(Vector3.up, mgr.RushHeading).normalized;
+        Vector3 aimAt = chargeLocked ? chargeTarget : player.position;
+        Vector3 rel = aimAt - mgr.RushOrigin;
+        Vector2 frame = new Vector2(Vector3.Dot(rel, right), rel.y);
+        float r = chargeLocked ? chargeRadius : BodyRadiusAcross((player.position - pos).normalized);
+        float blink = chargeLocked ? 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.time * 24f)) : 0.8f;
+        Color c = chargeLocked ? new Color(1f, 0.2f, 0.12f, blink) : new Color(1f, 0.85f, 0.25f, 0.75f);
+        SetCircle(chargeRing, OverlayPoint(frame, ZoneAhead), right, r, chargeLocked ? 2.2f : 1.2f, c);
+        chargeLine.loop = false;
+        chargeLine.positionCount = 2;
+        chargeLine.SetPosition(0, pos);
+        chargeLine.SetPosition(1, aimAt);
+        chargeLine.startWidth = chargeLocked ? 2.2f : 0.8f;
+        chargeLine.endWidth = 0.4f;
+        SetLineColor(chargeLine, c);
+        chargeLine.enabled = true;
+    }
+
+    private void HideChargeWarn()
+    {
+        if (chargeRing != null) chargeRing.enabled = false;
+        if (chargeLine != null) chargeLine.enabled = false;
+    }
+
+    /// <summary>
+    /// HUD: dalis hedefi kilitliyken (hazirlik sonu ya da dalis) oyuncu govdenin yolundaysa en yakin guvenli nokta ve
+    /// dalisa kalan sure.
+    /// </summary>
+    public bool ChargeDanger(out Vector3 exit, out float timeLeft)
+    {
+        exit = Vector3.zero;
+        timeLeft = 0f;
+        if (!chargeActive || !chargeLocked || chargeStage > 1 || player == null || !mgr.RushActive) return false;
+        Vector3 right = Vector3.Cross(Vector3.up, mgr.RushHeading).normalized;
+        Vector3 d = player.position - chargeTarget;
+        Vector2 off = new Vector2(Vector3.Dot(d, right), d.y);
+        float margin = chargeRadius + 6f;
+        if (off.magnitude >= margin) return false;
+        Vector2 dir = off.magnitude > 0.5f ? off.normalized : Vector2.up;
+        Vector2 pf = PlayerFrame();
+        Vector2 target = pf + dir * (margin + 6f - off.magnitude);
+        if (Mathf.Abs(target.x) > CombatManager.RushHalfWidth - 6f || target.y > CombatManager.RushUp - 6f || target.y < -CombatManager.RushDown + 6f)
+            target = pf - dir * (margin + 6f + off.magnitude);
+        exit = KiWaveWorld(target);
+        timeLeft = chargeStage == 0 ? chargeTelegraph - (Time.time - chargeStart) : 0f;
+        return true;
     }
 
     // Boss fazi: cerceve kayip dondugunde, dunyada tutulan ara noktalar ve yonler de cerceveyle birlikte tasinir

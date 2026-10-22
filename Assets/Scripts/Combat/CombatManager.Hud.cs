@@ -119,6 +119,11 @@ public partial class CombatManager
     {
         if (limbBrain == null || limbBrainOf == null || limbBrainOf.IsDead) return;
         if (limbBrain.BeamDanger(out Vector3 bx, out bool bLocked, out bool bInside) && (bInside || !bLocked)) DrawBeamWarn(bx, bLocked);
+        else if (limbBrain.ChargeDanger(out Vector3 cx, out float cLeft))
+        {
+            DrawVignette(new Color(1f, 0.2f, 0.08f), 0.28f + 0.12f * Mathf.Sin(Time.unscaledTime * 22f));
+            DrawGapArrow(cx, new Color(1f, 0.4f, 0.2f), 6f, $"DALIŞ! KAÇ  {Mathf.Max(0f, cLeft):0.0}", null, 1.6f);
+        }
         else if (limbBrain.FistDanger(out Vector3 fx, out float fLeft))
         {
             DrawVignette(new Color(1f, 0.25f, 0.08f), 0.25f + 0.12f * Mathf.Sin(Time.unscaledTime * 20f));

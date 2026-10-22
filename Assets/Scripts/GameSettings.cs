@@ -9,7 +9,7 @@ public class GameSettings : ScriptableObject
     // ------------------------------------------------------- hasar / carpisma
 
     [Header("Çarpışma")]
-    [Tooltip("Düşmana çarpınca alınan hasar = düşman türünün çarpma hasarı (Sürü 1, Avcı 2, Ağır 4, boss 4-6) x bu çarpan")]
+    [Tooltip("Düşmana çarpınca alınan hasar = düşman türünün çarpma hasarı (Sürü 1, Avcı 2, Ağır 4, boss 2) x bu çarpan")]
     [Min(0f)] public float ramDamageMultiplier = 1f;
     [Tooltip("Açıksa çarpma hasarı kalkanı atlar ve doğrudan gövdeye işler (kalkan çarpmayı bedava yapmasın)")]
     public bool ramIgnoresShield = false;
