@@ -94,5 +94,17 @@ public partial class BossBrain
             float p = 1f + 0.15f * Mathf.Sin(age * 6f);
             golemCore.localScale = new Vector3(3.2f * p, 3.2f * p, 1.6f);
         }
+        NearShrink(golemFistL);
+        NearShrink(golemFistR);
+    }
+
+    // Kameranin dibine gelen yumruk (vurus aninda) ekrani kaplamasin: 60 m'den yakinda %50'ye kadar kuculur.
+    // Vurus yaricapi (FistHitRadius) boyuttan bagimsiz.
+    private static void NearShrink(Transform t)
+    {
+        if (t == null) return;
+        Camera c = Camera.main;
+        float d = c != null ? Vector3.Distance(c.transform.position, t.position) : 999f;
+        t.localScale = Vector3.one * Mathf.Lerp(0.5f, 1f, Mathf.Clamp01((d - 15f) / 45f));
     }
 }

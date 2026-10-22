@@ -165,9 +165,13 @@ public class EnemyBulletVisual : MonoBehaviour
             if (tracer != null) tracer.gameObject.SetActive(want < 2);   // yildiz/kurenin izi yok
         }
         bool magic = want >= 2;
-        core.localScale = Vector3.one * size;
-        halo.localScale = Vector3.one * (size * (big ? 1.5f : (magic ? 2.4f : 3.1f)) * pulse);
-        rim.localScale = Vector3.one * (size * (big ? 1.9f : (magic ? 2.9f : 4.0f)) * pulse);
+        // Kameraya cok yakin (oyuncuyu gecmis) mermi ekrani kaplamasin: 30 m'den yakinda hale ve cekirdek kuculur
+        // (cark yildizlari kameranin dibinden gecerken dev pembe toplar olup boss'u gizliyordu). Isabet yaricapi ayni.
+        float near = Mathf.Clamp01((dist - 4f) / 26f);
+        float coreNear = Mathf.Lerp(0.55f, 1f, near), glowNear = Mathf.Lerp(0.35f, 1f, near);
+        core.localScale = Vector3.one * size * coreNear;
+        halo.localScale = Vector3.one * (size * (big ? 1.5f : (magic ? 2.4f : 3.1f)) * pulse * glowNear);
+        rim.localScale = Vector3.one * (size * (big ? 1.9f : (magic ? 2.9f : 4.0f)) * pulse * glowNear);
 
         // Top kameraya doner (billboard); izdusumde yuvarlak kalir
         Quaternion face = cam.transform.rotation;
