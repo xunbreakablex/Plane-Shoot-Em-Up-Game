@@ -99,6 +99,10 @@ public static class PlaneBuilder
         BuildMissiles(root, model, loadout, stats.span);
         BuildTurrets(root, model, loadout, forGame);
 
+        // Kahraman: govde dik kalir, uzuvlar canlanir (bir kez kurulur; yeniden uygulamada taban poz bozulmasin)
+        if (IsHero(model) && root.GetComponent<HeroAnimator>() == null)
+            root.AddComponent<HeroAnimator>().Init(model - HeroStart);
+
         // Oyunda kalkan gorunmez; carpma noktasinda renkli alan belirir. Hangarda yalniz
         // cok silik bir kure kalkan kapsamini gosterir.
         if (!forGame) BuildShield(root, stats);

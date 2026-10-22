@@ -82,6 +82,8 @@ public partial class CombatManager
         // Eski yerden yeniye parlak cizgi + kivilcim + ses; kamera arkasindan yetisir
         Vector3 to = plane.transform.position;
         FollowCamera.AddDashLag(to - from);
+        HeroAnimator anim = plane.GetComponent<HeroAnimator>();
+        if (anim != null) anim.OnDash(dir);
 
         // Yol boyunca uc ardisik hayalet (anime "afterimage"): yeni yere yakin olan daha belirgin; kamera
         // kahramani izledigi icin eski yerdeki tek hayalet kadraj disinda kaliyordu
