@@ -419,7 +419,9 @@ public partial class CombatManager
         go.name = "Enemy_" + kind + "_" + modelPrefabs[model].name;
         go.transform.localScale = Vector3.one * info.scale;
 
-        Tint(go, info.tint, drop >= 0);
+        // Asama temasi: Cehennem Kapisi'nda iblis, Gokyuzu Tapinagi'nda melek / dusmus melek (yalniz gorunum)
+        EnemyThemes.Look themeLook = EnemyThemes.Pick(stage != null ? stage.theme : EnemyTheme.None, kind);
+        Tint(go, EnemyThemes.Tint(themeLook, info.tint), drop >= 0, themeLook != EnemyThemes.Look.None ? 0.75f : 0.5f);
         SetLayerRecursively(go, EnemyLayer);
 
         foreach (var trail in go.GetComponentsInChildren<TrailRenderer>())
@@ -442,7 +444,8 @@ public partial class CombatManager
         var enemy = go.AddComponent<EnemyPlane>();
         enemy.Init(this, HitsFor(kind), cruise, turn, kind,
             strafe ? EnemyBehavior.Strafe : EnemyBehavior.Chase, look, drop);
-        EngineFx.Attach(go, model, () => enemy.IsDead ? -1f : enemy.EngineThrottle);   // egzoz alevi + duman
+        EnemyThemes.Decorate(go, themeLook);
+        EngineFx.Attach(go, model, () => enemy.IsDead ? -1f : enemy.EngineThrottle, EnemyThemes.Style(themeLook));   // egzoz alevi + duman
 
         enemies.Add(enemy);
         RunState.RegisterSpawn(1);
@@ -487,7 +490,7 @@ public partial class CombatManager
         return Mathf.Max(kind == EnemyKind.Kamikaze ? 2 : 4, Mathf.RoundToInt(Mathf.Max(hits, floorHits)));
     }
 
-    public static void Tint(GameObject go, Color tint, bool carrier)
+    public static void Tint(GameObject go, Color tint, bool carrier, float strength = 0.5f)
     {
         // Guclendirme tasiyicilari belirgin acik renkte
         Color target = carrier ? Color.Lerp(tint, new Color(1f, 0.9f, 0.4f), 0.45f) : tint;
@@ -497,7 +500,7 @@ public partial class CombatManager
             if (r is TrailRenderer || r is ParticleSystemRenderer) continue;
             var mats = r.materials;
             for (int i = 0; i < mats.Length; i++)
-                mats[i].color = Color.Lerp(mats[i].color, target, 0.5f);
+                mats[i].color = Color.Lerp(mats[i].color, target, strength);   // tema dusmaninda daha baskin
             r.materials = mats;
         }
     }

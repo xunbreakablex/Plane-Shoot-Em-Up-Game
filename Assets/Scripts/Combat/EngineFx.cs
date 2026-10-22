@@ -17,6 +17,11 @@ public class EngineFx : MonoBehaviour
 
     private static Material softMaterial;
 
+    /// <summary>Iz temasi: tema dusmanlari (iblis kizil alev + kara duman, melek altin, dusmus melek mor parilti).</summary>
+    public enum Style { Normal, Hell, Holy, Fallen }
+
+    private Style style;
+
     private System.Func<float> throttle;
     private readonly List<ParticleSystem> fires = new List<ParticleSystem>();
     private readonly List<ParticleSystem> smokes = new List<ParticleSystem>();
@@ -27,11 +32,12 @@ public class EngineFx : MonoBehaviour
     private float shown = 0.3f;   // yumusatilmis gaz (alev aninda sicramasin)
 
     /// <summary>Ucak kokune bir kez eklenir; varsa mevcut olani dondurur.</summary>
-    public static EngineFx Attach(GameObject root, int model, System.Func<float> throttle)
+    public static EngineFx Attach(GameObject root, int model, System.Func<float> throttle, Style style = Style.Normal)
     {
         var fx = root.GetComponent<EngineFx>();
         if (fx != null) { fx.throttle = throttle; return fx; }
         fx = root.AddComponent<EngineFx>();
+        fx.style = style;
         fx.Build(model, throttle);
         return fx;
     }
@@ -87,6 +93,10 @@ public class EngineFx : MonoBehaviour
             fires.Add(MakeFire(p, 0.45f));
             smokes.Add(MakeSmoke(p));
         }
+
+        // Melek / dusmus melek: govdenin arkasindan parilti izi (kahramanlardaki gibi)
+        if (style == Style.Holy || style == Style.Fallen)
+            sparkles.Add(MakeSparkle(new Vector3(0f, 0f, -0.5f), style == Style.Holy ? new Color(1f, 0.85f, 0.35f) : new Color(0.65f, 0.3f, 1f)));
     }
 
     private void Update()
@@ -168,10 +178,13 @@ public class EngineFx : MonoBehaviour
 
         var col = ps.colorOverLifetime;
         col.enabled = true;
+        Color a = new Color(1f, 0.97f, 0.75f), b = new Color(1f, 0.6f, 0.15f), c = new Color(0.9f, 0.2f, 0.05f);
+        if (style == Style.Hell) { a = new Color(1f, 0.7f, 0.3f); b = new Color(0.95f, 0.2f, 0.05f); c = new Color(0.45f, 0.02f, 0.02f); }
+        else if (style == Style.Holy) { a = Color.white; b = new Color(1f, 0.9f, 0.55f); c = new Color(1f, 0.75f, 0.3f); }
+        else if (style == Style.Fallen) { a = new Color(0.9f, 0.7f, 1f); b = new Color(0.6f, 0.25f, 0.95f); c = new Color(0.25f, 0.05f, 0.4f); }
         var g = new Gradient();
         g.SetKeys(
-            new[] { new GradientColorKey(new Color(1f, 0.97f, 0.75f), 0f), new GradientColorKey(new Color(1f, 0.6f, 0.15f), 0.35f),
-                    new GradientColorKey(new Color(0.9f, 0.2f, 0.05f), 1f) },
+            new[] { new GradientColorKey(a, 0f), new GradientColorKey(b, 0.35f), new GradientColorKey(c, 1f) },
             new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0.85f, 0.5f), new GradientAlphaKey(0f, 1f) });
         col.color = new ParticleSystem.MinMaxGradient(g);
         ps.Play();
@@ -198,10 +211,14 @@ public class EngineFx : MonoBehaviour
 
         var col = ps.colorOverLifetime;
         col.enabled = true;
+        Color s0 = new Color(0.55f, 0.53f, 0.5f), s1 = new Color(0.75f, 0.75f, 0.75f);
+        float alpha = 0.28f;
+        if (style == Style.Hell || style == Style.Fallen) { s0 = new Color(0.08f, 0.05f, 0.05f); s1 = new Color(0.2f, 0.15f, 0.15f); alpha = 0.45f; }
+        else if (style == Style.Holy) { s0 = new Color(1f, 0.97f, 0.9f); s1 = Color.white; alpha = 0.22f; }
         var g = new Gradient();
         g.SetKeys(
-            new[] { new GradientColorKey(new Color(0.55f, 0.53f, 0.5f), 0f), new GradientColorKey(new Color(0.75f, 0.75f, 0.75f), 1f) },
-            new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.28f, 0.12f), new GradientAlphaKey(0f, 1f) });
+            new[] { new GradientColorKey(s0, 0f), new GradientColorKey(s1, 1f) },
+            new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(alpha, 0.12f), new GradientAlphaKey(0f, 1f) });
         col.color = new ParticleSystem.MinMaxGradient(g);
         ps.Play();
         return ps;

@@ -40,6 +40,9 @@ public class StageDef
     public string subtitle;
     public WaveDef[] waves;
 
+    // Dusman ucaklarinin gorunum temasi (EnemyThemes): davranis ayni, gorunum iblis / melek
+    public EnemyTheme theme;
+
     // Asama ortasi boss: dalga saati bu saniyeye gelince cikar; oldurulene kadar dalgalar durur
     public BossType midBoss;
     public float midBossTime;
@@ -148,6 +151,7 @@ public static class Stages
         new StageDef
         {
             title = "Cehennem Kapısı",
+            theme = EnemyTheme.Demon,
             subtitle = "Kanatlı iblisin ve ki savaşçısının topraklarına gir",
             midBoss = BossType.Demon, midBossTime = 60f,
             boss = BossType.KiWarrior, minFirepower = 32f,
@@ -178,6 +182,7 @@ public static class Stages
         new StageDef
         {
             title = "Gökyüzü Tapınağı",
+            theme = EnemyTheme.Heaven,
             subtitle = "Melek ve Yıldız Büyücüsü: son sınav",
             midBoss = BossType.Angel, midBossTime = 64f,
             boss = BossType.MagicalGirl, minFirepower = 38f,
@@ -293,6 +298,7 @@ public static class Stages
         return new StageDef
         {
             title = $"Sonsuz Savaş {k + 1}",
+            theme = src.theme,
             subtitle = $"{src.title}: düşman geri çekilmiyor, daha çok ve daha güçlü",
             waves = waves,
             midBoss = midType, midBossTime = Mathf.Max(48f, src.midBossTime - 2f * k),
