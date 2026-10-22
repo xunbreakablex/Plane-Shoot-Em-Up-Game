@@ -281,6 +281,8 @@ public partial class BossBrain
         if (kiWaveTube != null) Destroy(kiWaveTube.gameObject);
         if (kiWaveTubeMesh != null) Destroy(kiWaveTubeMesh);
         if (kiWaveTubeMat != null) Destroy(kiWaveTubeMat);
+        // Uyari hedef halkalari da bagimsiz (boss olcegi halkayi bozmasin)
+        foreach (var r in warnRingPool) if (r != null) Destroy(r.gameObject);
     }
 
     /// <summary>Bomba: yaklasan enerji duvarini dagitir.</summary>

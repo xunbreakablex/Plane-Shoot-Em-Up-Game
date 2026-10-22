@@ -488,6 +488,7 @@ public partial class BossBrain : MonoBehaviour
     private struct WarnLine { public Vector3 origin; public Vector3 dir; public float until; }
     private readonly List<WarnLine> warns = new List<WarnLine>();
     private readonly List<LineRenderer> warnPool = new List<LineRenderer>();
+    private readonly List<LineRenderer> warnRingPool = new List<LineRenderer>();
 
     private void Telegraphed(Vector3 origin, Vector3 dir, System.Action<CombatManager.RushMap> fire)
     {
@@ -514,21 +515,63 @@ public partial class BossBrain : MonoBehaviour
         for (int i = warns.Count - 1; i >= 0; i--)
             if (Time.time >= warns[i].until) warns.RemoveAt(i);
 
-        int used = 0;
+        // Cizgi oyuncuya dogru baktigi icin kameradan kisa gorunur (eskiden 0,7 m sabit, okunmuyordu): boss tarafinda
+        // kalin, uca dogru incelir; boss fazinda atisin oyuncunun derinligini kesecegi yerde kirmizi hedef halkasi
+        int used = 0, rings = 0;
+        float pulse = 0.75f + 0.25f * Mathf.Sin(Time.time * 28f);
         for (int i = 0; i < warns.Count; i++)
         {
             if (used >= warnPool.Count) warnPool.Add(MakeWarnLine());
             LineRenderer lr = warnPool[used++];
             WarnLine w = warns[i];
-            float width = 0.7f * (0.75f + 0.25f * Mathf.Sin(Time.time * 28f));
             lr.enabled = true;
             lr.SetPosition(0, w.origin);
             lr.SetPosition(1, w.origin + w.dir * WarnLength);
-            lr.startWidth = width;
-            lr.endWidth = width;
+            lr.startWidth = 2.4f * pulse;
+            lr.endWidth = 0.8f * pulse;
+
+            if (mgr.RushActive && player != null)
+            {
+                Vector3 h = mgr.RushHeading;
+                float along = Vector3.Dot(w.dir, h);
+                if (along < -0.2f)
+                {
+                    float t = Vector3.Dot(player.position - w.origin, h) / along;
+                    if (t > 0f)
+                    {
+                        if (rings >= warnRingPool.Count) warnRingPool.Add(MakeWarnRing());
+                        LineRenderer ring = warnRingPool[rings++];
+                        ring.enabled = true;
+                        ring.transform.position = w.origin + w.dir * t;
+                        ring.transform.rotation = Quaternion.LookRotation(h, Vector3.up);
+                        float k = Mathf.Clamp01((w.until - Time.time) / Mathf.Max(ShotWarning, 0.05f));
+                        ring.transform.localScale = Vector3.one * Mathf.Lerp(3.5f, 7f, k);   // ates yaklastikca daralir
+                        ring.widthMultiplier = 0.12f * pulse;   // yerel uzay: kalinlik da olcekle buyur
+                    }
+                }
+            }
         }
         for (int i = used; i < warnPool.Count; i++) warnPool[i].enabled = false;
+        for (int i = rings; i < warnRingPool.Count; i++) warnRingPool[i].enabled = false;
         DrawGapLine();
+    }
+
+    private LineRenderer MakeWarnRing()
+    {
+        var go = new GameObject("BossWarnRing");
+        go.transform.SetParent(null, false);
+        var lr = go.AddComponent<LineRenderer>();
+        lr.useWorldSpace = false;
+        lr.loop = true;
+        lr.positionCount = 20;
+        for (int i = 0; i < 20; i++)
+        {
+            float a = i * Mathf.PI * 2f / 20f;
+            lr.SetPosition(i, new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f));
+        }
+        lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        lr.sharedMaterial = warnPool.Count > 0 && warnPool[0] != null ? warnPool[0].sharedMaterial : MakeWarnLine().sharedMaterial;
+        return lr;
     }
 
     private LineRenderer MakeWarnLine()
@@ -562,6 +605,7 @@ public partial class BossBrain : MonoBehaviour
         HideChargeWarn();
         if (gapLine != null) gapLine.enabled = false;
         foreach (var lr in warnPool) if (lr != null) lr.enabled = false;
+        foreach (var lr in warnRingPool) if (lr != null) lr.enabled = false;
     }
 
     // Uyarili atis uyari bitince cikar: hedefe donuk yon, oyuncunun bu surede (ayni yonde surerse) gidecegi yere kaydirilir.
