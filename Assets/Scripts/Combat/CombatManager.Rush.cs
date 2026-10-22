@@ -396,5 +396,38 @@ public partial class CombatManager
             color = new Color(1f, 0.75f, 0.3f),
             scale = 0.7f
         });
+        DropLimbReward(point, weapon);
+    }
+
+    /// <summary>Gerekli silah uzuvlari koptu: govde artik hasar alir.</summary>
+    public void OnBossGuardBroken(EnemyPlane bossEnemy, Vector3 point)
+    {
+        Announce("KALKAN DÜŞTÜ!  GÖVDE AÇIK", new Color(0.4f, 1f, 1f), 2.2f, true);
+        FollowCamera.AddShake(0.7f, 0.4f);
+        if (uiAudio != null) uiAudio.PlayOneShot(Sfx.LevelUp, 0.45f);
+    }
+
+    // Kopan uzuv odul birakir: silah uzvu guc + (onarim / kalkan sirayla), kanat onarim / kalkan. Boss fazinda odul
+    // uzuvdan kopup oyuncunun derinligine, uzvun hizasina suzulur ve cercevede durur (oyuncu kayip alir).
+    private int limbDropIndex;
+
+    private void DropLimbReward(Vector3 point, bool weapon)
+    {
+        if (powerUpPrefab == null) return;
+        int n = weapon ? 2 : 1;
+        Vector3 right = Vector3.Cross(Vector3.up, RushHeading).normalized;
+        for (int i = 0; i < n; i++)
+        {
+            PickupKind kind = weapon && i == 0 ? PickupKind.Power
+                : (limbDropIndex++ % 2 == 0 ? PickupKind.Repair : PickupKind.Shield);
+            Vector3 scatter = Random.insideUnitSphere * 10f;
+            PowerUp p = PowerUp.Spawn(powerUpPrefab, point, kind, RushActive ? Vector3.zero : scatter);
+            if (p == null || !RushActive) continue;
+
+            float spread = n > 1 ? (i == 0 ? -22f : 22f) : 0f;
+            float fx = Mathf.Clamp(Vector3.Dot(point - RushOrigin, right) + spread, -RushHalfWidth + 20f, RushHalfWidth - 20f);
+            float fy = Mathf.Clamp(point.y - RushOrigin.y, -RushDown + 15f, RushUp - 15f);
+            p.FlyToFrame(new Vector2(fx, fy));
+        }
     }
 }

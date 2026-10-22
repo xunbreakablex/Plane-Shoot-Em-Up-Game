@@ -423,8 +423,9 @@ public partial class PlayerGun : MonoBehaviour
         bool assisting = false;
         if (LockedEnemy != null)
         {
-            float time = Vector3.Distance(origin, LockedEnemy.transform.position) / Mathf.Max(leadSpeed, 1f);
-            Vector3 lead = LockedEnemy.transform.position + LockedEnemy.Velocity * time;
+            Vector3 tp = LockedEnemy.AimPoint;   // korunan boss'ta silah uzvu
+            float time = Vector3.Distance(origin, tp) / Mathf.Max(leadSpeed, 1f);
+            Vector3 lead = tp + LockedEnemy.Velocity * time;
 
             float cone = Mathf.Max(gs.autoAimCone, 0.1f);
             float w = gs.autoAimStrength * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(cone * 0.35f, cone, lockAngle)));
@@ -536,8 +537,9 @@ public partial class PlayerGun : MonoBehaviour
 
         if (LockedEnemy != null)
         {
-            float t = Vector3.Distance(muzzleCenter, LockedEnemy.transform.position) / Mathf.Max(leadSpeed, 1f);
-            AimPoint = LockedEnemy.transform.position + LockedEnemy.Velocity * t;
+            Vector3 tp = LockedEnemy.AimPoint;
+            float t = Vector3.Distance(muzzleCenter, tp) / Mathf.Max(leadSpeed, 1f);
+            AimPoint = tp + LockedEnemy.Velocity * t;
             return;
         }
 

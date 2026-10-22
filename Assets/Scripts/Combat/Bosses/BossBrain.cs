@@ -33,7 +33,7 @@ public partial class BossBrain : MonoBehaviour
     // Hasar parlamasi
     private int lastHits;
     private float flashUntil;
-    private bool flashing;
+    private int flashState;     // 0 yok, 1 vurus (beyaz), 2 korunan govdeden seken mermi (camgobegi, uzuvlar haric)
     private static MaterialPropertyBlock block;
 
     // ------------------------------------------------------------ boss bilgileri
@@ -305,10 +305,11 @@ public partial class BossBrain : MonoBehaviour
         }
 
         bool want = Time.time < flashUntil;
-        if (want != flashing)
+        int state = want ? 1 : (Time.time < deflectUntil && BodyProtected ? 2 : 0);
+        if (state != flashState)
         {
-            flashing = want;
-            ApplyFlash(want);
+            flashState = state;
+            ApplyFlash(state);
         }
     }
 
@@ -320,14 +321,22 @@ public partial class BossBrain : MonoBehaviour
 
     private void ApplyFlash(bool on)
     {
+        ApplyFlash(on ? 1 : 0);
+    }
+
+    private void ApplyFlash(int state)
+    {
         if (block == null) block = new MaterialPropertyBlock();
         for (int i = 0; i < renderers.Length; i++)
         {
             Renderer r = renderers[i];
             if (r == null) continue;
+            Color c = baseColors[i];
+            if (state == 1) c = Color.Lerp(c, Color.white, 0.7f);
+            else if (state == 2 && !IsLimbRenderer(r)) c = Color.Lerp(c, ShieldTint, 0.6f);
             r.GetPropertyBlock(block);
-            block.SetColor("_BaseColor", on ? Color.Lerp(baseColors[i], Color.white, 0.7f) : baseColors[i]);
-            block.SetColor("_Color", on ? Color.Lerp(baseColors[i], Color.white, 0.7f) : baseColors[i]);
+            block.SetColor("_BaseColor", c);
+            block.SetColor("_Color", c);
             r.SetPropertyBlock(block);
         }
     }

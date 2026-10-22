@@ -82,6 +82,7 @@ public partial class CombatManager
     // Boss uzuv can cubuklari: vurulan uzvun ustunde kisa sure, cani %30'un altindaki uzuvlarda surekli
     private BossBrain limbBrain;
     private EnemyPlane limbBrainOf;
+    private float guardLine;   // boss cubugunun altindaki koruma yazisinin payi
 
     private void DrawBossLimbBars()
     {
@@ -439,10 +440,23 @@ public partial class CombatManager
                 bossText.Text = $"{title}   {bar.HitsRemaining} / {bar.MaxHits}";
             // Beyaz + golge: hem dolu (acik renk) hem bos (koyu) kisimda okunur
             Hud.Text(br, bossText.Text, Color.white, 12, TextAnchor.MiddleCenter);
+
+            // Govde korumasi: cubuk camgobegi cerceveli, altinda ne yapilacagi
+            BossBrain gb = limbBrainOf == bar ? limbBrain : bar.GetComponent<BossBrain>();
+            if (gb != null && gb.BodyProtected)
+            {
+                float pulse = 0.6f + 0.4f * Mathf.Sin(Time.unscaledTime * 6f);
+                Hud.Outline(new Rect(br.x - 4f, br.y - 4f, br.width + 8f, br.height + 8f), new Color(0.35f, 0.95f, 1f, pulse), 2f);
+                Hud.Text(new Rect(br.x, br.yMax + 4f, br.width, 16f),
+                    $"GÖVDE KALKANLI  •  önce turuncu çubuklu SİLAH UZUVLARINI kopar  (kalan {gb.GuardLimbsLeft})",
+                    new Color(0.5f, 1f, 1f), 12, TextAnchor.MiddleCenter);
+                guardLine = 18f;
+            }
+            else guardLine = 0f;
         }
 
         // Us hedefi (komuta merkezi): boss cubugunun altinda
-        DrawBaseObjective(y + (bar != null ? 22f : 0f));
+        DrawBaseObjective(y + (bar != null ? 22f + guardLine : 0f));
     }
 
     // ------------------------------------------------------------- sag kolon
@@ -574,7 +588,7 @@ public partial class CombatManager
             Color col = info.marker;
             if (!inside) col.a = 0.55f;
             Hud.Disc(p, size, col);
-            if (e.IsCarrier) Hud.Ring(p, size + 2.5f, PowerUp.KindColors[e.CarrierDrop]);
+            if (e.IsCarrier && !e.IsBoss) Hud.Ring(p, size + 2.5f, PowerUp.KindColors[e.CarrierDrop]);
         }
 
         // Ucak: merkezde burun yukari bakan isaret
@@ -736,8 +750,8 @@ public partial class CombatManager
                     topY = hb.y;
                 }
 
-                // Guclendirme tasiyicisi: rozet (P / S / M / B / +)
-                if (e.IsCarrier)
+                // Guclendirme tasiyicisi: rozet (P / S / M / B / +). Boss'larda yok (odul uzuvlardan kopar)
+                if (e.IsCarrier && !e.IsBoss)
                 {
                     Color kc = PowerUp.KindColors[e.CarrierDrop];
                     Rect chip = new Rect(box.center.x - 11f, topY - 24f, 22f, 20f);
@@ -770,7 +784,7 @@ public partial class CombatManager
                 if (!important && (arrows >= 3 || ground)) continue;
                 arrows++;
                 AddArrow(c, hp, sp.z < 0f, col, dist, e.IsBoss || e.IsCore,
-                    e.IsCarrier ? PowerUp.Letters[e.CarrierDrop] + " " : (e.IsCore ? "ÜS " : null));
+                    e.IsCarrier && !e.IsBoss ? PowerUp.Letters[e.CarrierDrop] + " " : (e.IsCore ? "ÜS " : null));
             }
         }
 

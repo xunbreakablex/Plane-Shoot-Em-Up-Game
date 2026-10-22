@@ -8,6 +8,10 @@ using UnityEngine;
 //  boss agirlasir (yavaslar).
 //  Uzva gelen hasar bossun toplam canindan da duser: uzuv avlamak hep ilerlemedir. Asama sonu bosslarinda silah
 //  uzuvlarinin kopmasi faz atlatir (LimbPhase).
+//  Govde korumasi: gerekli silah uzuvlari (2 ya da daha azsa hepsi, coksa yarisi) kopana kadar govde ve kanatlar hasar
+//  almaz; mermi seker, govde camgobegi parlar, HUD uyarir. Alan hasari (fuze, bomba, plazma, yildirim) hedef silah
+//  uzvuna aktarilir; seken merminin de %30'u ona islenir (zarfin arkasindaki kule, govdenin arkasindaki degnek gibi
+//  vurulamayan uzuvda kilitlenme olmaz). Hedef uzuv: gorus hatti acik olanlardan en cok hasar almisi.
 public partial class BossBrain
 {
     private enum LimbKind { Weapon, Wing }
@@ -21,6 +25,7 @@ public partial class BossBrain
         public int maxHp, hp;
         public float lastHit = -10f;
         public bool broken;
+        public bool visible = true;         // oyuncudan gorus hatti acik (gizli uzuv hedef secilmez)
         public int shed;                    // kanat: dokulen parca kademesi (her %25'te bir)
         public System.Action onBreak;       // tur kodu: namlu / animasyon referanslarini birakir
     }
@@ -38,6 +43,116 @@ public partial class BossBrain
     private int LimbPhase => enemy != null && enemy.IsStageBoss && weaponLimbs > 0
         ? Mathf.Min(2, brokenWeapons * 3 / (weaponLimbs + 1))
         : 0;
+
+    // ------------------------------------------------------- govde korumasi
+
+    private static readonly Color ShieldTint = new Color(0.35f, 0.95f, 1f);
+    private int RequiredLimbs => weaponLimbs <= 2 ? weaponLimbs : Mathf.CeilToInt(weaponLimbs * 0.5f);
+    private bool limbGuardOff;          // uzuv kopunca govdeye verilen pay korumaya takilmasin
+    private float deflectUntil, lastDeflectFx;
+    private const float DeflectShare = 0.3f;   // seken mermi hasarinin hedef uzva islenen payi
+    private float deflectCarry;
+    private float visCheckAt;
+    private readonly HashSet<Renderer> limbRenderers = new HashSet<Renderer>();
+
+    /// <summary>Gerekli silah uzuvlari kopmadi: govde hasar almaz.</summary>
+    public bool BodyProtected => !dying && !limbGuardOff && enemy != null && !enemy.IsDead
+                                 && weaponLimbs > 0 && brokenWeapons < RequiredLimbs;
+
+    /// <summary>Korumanin kalkmasi icin daha kac silah uzvu kopmali.</summary>
+    public int GuardLimbsLeft => Mathf.Max(0, RequiredLimbs - brokenWeapons);
+
+    /// <summary>Mermi korunan govdeden / kanattan sekti: kivilcim, ses, govde parlamasi; hasarin bir payi hedef uzva.</summary>
+    public void Deflect(Vector3 point, int damage)
+    {
+        deflectUntil = Time.time + 0.2f;
+        deflectCarry += damage * DeflectShare;
+        int share = Mathf.FloorToInt(deflectCarry);
+        if (share > 0)
+        {
+            deflectCarry -= share;
+            Limb l = GuardTarget();
+            if (l != null)
+            {
+                Vector3 c = LimbCenter(l, point);
+                l.hp -= share;
+                l.lastHit = Time.time;
+                if (l.hp <= 0) BreakLimb(l, c);
+                limbGuardOff = true;   // uzva islenen hasar bossun toplam canindan da duser (uzuv vurusu gibi)
+                if (!enemy.IsDead) enemy.TakeHit(share, c);
+                limbGuardOff = false;
+            }
+        }
+
+        if (Time.time - lastDeflectFx < 0.08f) return;
+        lastDeflectFx = Time.time;
+        Vector3 n = point - transform.position;
+        mgr.SpawnShieldHit(point, n.sqrMagnitude > 1e-4f ? n.normalized : Vector3.up, transform);
+    }
+
+    /// <summary>Korunurken alan hasari: en cok hasar almis saglam silah uzvuna aktarilir (uzuv cani duser).</summary>
+    public bool RedirectToLimb(int damage, Vector3 point)
+    {
+        Limb l = GuardTarget();
+        if (l == null) return false;
+        l.hp -= damage;
+        l.lastHit = Time.time;
+        if (l.hp <= 0) BreakLimb(l, LimbCenter(l, point));
+        return true;
+    }
+
+    /// <summary>Nisan noktasi: korunurken hedef silah uzvunun merkezi, degilse boss merkezi.</summary>
+    public Vector3 GuardAimPoint()
+    {
+        if (!BodyProtected) return transform.position;
+        Limb l = GuardTarget();
+        return l != null ? LimbCenter(l, transform.position) : transform.position;
+    }
+
+    // Saglam silah uzuvlarindan gorus hatti acik olanlarin en cok hasar almisi (hic gorunen yoksa hepsinden):
+    // ates ve aktarilan hasar tek uzva toplanir. Eskiden esitlikte listedeki ilk uzuv seciliyordu: zeplinin zarf
+    // arkasindaki kulesine nisan alinip sonsuza dek zarf vuruluyordu.
+    private Limb GuardTarget()
+    {
+        if (Time.time >= visCheckAt)
+        {
+            visCheckAt = Time.time + 0.4f;
+            foreach (Limb l in limbs)
+                if (!l.broken && l.kind == LimbKind.Weapon) l.visible = LineOfSight(l);
+        }
+
+        Limb best = null;
+        float bestScore = float.MaxValue;
+        foreach (Limb l in limbs)
+        {
+            if (l.broken || l.kind != LimbKind.Weapon) continue;
+            float score = (float)l.hp / Mathf.Max(1, l.maxHp) + (l.visible ? 0f : 10f);
+            if (score < bestScore - 0.001f) { bestScore = score; best = l; }
+        }
+        return best;
+    }
+
+    // Oyuncudan uzvun merkezine isin: ilk carptigi boss parcasi bu uzva aitse gorunur
+    private bool LineOfSight(Limb l)
+    {
+        Transform pt = mgr != null ? mgr.PlayerTransform : null;
+        if (pt == null) return true;
+        Vector3 c = LimbCenter(l, transform.position);
+        Vector3 d = c - pt.position;
+        float dist = d.magnitude;
+        if (dist < 1f) return true;
+        // Oyuncunun kendi parcalarindan kacinmak icin 4 m onden; bossa ait olmayan engel (bulut, baska ucak) sayilmaz
+        Vector3 dir = d / dist;
+        var hits = Physics.RaycastAll(pt.position + dir * 4f, dir, dist + 5f, ~0, QueryTriggerInteraction.Ignore);
+        float nearest = float.MaxValue;
+        Collider first = null;
+        foreach (var h in hits)
+            if (h.collider.transform.IsChildOf(transform) && h.distance < nearest) { nearest = h.distance; first = h.collider; }
+        if (first == null) return true;
+        return limbByCollider.TryGetValue(first, out Limb owner) && owner == l;
+    }
+
+    private bool IsLimbRenderer(Renderer r) => limbRenderers.Contains(r);
 
     // -------------------------------------------------------------- kurulum
 
@@ -132,6 +247,7 @@ public partial class BossBrain
         }
 
         // Ic ice uzuvlar (kanadin ustundeki top gibi): her renderer, collider'inin bagli oldugu uzva sayilir
+        limbRenderers.Clear();
         foreach (Limb l in limbs)
         {
             l.rends.Clear();
@@ -141,7 +257,10 @@ public partial class BossBrain
                 {
                     var c = r.GetComponent<Collider>();
                     if (c == null || (limbByCollider.TryGetValue(c, out Limb owner) && owner == l))
+                    {
                         l.rends.Add(r);
+                        if (l.kind == LimbKind.Weapon) limbRenderers.Add(r);   // korunurken parlamaz: hedef belli olsun
+                    }
                 }
             }
         }
@@ -178,16 +297,21 @@ public partial class BossBrain
 
     // --------------------------------------------------------------- hasar
 
-    /// <summary>Oyuncu mermisi / isini bir parcayi vurdu: parca bir uzva aitse uzvun cani da duser.</summary>
-    public void OnPartHit(Collider c, int damage, Vector3 point)
+    /// <summary>
+    /// Oyuncu mermisi / isini bir parcayi vurdu: parca bir uzva aitse uzvun cani da duser. Govde korunurken yalniz
+    /// silah uzuvlari hasar alir. Hasari bir uzuv aldiysa true (govde korunsa da bossun toplam cani duser).
+    /// </summary>
+    public bool OnPartHit(Collider c, int damage, Vector3 point)
     {
-        if (c == null || enemy == null || enemy.IsDead) return;
-        if (!limbByCollider.TryGetValue(c, out Limb limb) || limb.broken) return;
+        if (c == null || enemy == null || enemy.IsDead) return false;
+        if (!limbByCollider.TryGetValue(c, out Limb limb) || limb.broken) return false;
+        if (limb.kind == LimbKind.Wing && BodyProtected) return false;
 
         limb.hp -= damage;
         limb.lastHit = Time.time;
         if (limb.kind == LimbKind.Wing) ShedFromWing(limb, point);
         if (limb.hp <= 0) BreakLimb(limb, point);
+        return true;
     }
 
     // Kanat her %25 can kaybinda birkac kucuk parca doker
@@ -205,6 +329,7 @@ public partial class BossBrain
 
     private void BreakLimb(Limb limb, Vector3 point)
     {
+        bool wasGuarded = BodyProtected;
         limb.broken = true;
         limb.hp = 0;
         Vector3 c = LimbCenter(limb, point);
@@ -239,8 +364,13 @@ public partial class BossBrain
             mgr.OnBossLimbBroken(enemy, limb.label, false, c);
         }
 
-        // Uzuv kopunca govde sarsilir: bossun toplam canindan ek bir pay duser
+        // Govde acildi: duyuru (uzuv kopma duyurusunun ardindan)
+        if (wasGuarded && !BodyProtected) mgr.OnBossGuardBroken(enemy, c);
+
+        // Uzuv kopunca govde sarsilir: bossun toplam canindan ek bir pay duser (korumaya takilmaz)
+        limbGuardOff = true;
         if (!enemy.IsDead) enemy.TakeHit(Mathf.Max(1, Mathf.RoundToInt(enemy.MaxHits * 0.03f)), c);
+        limbGuardOff = false;
     }
 
     // Duman prefabinin turuncu kopyasi (yanan kanat)
@@ -401,7 +531,8 @@ public partial class BossBrain
         if (l.broken) return false;
 
         fraction = Mathf.Clamp01((float)l.hp / Mathf.Max(1, l.maxHp));
-        bool show = Time.time - l.lastHit < LimbBarShowTime || fraction < LimbLowFraction;
+        // Govde korunurken silah uzuvlarinin cubugu hep acik: neyi vuracagin belli olsun
+        bool show = Time.time - l.lastHit < LimbBarShowTime || fraction < LimbLowFraction || (weapon && BodyProtected);
         if (!show) return false;
 
         worldPos = LimbCenter(l, transform.position);

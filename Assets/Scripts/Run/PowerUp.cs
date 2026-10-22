@@ -11,6 +11,7 @@ public class PowerUp : MonoBehaviour
     private static float Lifetime => GameSettings.Current.pickupLifetime;
     private static float BaseMagnet => GameSettings.Current.pickupMagnetRange;
     private static float CollectRadius => GameSettings.Current.pickupCollectRadius;
+    private const float RushMagnet = 28f;   // boss fazinda odule oyuncu gider (eskiden 150 m'den cekiliyordu)
 
     public Transform core;
     public Transform glow;
@@ -39,6 +40,16 @@ public class PowerUp : MonoBehaviour
     private Vector3 drift;
     private float seed;
     private bool collected;
+    private bool frameDrop;          // boss fazi: cercevedeki hedef noktaya suzulur ve orada durur
+    private Vector2 frameTarget;     // x saga, y yukari (CombatManager.RushOrigin'e gore, oyuncunun derinliginde)
+
+    /// <summary>Boss fazi: odul oyuncunun derinligine, verilen cerceve noktasina suzulur ve orada bekler.</summary>
+    public void FlyToFrame(Vector2 target)
+    {
+        frameDrop = true;
+        frameTarget = target;
+        drift = Vector3.zero;
+    }
 
     private static MaterialPropertyBlock block;
     private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -111,6 +122,8 @@ public class PowerUp : MonoBehaviour
             if (glow != null) glow.rotation = mgr.cam.transform.rotation;
         }
 
+        if (frameDrop && (mgr == null || !mgr.RushActive)) frameDrop = false;   // boss bitti: normal davranis
+
         if (alive)
         {
             Vector3 to = player.position - transform.position;
@@ -122,9 +135,10 @@ public class PowerUp : MonoBehaviour
                 return;
             }
 
-            float range = BaseMagnet * RunUpgrades.Mods.magnetMul;
+            float range = (mgr.RushActive ? RushMagnet : BaseMagnet) * RunUpgrades.Mods.magnetMul;
             if (d < range)
             {
+                frameDrop = false;
                 // Yaklastikca hizlanir; ucagin hizini da asar ki yakalayabilsin (hizli ucaklar icin hizdan fazla)
                 float k = 1f - d / range;
                 float speed = Mathf.Lerp(70f, 190f, k) + mgr.PlayerSpeed * 1.15f;
@@ -133,8 +147,21 @@ public class PowerUp : MonoBehaviour
             }
         }
 
-        transform.position += (drift + CombatManager.FrameVelocityAt(transform.position)) * dt;   // boss fazinda cerceveyle tasinir
-        drift = Vector3.Lerp(drift, Vector3.zero, 2.2f * dt);
+        if (frameDrop)
+        {
+            // Uzuvdan kopup oyuncunun derinligine suzulur (once hizli, yaklastikca yavas), sonra cercevede asili kalir
+            Vector3 right = Vector3.Cross(Vector3.up, mgr.RushHeading).normalized;
+            Vector3 goal = mgr.RushOrigin + right * frameTarget.x + Vector3.up * frameTarget.y;
+            Vector3 toGoal = goal - transform.position;
+            float gd = toGoal.magnitude;
+            float step = Mathf.Max(60f, gd * 2.2f) * dt;
+            transform.position = gd <= step ? goal : transform.position + toGoal / gd * step;
+        }
+        else
+        {
+            transform.position += (drift + CombatManager.FrameVelocityAt(transform.position)) * dt;   // boss fazinda cerceveyle tasinir
+            drift = Vector3.Lerp(drift, Vector3.zero, 2.2f * dt);
+        }
 
         // Gorsel: donus, havada asili salinim, uzakta buyuyen parlama
         if (core != null)

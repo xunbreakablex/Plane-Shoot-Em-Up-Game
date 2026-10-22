@@ -903,8 +903,18 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     /// <summary>Alan hasari (fuze, bomba, plazma): uzuv secilmez, yalnizca toplam can duser.</summary>
     public void TakeHit(int damage, Vector3 point)
     {
+        if (dead) return;
+        // Boss govdesi korunuyor: hasar silah uzvuna aktarilir (uzuv yoksa seker)
+        if (brain != null && brain.BodyProtected && !brain.RedirectToLimb(damage, point))
+        {
+            brain.Deflect(point, damage);
+            return;
+        }
         ApplyDamage(damage, point, HitZone.Body);
     }
+
+    /// <summary>Nisan / onde tutma noktasi: korunan boss'ta hedef silah uzvu, digerlerinde merkez.</summary>
+    public Vector3 AimPoint => brain != null ? brain.GuardAimPoint() : transform.position;
 
     /// <summary>
     /// Mermi / isin isabeti, vurulan collider ile: boss'ta collider'in ait oldugu uzvun (top, kol, kanat...) cani da duser.
@@ -912,7 +922,16 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     public void TakeHitLocal(int damage, Vector3 point, Collider hitCollider)
     {
         if (dead) return;
-        if (brain != null && hitCollider != null) brain.OnPartHit(hitCollider, damage, point);
+        if (brain != null)
+        {
+            bool limbHit = hitCollider != null && brain.OnPartHit(hitCollider, damage, point);
+            // Korunan govde / kanat: mermi seker, can dusmez
+            if (!limbHit && brain.BodyProtected)
+            {
+                brain.Deflect(point, damage);
+                return;
+            }
+        }
         TakeHitLocal(damage, point);
     }
 
