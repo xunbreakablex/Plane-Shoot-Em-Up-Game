@@ -52,6 +52,7 @@ public partial class CombatManager
         stageLoaded = index;
         waveIndex = 0;
         waveClock = 0f;
+        waveCountCarry = 0f;
         bossSpawned = false;
         midBossSpawned = false;
         CancelBossWarning();
@@ -248,6 +249,13 @@ public partial class CombatManager
 
         if (w.ace) { SpawnAce(w, playerPos, vel, fwd); return; }
         w.drop = RollDrop(w.drop);   // as pilot hep dusurur; diger tasiyicilar orana gore
+
+        // Daha az ama daha dayanikli dusman (GameSettings.enemyCountScale): kesir asama boyunca birikir, toplam sayi
+        // tam orana iner; tek ucakli dalga kaybolmaz (eksik kalan sonraki dalgalardan dusulur)
+        float wantCount = w.count * GameSettings.Current.enemyCountScale + waveCountCarry;
+        int count = Mathf.Max(1, Mathf.FloorToInt(wantCount + 0.001f));
+        waveCountCarry = wantCount - count;
+        w.count = count;
         Radio(w.kind, w.count);
 
         switch (w.formation)
@@ -458,6 +466,8 @@ public partial class CombatManager
     // Dusman en az bu kadar sure, oyuncunun o anki ates gucunun yarisi isabet ederse duser (buharlasmayi onler)
     private const float MinKillSeconds = 0.5f;
 
+    private float waveCountCarry;
+
     private int HitsFor(EnemyKind kind)
     {
         // Can, uc donanimin temel DPS'inden: guc seviyesi ve yukseltmeler dusmani tanklastirmaz,
@@ -471,7 +481,7 @@ public partial class CombatManager
         }
         // Asama ilerledikce %12 daha dayanikli
         float grow = 1f + 0.12f * RunState.Stage;
-        float hits = baseDps * 0.5f * TimeToKill(kind) * grow * Difficulty.HitsMul;
+        float hits = baseDps * 0.5f * TimeToKill(kind) * grow * Difficulty.HitsMul * GameSettings.Current.enemyHitsScale;
         float floorHits = curDps * 0.5f * MinKillSeconds;
         return Mathf.Max(kind == EnemyKind.Kamikaze ? 2 : 4, Mathf.RoundToInt(Mathf.Max(hits, floorHits)));
     }

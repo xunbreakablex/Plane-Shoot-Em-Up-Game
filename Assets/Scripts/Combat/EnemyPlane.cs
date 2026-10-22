@@ -129,6 +129,15 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private float cruiseSpeed;
     private float turnRate;
     private float bank;
+
+    // Organik donus: hedef yon yumusatilir (ani yon degisimi yok), donus hizi ivmeyle artar (yavas baslar) ve hedefe
+    // yaklastikca azalir (yavaslayarak biter). Eskiden RotateTowards sabit hizla aninda baslayip aninda duruyordu.
+    private const float DesireSmoothing = 3f;     // hedef yonun yumusatma hizi (1/sn): ~0,33 sn'de yeni yone
+    private const float TurnAccelMul = 2.5f;      // tam donus hizina ~0,4 sn'de cikar
+    private const float TurnEaseOut = 3f;         // kalan aci (derece) x bu = istenen donus hizi (yaklastikca yavaslar)
+    private Vector3 smoothDesired;
+    private float turnVel;                        // anlik donus hizi (derece/sn)
+    private float climbVel;                       // duz gecen bombardimancinin tirmanma hizi
     private float weavePhase;
     private float weaveRate;
 
@@ -499,9 +508,12 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         // Arazi: yaklasan tepeyi asmak icin burnunu kaldirir
         Vector3 ahead = pos + heading * cruiseSpeed * 2.2f;
         float ground = Mathf.Max(mgr.GroundHeight(pos), mgr.GroundHeight(ahead));
-        if (pos.y - ground < 70f)
+        // Tirmanma yumusak baslar ve biter (eskiden 0,9 rad/sn ile aninda burun kaldiriyordu)
+        float wantClimb = pos.y - ground < 70f ? 0.9f : 0f;
+        climbVel = Mathf.MoveTowards(climbVel, wantClimb, 2.5f * dt);
+        if (climbVel > 0.001f)
         {
-            heading.y = Mathf.MoveTowards(heading.y, 0.4f, 0.9f * dt);
+            heading.y = Mathf.MoveTowards(heading.y, 0.4f, climbVel * dt);
             heading.Normalize();
         }
 
@@ -640,7 +652,12 @@ public class EnemyPlane : MonoBehaviour, IDamageable
         flat = flat.normalized * Mathf.Sqrt(1f - desired.y * desired.y);
         desired = new Vector3(flat.x, desired.y, flat.z).normalized;
 
-        Vector3 newFwd = Vector3.RotateTowards(fwd, desired, turnRate * (IsDiving ? 1.4f : 1f) * Mathf.Deg2Rad * dt, 0f);
+        float maxTurn = turnRate * (IsDiving ? 1.4f : 1f);
+        if (smoothDesired.sqrMagnitude < 0.5f) smoothDesired = fwd;
+        smoothDesired = Vector3.Slerp(smoothDesired, desired, 1f - Mathf.Exp(-DesireSmoothing * dt)).normalized;
+        float wantTurn = Mathf.Min(maxTurn, Vector3.Angle(fwd, smoothDesired) * TurnEaseOut);
+        turnVel = Mathf.MoveTowards(turnVel, wantTurn, maxTurn * TurnAccelMul * dt);
+        Vector3 newFwd = Vector3.RotateTowards(fwd, smoothDesired, turnVel * Mathf.Deg2Rad * dt, 0f);
 
         // Gorsel yatis: donuse gore
         float yawRate = Vector3.SignedAngle(fwd, newFwd, Vector3.up) / dt;

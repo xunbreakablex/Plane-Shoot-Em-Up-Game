@@ -337,7 +337,9 @@ public partial class CombatManager : MonoBehaviour
 
         // Puan: tur puani x kombo carpani
         EnemyKindInfo info = EnemyKinds.Get(enemy.Kind);
-        int points = Mathf.RoundToInt(info.score * ComboMultiplier * (enemy.IsAce ? 5f : 1f));
+        // Dalga ucagi az ama dayanikli: tek indirme sayi azaldigi oranda daha cok puan verir (asama puani ayni kalir)
+        float countComp = enemy.IsBoss || enemy.IsGround ? 1f : 1f / Mathf.Max(0.3f, GameSettings.Current.enemyCountScale);
+        int points = Mathf.RoundToInt(info.score * countComp * ComboMultiplier * (enemy.IsAce ? 5f : 1f));
         if (enemy.IsAce)
         {
             Announce("AS PİLOT İNDİRİLDİ!  " + enemy.Title.Replace("AS: ", "").ToUpper(), new Color(1f, 0.85f, 0.3f), 3f, true);

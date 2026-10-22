@@ -168,6 +168,12 @@ public class GameSettings : ScriptableObject
 
     // ------------------------------------------------------------ guclendirme
 
+    [Header("Düşman uçakları")]
+    [Tooltip("Dalgalardaki uçak sayısı ölçeği (kesir aşama boyunca birikir; tek uçaklı dalga kaybolmaz). 1 = eski sayı.")]
+    [Range(0.3f, 1.5f)] public float enemyCountScale = 0.75f;
+    [Tooltip("Dalga uçaklarının can ölçeği. Sayı azalınca toplam zorluk benzer kalsın diye artar (0,75 sayı x 1,2 can; uzun yaşayan düşman daha çok ateş eder).")]
+    [Range(0.5f, 3f)] public float enemyHitsScale = 1.2f;
+
     [Header("Güçlendirme (power-up)")]
     [Tooltip("Güçlendirmenin uçağa doğru çekilmeye başladığı mesafe (m)")]
     [Range(20f, 400f)] public float pickupMagnetRange = 150f;
