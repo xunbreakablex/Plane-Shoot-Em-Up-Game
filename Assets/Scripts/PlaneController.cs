@@ -280,6 +280,32 @@ public class PlaneController : MonoBehaviour
         hasRunway = other.hasRunway;
     }
 
+    // ---- Hiz zarfi: hizli govde + agir donanim (agirlik seyir hizini artirir) + itki upgrade'i birlesince seyir ve
+    // azami hiz ucuk degerlere cikiyordu (Roket agir yukle ~245 m/s seyir, gaz kapaliyken bile ~135 m/s). Tum ucaklar
+    // ayni zarfta kalir: diz noktasinin ustu yumusakca sikistirilir (hizli ucak yine hizli, siralama korunur), sonra
+    // kesin sinirlar uygulanir. Gaz kapali hiz en fazla SlowCap: yavaslamak her ucakta gercekten yavaslatir.
+    public const float CruiseFloor = 36f, CruiseKnee = 85f, CruiseCap = 110f;
+    public const float MaxKnee = 135f, MaxCap = 180f;
+    public const float SlowCap = 48f;
+    private const float EnvelopeSlope = 0.35f;   // diz ustundeki fazlanin korunan orani
+    private const float AccelCap = 45f;          // arcade ucusta en hizli hizlanma (m/s^2)
+    private const float DecelCap = 60f;          // arcade ucusta en hizli yavaslama (m/s^2)
+    private const float DiveOverspeed = 1.12f;   // dalista azami hizin en fazla bu kati
+
+    private static float Soft(float v, float knee) => v <= knee ? v : knee + (v - knee) * EnvelopeSlope;
+
+    /// <summary>Hiz zarfindan gecirilmis seyir hizi (m/s).</summary>
+    public static float EnvelopeCruise(float cruise) => Mathf.Clamp(Soft(cruise, CruiseKnee), CruiseFloor, CruiseCap);
+
+    /// <summary>Hiz zarfindan gecirilmis azami hiz (m/s); seyrin en az 1,3 kati.</summary>
+    public static float EnvelopeMax(float envCruise, float max) => Mathf.Clamp(Soft(max, MaxKnee), envCruise * 1.3f, MaxCap);
+
+    /// <summary>Gaz kapaliyken (ya da S basiliyken) inilen en dusuk hiz (m/s).</summary>
+    public static float SlowSpeedOf(float envCruise) => Mathf.Min(envCruise * ArcadeMinSpeed, SlowCap);
+
+    /// <summary>Gaz kapali en dusuk hiz (m/s).</summary>
+    public float SlowSpeed => SlowSpeedOf(cruiseSpeed);
+
     private bool baseCaptured;
     private float baseCruise, baseMaxSpeed, baseThrust, baseRoll, baseMaxG;
     private float lastEffThrust = 1f, lastEffRoll = 1f, lastEffMaxSpeed = 1f;
@@ -298,7 +324,7 @@ public class PlaneController : MonoBehaviour
 
         maxThrust = baseThrust * lastEffThrust * upgradeThrust;
         rollRate = baseRoll * lastEffRoll * upgradeRoll;
-        maxSpeed = Mathf.Max(cruiseSpeed * 1.15f, baseMaxSpeed * lastEffMaxSpeed * Mathf.Sqrt(upgradeThrust));
+        maxSpeed = EnvelopeMax(cruiseSpeed, baseMaxSpeed * lastEffMaxSpeed * Mathf.Sqrt(upgradeThrust));
         ComputeConstants();
     }
 
@@ -319,8 +345,8 @@ public class PlaneController : MonoBehaviour
         lastEffRoll = s.EffRoll;
         lastEffMaxSpeed = s.EffMaxSpeed;
 
-        cruiseSpeed = baseCruise * s.EffCruise;
-        maxSpeed = Mathf.Max(cruiseSpeed * 1.15f, baseMaxSpeed * s.EffMaxSpeed * Mathf.Sqrt(upgradeThrust));
+        cruiseSpeed = EnvelopeCruise(baseCruise * s.EffCruise);
+        maxSpeed = EnvelopeMax(cruiseSpeed, baseMaxSpeed * s.EffMaxSpeed * Mathf.Sqrt(upgradeThrust));
         maxThrust = baseThrust * s.EffThrust * upgradeThrust;
         rollRate = baseRoll * s.EffRoll * upgradeRoll;
         maxG = Mathf.Max(3f, baseMaxG * s.EffMaxG);
@@ -901,7 +927,8 @@ public class PlaneController : MonoBehaviour
 
         float drag = dragK * speed * speed
                      + inducedDrag * liftAccel * liftAccel / Mathf.Max(speed * speed, 100f)
-                     + Mathf.Abs(Mathf.Sin(beta)) * dragK * 4f * speed * speed;
+                     + Mathf.Abs(Mathf.Sin(beta)) * dragK * 4f * speed * speed
+                     + Mathf.Max(0f, speed - maxSpeed * DiveOverspeed) * 3f;   // dalista hiz zarfini asmasin
 
         Vector3 accel = liftDir * liftAccel
                         + fwd * ThrustAccel(throttle, speed)
@@ -1114,7 +1141,7 @@ public class PlaneController : MonoBehaviour
         Vector3 strafeWant = new Vector3(strafeRaw.x * gs.strafeSpeed, strafeRaw.y * gs.strafeSpeed,
             strafeRaw.z > 0f ? strafeRaw.z * gs.forwardStrafeSpeed : strafeRaw.z * gs.backStrafeSpeed);
         // Ileri-geri: net hiz (taban + kayma) stall'in uzerinde kalir ve azami hizi asmaz
-        float minNet = Mathf.Max(cruiseSpeed * 0.45f, stallSpeed * 0.7f);
+        float minNet = Mathf.Min(Mathf.Max(cruiseSpeed * 0.45f, stallSpeed * 0.7f), SlowCap);
         float maxNet = Mathf.Max(maxSpeed, cruiseSpeed * 1.1f);
         strafeWant.z = Mathf.Clamp(strafeWant.z, minNet - speed, maxNet - speed);
         strafeVel = Vector3.Lerp(strafeVel, strafeWant, 1f - Mathf.Exp(-gs.strafeResponse * dt));
@@ -1140,7 +1167,7 @@ public class PlaneController : MonoBehaviour
         // Hiz: gaz seyir degerindeyken seyir hizi, tam gazda azami hiz, kapaliyken seyir hizinin ArcadeMinSpeed kati
         Vector3 nose = next * Vector3.forward;
         float eq = EquilibriumThrottle();
-        float minSpd = cruiseSpeed * ArcadeMinSpeed;
+        float minSpd = SlowSpeed;
         // Kayma modunda gaz mekanigi yok: taban hiz hep seyirde, W/S ileri-geri kaymasi ustune biner.
         // Motor sesi/pervane icin gaz, ileri-geri kaymaya gore surulur.
         float targetSpd;
@@ -1157,9 +1184,11 @@ public class PlaneController : MonoBehaviour
                 ? Mathf.Lerp(cruiseSpeed, maxSpeed, (throttle - eq) / Mathf.Max(1f - eq, 0.01f))
                 : Mathf.Lerp(minSpd, cruiseSpeed, throttle / Mathf.Max(eq, 0.01f));
         }
-        float s = speed + (targetSpd - speed) * (1f - Mathf.Exp(-ArcadeSpeedResponse * dt));
+        // Hizlanma / yavaslama ivmesi sinirli: buyuk farkta bile hiz tek seferde firlamaz (Roket 48 -> 174 ~3 sn)
+        float ds = (targetSpd - speed) * (1f - Mathf.Exp(-ArcadeSpeedResponse * dt));
+        float s = speed + Mathf.Clamp(ds, -DecelCap * dt, AccelCap * dt);
         s -= G * ArcadeGravity * nose.y * dt;
-        s = Mathf.Clamp(s, minSpd * 0.85f, maxSpeed * 1.25f);
+        s = Mathf.Clamp(s, minSpd * 0.85f, maxSpeed * DiveOverspeed);
 
         Vector3 velDir = speed > 0.1f ? baseVel / speed : nose;
         Vector3 dir = Vector3.Slerp(velDir, nose, 1f - Mathf.Exp(-ArcadeGrip * dt));

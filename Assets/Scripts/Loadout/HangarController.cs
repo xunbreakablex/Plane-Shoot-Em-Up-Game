@@ -667,7 +667,12 @@ public class HangarController : MonoBehaviour
         cy += 26f;
         // Taban puan = ucagin kendi ozelligi (jetler ust siralarda); parcalar bunu carpar
         PlaneController.PresetData pd = PlaneController.DataOf(AircraftCatalog.Get(model).preset);
-        Rating(x + 14f, ref cy, w - 28f, "Hız", st.EffMaxSpeed, prev.EffMaxSpeed, pd.maxSpeed / 25f);
+        TopSpeeds(pd, st, out float slowS, out float cruiseS, out float topS);
+        TopSpeeds(pd, prev, out _, out _, out float prevTopS);
+        Rating(x + 14f, ref cy, w - 28f, "Hız", topS, prevTopS, 1f / 18f);
+        Hud.Text(new Rect(x + 14f, cy - 3f, w - 28f, 16f),
+            $"yavaş {slowS * 3.6f:0}  •  seyir {cruiseS * 3.6f:0}  •  azami {topS * 3.6f:0} km/s", Dim, 11, TextAnchor.UpperLeft, false);
+        cy += 15f;
         Rating(x + 14f, ref cy, w - 28f, "İvme", st.EffThrust, prev.EffThrust, pd.thrust / 4.6f);
         Rating(x + 14f, ref cy, w - 28f, "Çeviklik (yatış)", st.EffRoll, prev.EffRoll, pd.roll / 58f);
         Rating(x + 14f, ref cy, w - 28f, "Dönüş gücü (G)", st.EffMaxG, prev.EffMaxG, pd.maxG / 2.0f);
@@ -723,6 +728,14 @@ public class HangarController : MonoBehaviour
     }
 
     // Puan cubugu (0-10): 5 = standart donanim. Son degisikligin farki yanda gorunur.
+    /// <summary>Ucusta gercekten olusacak hizlar (PlaneController hiz zarfi ile ayni hesap; kosu ici upgrade haric, m/s).</summary>
+    private static void TopSpeeds(PlaneController.PresetData pd, LoadoutStats s, out float slow, out float cruise, out float top)
+    {
+        cruise = PlaneController.EnvelopeCruise(pd.cruise * s.EffCruise);
+        top = PlaneController.EnvelopeMax(cruise, pd.maxSpeed * s.EffMaxSpeed);
+        slow = PlaneController.SlowSpeedOf(cruise);
+    }
+
     private void Rating(float x, ref float y, float w, string label, float eff, float prevEff, float baseScore)
     {
         float score = Mathf.Clamp(eff * baseScore, 0f, 10f);
