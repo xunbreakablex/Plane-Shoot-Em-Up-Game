@@ -1220,6 +1220,9 @@ public class PlaneController : MonoBehaviour
     private Vector2 rushVel;          // kayma hizi (m/s)
     private Vector2 rushMove;         // kayma girisi -1..1
     private Vector2 rushAim;          // burun acisi (derece): x saga, y yukari
+
+    /// <summary>Boss fazinda burnun ilerleme yonune gore nisan acisi (derece): x saga, y yukari.</summary>
+    public Vector2 RushAim => rushAim;
     private float rushBank;
     private bool rushSavedGravity;
 

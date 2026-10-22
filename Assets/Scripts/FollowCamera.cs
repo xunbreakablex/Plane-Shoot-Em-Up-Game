@@ -149,9 +149,15 @@ public class FollowCamera : MonoBehaviour
         // loopta ve hizli donuslerde kamera sicriyordu. Yatis ekseni ise yalnizca ufka dogru
         // sinirli hizla duzeltilir (loopta kamera ucakla birlikte asilir, sonra yumusakca dogrulur).
         Vector3 fwd = target.forward;
-        // Boss fazi: kamera ilerleme yonune bakar (burun ±45 derece nisan icin doner, ekran savrulmaz)
+        // Boss fazi: kamera nisan yonune (ilerleme yonu + burnun nisan acisi) bakar; nisangah ekranin ortasinda kalir.
+        // Eskiden yalniz ilerleme yonune bakiyordu: burun ±45 derece donunce nisangah ekranda saga sola kayiyordu.
+        // Gecis rotationLag ile yumusar; yatis (burnun banki) alinmaz, ekran savrulmaz.
         CombatManager cm = CombatManager.Instance;
-        if (cm != null && cm.RushActive && plane != null && plane.InRush) fwd = cm.RushHeading;
+        if (cm != null && cm.RushActive && plane != null && plane.InRush)
+        {
+            Vector2 aim = plane.RushAim;
+            fwd = Quaternion.LookRotation(cm.RushHeading, Vector3.up) * Quaternion.Euler(-aim.y, aim.x, 0f) * Vector3.forward;
+        }
         Quaternion swung = Quaternion.FromToRotation(rot * Vector3.forward, fwd) * rot;
         // FARE semasinda burun fareyle hizli doner; kamera daha siki takip eder ki nisan ekranda kaybolmasin
         float lag = ControlSettings.MouseSteering ? Mathf.Max(rotationLag, 9f) : rotationLag;
