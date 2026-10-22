@@ -1326,6 +1326,28 @@ public class PlaneController : MonoBehaviour
         aoa = Mathf.Lerp(aoa, 0f, 8f * dt);
     }
 
+    /// <summary>
+    /// Kahraman kacisi: yana aninda sicrar (meters: + sag). Boss fazinda cercevede kayar (kenarda durur); serbest ucusta
+    /// yatay sag ekseni boyunca isinlanir. Gercekte gidilen mesafeyi dondurur.
+    /// </summary>
+    public float DashSideways(float meters)
+    {
+        if (crashed || rb == null) return 0f;
+        if (rushMode)
+        {
+            float before = rushOffset.x;
+            rushOffset.x = Mathf.Clamp(rushOffset.x + meters, -CombatManager.RushHalfWidth, CombatManager.RushHalfWidth);
+            rushVel.x = Mathf.Sign(meters) * RushStrafeSpeed * 0.5f;
+            return rushOffset.x - before;
+        }
+        Vector3 side = Vector3.ProjectOnPlane(transform.right, Vector3.up);
+        if (side.sqrMagnitude < 0.01f) side = Vector3.Cross(Vector3.up, transform.forward);
+        Vector3 to = rb.position + side.normalized * meters;
+        rb.position = to;
+        transform.position = to;
+        return meters;
+    }
+
     /// <summary>Boss fazinda yeniden dogus: ucak cercevenin ortasina konur.</summary>
     private bool RushRevivePose(out Vector3 position, out Quaternion rotation)
     {

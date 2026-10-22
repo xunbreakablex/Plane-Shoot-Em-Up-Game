@@ -157,6 +157,7 @@ public partial class CombatManager : MonoBehaviour
         var kb = Keyboard.current;
         var gpad = Gamepad.current;
         if ((kb != null && kb.bKey.wasPressedThisFrame) || (gpad != null && gpad.buttonWest.wasPressedThisFrame)) TryBomb();
+        UpdateDashInput();
 
         UpdateDirector();
         UpdateRush();

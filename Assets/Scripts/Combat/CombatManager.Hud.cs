@@ -413,6 +413,8 @@ public partial class CombatManager
         const float rowH = 22f;
         float h = 10f + rowH * 2f + 20f + 24f + 24f;
         if (gun != null && gun.HasMissiles) h += 20f;
+        bool dash = DashStatus(out float dashReady, out string dashName);
+        if (dash) h += 22f;
         bool overdrive = RunState.OverdriveActive;
         if (overdrive) h += 22f;
 
@@ -457,6 +459,17 @@ public partial class CombatManager
         {
             Hud.Text(new Rect(x + 10f, cy, w - 20f, 20f), gun.MissileStatus, new Color(1f, 0.9f, 0.45f), 13);
             cy += 20f;
+        }
+
+        // Kahraman kacisi: Q / E, dolma cubugu
+        if (dash)
+        {
+            Color dc = dashReady >= 1f ? new Color(0.55f, 1f, 0.9f) : new Color(0.55f, 0.7f, 0.8f);
+            Hud.Text(new Rect(x + 10f, cy, 170f, 20f), dashName + " [Q/E]", dc, 13);
+            Rect bar = new Rect(x + 190f, cy + 5f, w - 200f, 10f);
+            Hud.Fill(bar, new Color(1f, 1f, 1f, 0.15f));
+            Hud.Fill(new Rect(bar.x, bar.y, bar.width * dashReady, bar.height), dc);
+            cy += 22f;
         }
 
         Hud.Text(new Rect(x + 10f, cy, w - 20f, 18f), "Rozetli düşman = güçlendirme düşürür", new Color(0.8f, 0.88f, 1f), 11, TextAnchor.UpperLeft, false);

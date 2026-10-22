@@ -247,6 +247,14 @@ public class FlightTestManager : MonoBehaviour
         "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     F  füze     B  bomba",
         "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
+    private const string HelpHeroKeys = "B  özel yetenek     Q / E  yana kaç (kısa dokunulmazlık)     SAĞ TIK  yakınlaştır";
+    private static readonly string[] rushHelpHero =
+    {
+        "BOSS SAVAŞI  •  W / S kapalı, boss hep önünde",
+        "A / D  sağa-sola kay     SHIFT / CTRL  yukarı-aşağı     Q / E  yana kaç",
+        "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     B  özel yetenek",
+        "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
+    };
     private static readonly string[] rushHelpPad =
     {
         "BOSS SAVAŞI  •  boss hep önünde",
@@ -271,9 +279,10 @@ public class FlightTestManager : MonoBehaviour
         if (!open) return;
 
         string[] lines;
+        bool hero = cm != null && cm.flight != null && PlaneBuilder.IsHero(cm.flight.CurrentIndex);
         if (rush)
         {
-            lines = PadNav.Connected ? rushHelpPad : rushHelpKeys;
+            lines = PadNav.Connected ? rushHelpPad : (hero ? rushHelpHero : rushHelpKeys);
         }
         else
         {
@@ -289,6 +298,7 @@ public class FlightTestManager : MonoBehaviour
                 : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);
             helpLines[2] = strafeScheme ? (stick ? HelpKeysStick : HelpKeysMouse) : HelpKeysDefault;
             helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;
+            helpLines[3] = hero ? HelpHeroKeys : (DevBuild.Enabled ? "SAĞ TIK  yakınlaştır     1-9 / TAB  uçak değiştir (açık olanlar)" : "SAĞ TIK  yakınlaştır     B  bomba     F  füze");
             lines = helpLines;
         }
 

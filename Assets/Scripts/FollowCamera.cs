@@ -49,6 +49,16 @@ public class FollowCamera : MonoBehaviour
         look = Vector2.zero;
     }
 
+    // ---- Kacis gecikmesi: hedef aniden yer degistirince (kahraman kacisi) kamera eski yerinden yetisir
+    private static Vector3 dashLag;
+
+    /// <summary>Hedef bu kadar ani yer degistirdi: kamera kisa surede arkasindan yetisir (Q/E kacisi).</summary>
+    public static void AddDashLag(Vector3 targetJump)
+    {
+        dashLag -= targetJump;
+        if (dashLag.magnitude > 80f) dashLag = dashLag.normalized * 80f;
+    }
+
     // ---- Kamera sarsintisi (vurus, patlama, boss olumu): siddet UserSettings.Shake ile olceklenir
     private static float shakeAmp, shakeStart, shakeDur;
 
@@ -169,6 +179,14 @@ public class FollowCamera : MonoBehaviour
         smoothUp = Vector3.Lerp(smoothUp, wantUp, 1f - Mathf.Exp(-9f * dt));
         if (smoothUp.sqrMagnitude < 1e-4f) smoothUp = wantUp;
         smoothUp.Normalize();
+
+        // Kacis: kamera eski yerine yakin baslar ve ~0,3 sn'de yetisir; bakis kahramana doner (savrulma hissi)
+        if (dashLag.sqrMagnitude > 0.01f)
+        {
+            pos += dashLag * 0.85f;
+            dashLag = Vector3.Lerp(dashLag, Vector3.zero, 1f - Mathf.Exp(-11f * dt));
+        }
+        else dashLag = Vector3.zero;
 
         Vector3 lookPoint = target.position + fwd * 8f;
         Quaternion finalRot = Quaternion.LookRotation(lookPoint - pos, smoothUp);
