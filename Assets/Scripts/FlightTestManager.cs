@@ -128,7 +128,9 @@ public class FlightTestManager : MonoBehaviour
         // Boss fazinda gaz, stall ve dikey hiz anlamsiz (W/S kapali, cerceve ucurur): yalniz ad, hiz ve irtifa
         CombatManager cm = CombatManager.Instance;
         bool rush = cm != null && cm.RushActive;
-        float x = Hud.Margin, y = Hud.TopY, w = 330f, h = rush ? 52f : 104f;
+        // Kahraman (insan): AoA, stall ve G anlamsiz; yalniz ad, hiz/irtifa ve ucus gucu
+        bool hero = cm != null && cm.flight != null && PlaneBuilder.IsHero(cm.flight.CurrentIndex);
+        float x = Hud.Margin, y = Hud.TopY, w = 330f, h = rush ? 52f : (hero ? (ControlSettings.WsStrafe ? 52f : 72f) : 104f);
         Hud.Panel(new Rect(x, y, w, h));
 
         float tx = x + 10f;
@@ -145,6 +147,16 @@ public class FlightTestManager : MonoBehaviour
         if (speedText.Update(kmhI, altI)) speedText.Text = $"HIZ {kmhI} km/s     İRTİFA {altI} m";
         Hud.Text(new Rect(tx, y + 27f, w - 20f, 20f), speedText.Text, Color.white, 15);
         if (rush) return;
+        if (hero)
+        {
+            if (ControlSettings.WsStrafe) return;
+            Rect hb = new Rect(tx, y + 54f, 200f, 9f);
+            Hud.Bar(hb, p.Throttle, Color.Lerp(new Color(0.6f, 0.5f, 1f), new Color(1f, 0.5f, 0.9f), p.Throttle));
+            int hpI = Mathf.RoundToInt(p.Throttle * 100f);
+            if (throttleText.Update(hpI)) throttleText.Text = $"UÇUŞ GÜCÜ %{hpI}";
+            Hud.Text(new Rect(hb.xMax + 10f, y + 49f, 110f, 18f), throttleText.Text, Color.white, 13);
+            return;
+        }
 
         int vsI = Mathf.RoundToInt(p.VerticalSpeed * 10f), gI = Mathf.RoundToInt(p.GForce * 10f), aoaI = Mathf.RoundToInt(p.AoADeg);
         if (dynText.Update(vsI, gI, aoaI))
@@ -189,7 +201,11 @@ public class FlightTestManager : MonoBehaviour
         if (p.IsCrashed)
             Hud.Text(new Rect(cx - 300f, y, 600f, 60f), "ÇARPTI!", new Color(1f, 0.3f, 0.2f), 44, TextAnchor.MiddleCenter);
         else if (p.IsStalling && !p.InRush)   // boss fazinda cerceve durunca stall uyarisi anlamsiz
-            Hud.Text(new Rect(cx - 300f, y, 600f, 60f), "STALL!", new Color(1f, 0.3f, 0.2f), 44, TextAnchor.MiddleCenter);
+        {
+            CombatManager cm = CombatManager.Instance;
+            bool hero = cm != null && cm.flight != null && PlaneBuilder.IsHero(cm.flight.CurrentIndex);
+            Hud.Text(new Rect(cx - 300f, y, 600f, 60f), hero ? "DÜŞÜYORSUN, HIZLAN!" : "STALL!", new Color(1f, 0.3f, 0.2f), 44, TextAnchor.MiddleCenter);
+        }
     }
 
     // Nisan moduna gore 1. satir (ESC menusunden Otomatik/Fare)

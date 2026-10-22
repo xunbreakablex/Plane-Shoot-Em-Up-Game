@@ -36,7 +36,7 @@ public class PlaneController : MonoBehaviour
                 // ~70 derece/sn
                 return new PresetData
                 {
-                    name = "Planor", cruise = 38f, maxSpeed = 72f, thrust = 8f,
+                    name = "Planör", cruise = 38f, maxSpeed = 72f, thrust = 8f,
                     cruiseAoA = 2.4f, stallAoA = 17f, liftSlope = 5.6f, maxG = 6f,
                     roll = 95f, yaw = 22f, pitchGain = 6f, responsiveness = 6f, inputResponse = 1.1f,
                     arcadeTurn = 82f
@@ -45,7 +45,7 @@ public class PlaneController : MonoBehaviour
                 // ~110 derece/sn (eskiden ~28)
                 return new PresetData
                 {
-                    name = "WW2 Avci", cruise = 82f, maxSpeed = 142f, thrust = 19f,
+                    name = "WW2 Avcı", cruise = 82f, maxSpeed = 142f, thrust = 19f,
                     cruiseAoA = 1.2f, stallAoA = 16f, liftSlope = 4.8f, maxG = 13f,
                     roll = 240f, yaw = 30f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.25f,
                     arcadeTurn = 112f
@@ -72,7 +72,7 @@ public class PlaneController : MonoBehaviour
                 // ~140 derece/sn
                 return new PresetData
                 {
-                    name = "Yavru Kopekbaligi", cruise = 74f, maxSpeed = 134f, thrust = 22f,
+                    name = "Yavru Köpekbalığı", cruise = 74f, maxSpeed = 134f, thrust = 22f,
                     cruiseAoA = 1.9f, stallAoA = 28f, liftSlope = 5.5f, maxG = 14f,
                     roll = 470f, yaw = 55f, pitchGain = 11f, responsiveness = 15f, inputResponse = 1.9f,
                     arcadeTurn = 150f
@@ -108,7 +108,7 @@ public class PlaneController : MonoBehaviour
                 // Ay Savascisi: ucan kahraman; hafif, cok cevik, orta hiz, stall etmez gibi (yuksek stall AoA)
                 return new PresetData
                 {
-                    name = "Ay Savascisi", cruise = 92f, maxSpeed = 165f, thrust = 27f,
+                    name = "Ay Savaşçısı", cruise = 92f, maxSpeed = 165f, thrust = 27f,
                     cruiseAoA = 1.4f, stallAoA = 30f, liftSlope = 5.6f, maxG = 16f,
                     roll = 420f, yaw = 55f, pitchGain = 11f, responsiveness = 15f, inputResponse = 1.9f,
                     arcadeTurn = 150f
@@ -117,7 +117,7 @@ public class PlaneController : MonoBehaviour
                 // Ki Kahramani: en hizli ivme, cok cevik
                 return new PresetData
                 {
-                    name = "Ki Kahramani", cruise = 112f, maxSpeed = 205f, thrust = 40f,
+                    name = "Ki Kahramanı", cruise = 112f, maxSpeed = 205f, thrust = 40f,
                     cruiseAoA = 1.4f, stallAoA = 30f, liftSlope = 5.6f, maxG = 17f,
                     roll = 460f, yaw = 55f, pitchGain = 11f, responsiveness = 15f, inputResponse = 2.0f,
                     arcadeTurn = 148f
@@ -126,7 +126,7 @@ public class PlaneController : MonoBehaviour
                 // Imparator: suzulen karanlik lord; yavas, agir, dayanikli
                 return new PresetData
                 {
-                    name = "Imparator", cruise = 84f, maxSpeed = 150f, thrust = 24f,
+                    name = "İmparator", cruise = 84f, maxSpeed = 150f, thrust = 24f,
                     cruiseAoA = 1.6f, stallAoA = 30f, liftSlope = 5.4f, maxG = 13f,
                     roll = 300f, yaw = 45f, pitchGain = 10f, responsiveness = 13f, inputResponse = 1.5f,
                     arcadeTurn = 118f
@@ -135,7 +135,7 @@ public class PlaneController : MonoBehaviour
                 // WW1: ~90 derece/sn
                 return new PresetData
                 {
-                    name = "WW1 Cift Kanat", cruise = 55f, maxSpeed = 98f, thrust = 12f,
+                    name = "WW1 Çift Kanat", cruise = 55f, maxSpeed = 98f, thrust = 12f,
                     cruiseAoA = 2.2f, stallAoA = 16f, liftSlope = 5.2f, maxG = 7f,
                     roll = 150f, yaw = 38f, pitchGain = 8f, responsiveness = 10f, inputResponse = 1.15f,
                     arcadeTurn = 98f

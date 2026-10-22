@@ -120,6 +120,34 @@ public partial class CombatManager
         if (limbBrain.CurtainGap(out Vector3 gp)) DrawGapArrow(gp, new Color(0.3f, 1f, 0.45f), 38f, "BOŞLUK", "BOŞLUKTASIN");
         else if (limbBrain.WheelGap(out Vector3 wg)) DrawGapArrow(wg, new Color(1f, 0.45f, 0.85f), 24f, "BOŞLUK", "BOŞLUKTASIN");
         else if (limbBrain.KiWaveDanger(out Vector3 kc, out float kr, out float kLeft)) DrawKiWaveExit(kc, kr, kLeft);
+        else if (limbBrain.SweepDanger(out Vector3 bc, out bool vert, out bool inside)) DrawSweepExit(bc, vert, inside);
+    }
+
+    // Supurme: oyuncu kilitli seritteyse en yakin kenara buyuk "KAC" oku (yatay taramada yukari/asagi, dikeyde saga/sola)
+    private void DrawSweepExit(Vector3 bandCenter, bool vertical, bool inside)
+    {
+        PlaneController plane = flight != null ? flight.Current : null;
+        if (plane == null || plane.IsCrashed) return;
+        Vector3 pp = plane.transform.position;
+        if (!inside)
+        {
+            Vector3 psp = cam.WorldToScreenPoint(pp);
+            if (psp.z > 0f)
+                Hud.Text(new Rect(Hud.ToHud(psp).x - 80f, Hud.ToHud(psp).y + 40f, 160f, 18f), "ŞERİDİN DIŞINDASIN", new Color(0.4f, 1f, 0.55f), 13, TextAnchor.UpperCenter);
+            return;
+        }
+        Vector3 right = Vector3.Cross(Vector3.up, RushHeading).normalized;
+        Vector3 axis = vertical ? right : Vector3.up;
+        float side = Vector3.Dot(pp - bandCenter, axis);
+        // Kayma alaninin kenarina sikismissa obur yana
+        float lim = vertical ? RushHalfWidth - 20f : RushUp - 20f;
+        float limLo = vertical ? -RushHalfWidth + 20f : -RushDown + 20f;
+        float pf = vertical ? Vector3.Dot(pp - RushOrigin, right) : pp.y - RushOrigin.y;
+        float dir = side >= 0f ? 1f : -1f;
+        if (pf + dir * 30f > lim || pf + dir * 30f < limLo) dir = -dir;
+        Vector3 exit = pp + axis * dir * 40f;
+        DrawVignette(new Color(1f, 0.3f, 0.08f), 0.22f + 0.1f * Mathf.Sin(Time.unscaledTime * 16f));
+        DrawGapArrow(exit, new Color(1f, 0.35f, 0.2f), 6f, vertical ? "YANA KAÇ!" : (dir > 0f ? "YUKARI KAÇ!" : "AŞAĞI KAÇ!"), null, 1.5f);
     }
 
     // Ki dalgasi: cember kameranin onundeki duzlemde ekrana sigmaz. Oyuncu icindeyse ekran kenarlari kirmizi yanar (ates

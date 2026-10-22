@@ -37,7 +37,11 @@ public partial class BossBrain
         switch (step++ % 4)
         {
             case 0:
-                StartSpray(octoEyes, 3.2f, 3 + phase, 14f, 0.07f, 190f);
+                // Boss fazinda imza saldiri: dikey dokunac tokadi (oyuncunun yanal konumuna kilitli; yana kac)
+                if (mgr.RushActive)
+                    StartSweep(octoEyes, true, phase >= 2 ? 2 : 1, new Color(0.95f, 0.75f, 1f, 1f), new Color(0.55f, 0.15f, 0.75f, 0.6f),
+                        "DOKUNAÇ TOKADI: sağa ya da sola kaç!");
+                else StartSpray(octoEyes, 3.2f, 3 + phase, 14f, 0.07f, 190f);
                 break;
             case 1:
             {
@@ -256,7 +260,11 @@ public partial class BossBrain
                 Fan(mouth, AimFrom(mouth, 240f, 4f), 5, 22f, 240f, 1);
                 break;
             case 1:
-                StartSpray(dragonMouth, 2.6f, 2 + phase, 12f, 0.08f, 200f);
+                // Boss fazinda imza saldiri: yatay ates nefesi (oyuncunun yuksekligine kilitli; yukari/asagi kac)
+                if (mgr.RushActive)
+                    StartSweep(dragonMouth, false, phase >= 2 ? 2 : 1, new Color(1f, 0.92f, 0.6f, 1f), new Color(1f, 0.38f, 0.08f, 0.6f),
+                        "ATEŞ NEFESİ: yukarı ya da aşağı kaç!");
+                else StartSpray(dragonMouth, 2.6f, 2 + phase, 12f, 0.08f, 200f);
                 break;
             case 2:
                 if (phase >= 1 && !dragonJawBroken) StartBeam(dragonMouth, 1.2f, 1.5f);

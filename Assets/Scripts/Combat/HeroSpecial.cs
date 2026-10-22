@@ -23,8 +23,7 @@ public class HeroSpecial : MonoBehaviour
     private float start, duration, radius;
     private float nextTick;
     private Color core, glow;
-    private Transform coreTube, glowTube, neckTube;
-    private const float NeckLength = 14f;   // ellerden ince boyun; ana tup bundan sonra acilir (kamera tupun icinde kalmasin)
+    private Transform coreTube, glowTube;
     private Material coreMat, glowMat;
     private readonly List<LineRenderer> bolts = new List<LineRenderer>();
     private Transform orb;
@@ -53,11 +52,11 @@ public class HeroSpecial : MonoBehaviour
         {
             case Kind.MoonBeam:
                 duration = 3.0f; radius = 7f;
-                core = new Color(1f, 0.95f, 1f, 1f); glow = new Color(1f, 0.45f, 0.85f, 0.5f);
+                core = new Color(1f, 0.95f, 1f, 1f); glow = new Color(1f, 0.45f, 0.85f, 0.75f);
                 break;
             case Kind.Kamehameha:
                 duration = 3.2f; radius = 9f;
-                core = new Color(0.9f, 1f, 1f, 1f); glow = new Color(0.3f, 0.7f, 1f, 0.55f);
+                core = new Color(0.9f, 1f, 1f, 1f); glow = new Color(0.3f, 0.7f, 1f, 0.8f);
                 break;
             default:
                 duration = 2.6f; radius = 0f;
@@ -73,7 +72,7 @@ public class HeroSpecial : MonoBehaviour
             coreMat = new Material(mat) { color = core };
             glowTube = MakeTube("Glow", glowMat);
             coreTube = MakeTube("Core", coreMat);
-            neckTube = MakeTube("Neck", coreMat);
+
             orb = GameObject.CreatePrimitive(PrimitiveType.Sphere).transform;
             Destroy(orb.GetComponent<Collider>());
             orb.name = "ChargeOrb";
@@ -99,11 +98,46 @@ public class HeroSpecial : MonoBehaviour
         HeroVoice.Special((int)kind - 1, plane.transform.position);   // yetenek bagirisi
     }
 
+    private static Mesh coneMesh;
+
+    // Kapaksiz, ellerden genisleyen huni-tup (yaricap 1, boy 1, +Z boyunca): basta ince boyun, %8'de tam yaricap.
+    // Silindir primitive'inin duz kapagi arkadan bakinca ekrani kaplayan bir kubbe gibi gorunuyordu.
+    private static Mesh ConeMesh()
+    {
+        if (coneMesh != null) return coneMesh;
+        const int sides = 28;
+        float[] z = { 0f, 0.025f, 0.08f, 1f };
+        float[] r = { 0.12f, 0.45f, 1f, 1f };
+        var verts = new Vector3[sides * z.Length];
+        var uv = new Vector2[verts.Length];
+        for (int k = 0; k < z.Length; k++)
+            for (int i = 0; i < sides; i++)
+            {
+                float a = Mathf.PI * 2f * i / sides;
+                verts[k * sides + i] = new Vector3(Mathf.Cos(a) * r[k], Mathf.Sin(a) * r[k], z[k]);
+                uv[k * sides + i] = new Vector2((float)i / sides, z[k]);
+            }
+        var tris = new int[(z.Length - 1) * sides * 6];
+        int t = 0;
+        for (int k = 0; k < z.Length - 1; k++)
+            for (int i = 0; i < sides; i++)
+            {
+                int j = (i + 1) % sides;
+                int a0 = k * sides + i, a1 = k * sides + j, b0 = (k + 1) * sides + i, b1 = (k + 1) * sides + j;
+                tris[t++] = a0; tris[t++] = b0; tris[t++] = a1;
+                tris[t++] = a1; tris[t++] = b0; tris[t++] = b1;
+            }
+        coneMesh = new Mesh { name = "HeroBeamCone", vertices = verts, uv = uv, triangles = tris };
+        coneMesh.RecalculateBounds();
+        coneMesh.bounds = new Bounds(new Vector3(0f, 0f, 0.5f), new Vector3(2f, 2f, 1f));
+        return coneMesh;
+    }
+
     private Transform MakeTube(string name, Material m)
     {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        go.name = name;
-        Destroy(go.GetComponent<Collider>());
+        var go = new GameObject(name);
+        go.AddComponent<MeshFilter>().sharedMesh = ConeMesh();
+        go.AddComponent<MeshRenderer>();
         go.transform.SetParent(transform, false);
         var r = go.GetComponent<Renderer>();
         r.sharedMaterial = m;
@@ -119,9 +153,9 @@ public class HeroSpecial : MonoBehaviour
         bool on = diameter > 0.05f;
         if (tube.gameObject.activeSelf != on) tube.gameObject.SetActive(on);
         if (!on) return;
-        tube.position = from + dir * (length * 0.5f);
-        tube.rotation = Quaternion.LookRotation(dir) * Quaternion.Euler(90f, 0f, 0f);
-        tube.localScale = new Vector3(diameter, length * 0.5f, diameter);
+        tube.position = from;
+        tube.rotation = Quaternion.LookRotation(dir);
+        tube.localScale = new Vector3(diameter * 0.5f, diameter * 0.5f, length);
     }
 
     private LineRenderer MakeLine(string name, int points)
@@ -174,9 +208,8 @@ public class HeroSpecial : MonoBehaviour
         Vector3 d = AimDir();
         Vector3 end = o + d * BeamLength;
 
-        PlaceTube(neckTube, o, d, NeckLength, w * 0.22f);
-        PlaceTube(glowTube, o + d * NeckLength, d, BeamLength - NeckLength, w);
-        PlaceTube(coreTube, o + d * NeckLength, d, BeamLength - NeckLength, w * 0.42f);
+        PlaceTube(glowTube, o, d, BeamLength, w);
+        PlaceTube(coreTube, o, d, BeamLength, w * 0.55f);
         if (glowMat != null) glowMat.color = new Color(glow.r, glow.g, glow.b, glow.a * (0.7f + 0.3f * Mathf.Sin(Time.time * 40f)));
 
         if (orb != null)
