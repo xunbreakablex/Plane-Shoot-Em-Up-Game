@@ -26,6 +26,7 @@ public static class RunState
     public static int StageKills { get; private set; }
     public static int StageSpawned { get; private set; }
     public static int StageHullHits { get; private set; }
+    public static int StageBestCombo { get; private set; }   // asama derecesi icin (BestCombo tum kosu)
     public static int PowerLevel { get; private set; }
 
     /// <summary>Boss Rush: bu oyun yalnizca boss'lardan olusur (hangarda secilir, NewCampaign'de uygulanir).</summary>
@@ -112,6 +113,7 @@ public static class RunState
         StageKills = 0;
         StageSpawned = 0;
         StageHullHits = 0;
+        StageBestCombo = 0;
         StageStartScore = Score;
         ClearBonusAccuracy = 0;
         ClearBonusNoDamage = 0;
@@ -165,6 +167,7 @@ public static class RunState
         Kills++;
         StageKills++;
         if (combo > BestCombo) BestCombo = combo;
+        if (combo > StageBestCombo) StageBestCombo = combo;
     }
 
     public static void RegisterHullHit() { StageHullHits++; }
