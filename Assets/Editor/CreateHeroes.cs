@@ -17,6 +17,17 @@ public static class CreateHeroes
     private static readonly string[] Names = { "AySavascisi", "KiKahramani", "Imparator" };
     private static readonly int[] ModelIndex = { 9, 10, 11 };
 
+    // Kullanicinin modeli (Assets/_Art): yalniz Imparator icin var; digerleri gelince ayni yolla takilir
+    private const string EmperorModel = "Assets/_Art/Models/Emperor.fbx";
+
+    /// <summary>Yalniz Imparator prefab'ini yeniden kurar (sahne / hangar kayitlari ayni prefab'i gosterir).</summary>
+    [MenuItem("Tools/Create Heroes (yalniz Imparator)")]
+    public static void RebuildEmperor()
+    {
+        BuildEmperor();
+        AssetDatabase.SaveAssets();
+    }
+
     [MenuItem("Tools/Create Heroes")]
     public static void CreateAll()
     {
@@ -154,43 +165,54 @@ public static class CreateHeroes
         Finish(root, "KiKahramani", 0.15f, 0f, -1.6f);
     }
 
-    // ================================================================== IMPARATOR (dik, 22 derece one egik)
+    // ================================================================== IMPARATOR (dik, 10 derece one egik)
 
     private static void BuildEmperor()
     {
-        Material robe = Lit("Hero_Robe", new Color(0.1f, 0.08f, 0.12f));
-        Material cape = Lit("Hero_Cape", new Color(0.3f, 0.05f, 0.08f));
-        Material pale = Lit("Hero_Pale", new Color(0.85f, 0.82f, 0.75f));
-        Material eye = Unlit("Hero_EyeRed", new Color(1f, 0.75f, 0.1f));
         Material dark = Unlit("Hero_DarkEnergy", new Color(0.6f, 0.25f, 1f));
         Material black = CreateGliderPlane.GetMaterial("Plane_Dark", new Color(0.12f, 0.12f, 0.12f));
 
         var root = new GameObject("Imparator");
         GameObject body = Body(root, PlaneBuilder.HeroLean[2]);
 
-        // Dik suzulen cuppe: kapsul govde, kukuleta, icinde solgun yuz ve parlayan gozler
-        Part(body, PrimitiveType.Capsule, "Robe", V(0, 0, 0), V(0.9f, 1.1f, 0.9f), robe);
-        Part(body, PrimitiveType.Cylinder, "Hem", V(0, -0.95f, 0), V(1.1f, 0.12f, 1.1f), robe);
-        Part(body, PrimitiveType.Sphere, "Hood", V(0, 1.05f, 0.05f), V(0.62f, 0.6f, 0.62f), robe);
-        Part(body, PrimitiveType.Sphere, "Head", V(0, 1.0f, 0.22f), V(0.36f, 0.42f, 0.3f), pale);
-        Part(body, PrimitiveType.Sphere, "EyeL", V(-0.08f, 1.05f, 0.38f), V(0.07f, 0.05f, 0.04f), eye);
-        Part(body, PrimitiveType.Sphere, "EyeR", V(0.08f, 1.05f, 0.38f), V(0.07f, 0.05f, 0.04f), eye);
-        Part(body, PrimitiveType.Cube, "Cape", V(0, 0.3f, -0.5f), V(1.1f, 1.9f, 0.08f), cape);
-
-        // Kollar one uzanir, parmak uclari yildirim kaynagi
-        for (int s = -1; s <= 1; s += 2)
+        // Kullanicinin modeli: kukuletali, pelerinli imparator (+Z'ye bakar, 2 m boy, merkezi gobek). 1,2 olcekle
+        // eski boyuna (2,4 m) gelir; eller one uzanik (sol ~(-0,45; 0,3; 0,7), sag ~(0,54; 0,27; 0,51) model biriminde).
+        var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(EmperorModel);
+        if (fbx != null)
         {
-            Part(body, PrimitiveType.Capsule, "Sleeve", V(s * 0.42f, 0.68f, 0.35f), V(0.22f, 0.4f, 0.22f), robe, V(60, 0, s * -25));
-            Part(body, PrimitiveType.Sphere, "Hand", V(s * 0.42f, 0.45f, 0.62f), V(0.17f, 0.15f, 0.2f), pale);
+            var model = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
+            model.name = "Model";
+            model.transform.SetParent(body.transform, false);
+            model.transform.localScale = Vector3.one * 1.2f;
+            foreach (var r in model.GetComponentsInChildren<Renderer>(true))
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         }
 
-        // Ayak altinda karanlik enerji halkasi
-        Part(body, PrimitiveType.Cylinder, "Ring", V(0, -1.1f, 0), V(1.5f, 0.03f, 1.5f), dark);
-        Part(body, PrimitiveType.Cylinder, "RingInner", V(0, -1.12f, 0), V(1.1f, 0.02f, 1.1f), dark);
+        // Carpisma hacimleri (gorunmez): govde ve kukuleta
+        Hitbox(body, "Robe", V(0, -0.05f, 0), V(0.9f, 1.1f, 0.9f));
+        Hitbox(body, "Hood", V(0, 0.85f, 0.1f), V(0.62f, 0.6f, 0.62f));
 
-        Part(body, PrimitiveType.Cube, "BellySkid", V(0, -1.2f, 0), V(0.3f, 0.08f, 0.8f), black);
+        // Parmak uclarinda karanlik enerji kureleri: yildirim kaynagi, ates ederken parlar (HeroAnimator "Hand")
+        Part(body, PrimitiveType.Sphere, "Hand", V(-0.54f, 0.36f, 0.86f), V(0.14f, 0.14f, 0.14f), dark);
+        Part(body, PrimitiveType.Sphere, "Hand", V(0.62f, 0.33f, 0.66f), V(0.14f, 0.14f, 0.14f), dark);
+
+        // Ayak altinda karanlik enerji halkasi
+        Part(body, PrimitiveType.Cylinder, "Ring", V(0, -1.15f, 0), V(1.5f, 0.03f, 1.5f), dark);
+        Part(body, PrimitiveType.Cylinder, "RingInner", V(0, -1.17f, 0), V(1.1f, 0.02f, 1.1f), dark);
+
+        Part(body, PrimitiveType.Cube, "BellySkid", V(0, -1.25f, 0), V(0.3f, 0.08f, 0.8f), black);
+        body.transform.Find("BellySkid").GetComponent<Renderer>().enabled = false;
 
         Finish(root, "Imparator", 0.75f, 0f, -1.05f);
+    }
+
+    // Gorunmez carpisma hacmi: Finish isme gore collider ekler (Robe = kapsul, Hood = kure)
+    private static void Hitbox(GameObject parent, string name, Vector3 pos, Vector3 scale)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent.transform, false);
+        go.transform.localPosition = pos;
+        go.transform.localScale = scale;
     }
 
     // ================================================================== yardimcilar
