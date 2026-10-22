@@ -18,30 +18,15 @@ public partial class BossBrain
 
     private void EagleAttack()
     {
-        switch (step++ % 5)
+        // Saldirilar: FIRTINA KANADI (imza), pence dalisi
+        switch (step++ % 2)
         {
             case 0:
                 if (mgr.RushActive) StartGale();                                                         // boss fazi imza: firtina kanadi
-                else Fan(eagleBeak.position, AimFrom(eagleBeak.position, 215f, 4f), 7, 40f, 215f, 1);     // tuy yagmuru
-                break;
-            case 1:
-            {
-                // Kanat ucu toplari: kopan top susar; ikisi de koptuysa gagadan
-                if (eagleMuzzleL != null) Cone(eagleMuzzleL.position, AimFrom(eagleMuzzleL.position, 180f, 3f), 8 + phase * 2, 10f, 180f, 1, Random.value * 90f);
-                if (eagleMuzzleR != null) Cone(eagleMuzzleR.position, AimFrom(eagleMuzzleR.position, 180f, 3f), 8 + phase * 2, 10f, 180f, 1, Random.value * 90f);
-                if (eagleMuzzleL == null && eagleMuzzleR == null)
-                    Cone(eagleBeak.position, AimFrom(eagleBeak.position, 180f, 3f), 10 + phase * 2, 10f, 180f, 1, Random.value * 90f);
-                break;
-            }
-            case 2:
-                StartCharge(0.9f, 205f, 1.7f);                                                           // dalis
-                break;
-            case 3:
-                StartSpray(eagleBeak, 2.2f, 2 + phase, 14f, 0.08f, 190f);
+                else StartCharge(0.9f, 205f, 1.7f);
                 break;
             default:
-                if (phase >= 1) StartBeam(eagleBeak, 1.1f, 1.3f);
-                else RainFromAbove(8, 135f, 140f);
+                StartCharge(0.9f, 205f, 1.7f);                                                           // pence dalisi
                 break;
         }
 
@@ -80,29 +65,18 @@ public partial class BossBrain
 
     private void GolemAttack()
     {
-        switch (step++ % 5)
+        // Saldirilar: YUMRUKLAR (imza; iki yumruk da koptuysa ezme), cekirdek isini, kaya yagmuru
+        switch (step++ % 3)
         {
             case 0:
-            {
-                // Yumruklar: kopan yumruk susar; ikisi de koptuysa cekirdekten
-                if (golemMuzzleL != null) Fan(golemMuzzleL.position, AimFrom(golemMuzzleL.position, 190f, 4f), 5, 30f, 190f, 1);
-                if (golemMuzzleR != null) Fan(golemMuzzleR.position, AimFrom(golemMuzzleR.position, 190f, 4f), 5, 30f, 190f, 1);
-                if (golemMuzzleL == null && golemMuzzleR == null)
-                    Fan(golemMuzzleCore.position, AimFrom(golemMuzzleCore.position, 190f, 4f), 7, 36f, 190f, 1);
-                break;
-            }
-            case 1:
-                RainFromAbove(10 + phase * 4, 120f, 150f);                                               // kaya yagmuru
-                break;
-            case 2:
-                StartBeam(golemMuzzleCore, 1.3f, 1.5f);
-                break;
-            case 3:
                 if (FistL || FistR) StartFists();                                                        // yumruklar takip edip vurur
                 else StartCharge(1.0f, 170f, 1.9f);                                                      // ezme
                 break;
+            case 1:
+                StartBeam(golemMuzzleCore, 1.3f, 1.5f);                                                  // cekirdek isini
+                break;
             default:
-                Cone(golemMuzzleCore.position, AimFrom(golemMuzzleCore.position, 150f, 0f), 16 + phase * 4, 12f, 150f, 2, Random.value * 90f);
+                RainFromAbove(10 + phase * 4, 120f, 150f);                                               // kaya yagmuru
                 break;
         }
 

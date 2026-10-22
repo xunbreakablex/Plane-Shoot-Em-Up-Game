@@ -34,36 +34,32 @@ public partial class BossBrain
         Vector3 eyes = octoEyes.position;
         Vector3 aim = AimFrom(eyes, 200f, 4f);
 
-        switch (step++ % 4)
+        // Saldirilar: DOKUNAC TOKADI (imza), dokunac yaylimi (uyarili), murekkep halkasi
+        switch (step++ % 3)
         {
             case 0:
                 // Boss fazinda imza saldiri: dikey dokunac tokadi (oyuncunun yanal konumuna kilitli; yana kac)
                 if (mgr.RushActive)
                     StartSweep(octoEyes, true, phase >= 2 ? 2 : 1, new Color(0.95f, 0.75f, 1f, 1f), new Color(0.55f, 0.15f, 0.75f, 0.6f),
                         "DOKUNAÇ TOKADI: sağa ya da sola kaç!");
-                else StartSpray(octoEyes, 3.2f, 3 + phase, 14f, 0.07f, 190f);
+                else Cone(eyes, aim, 14, 10f, 180f, 1, Random.value * 90f);
                 break;
             case 1:
             {
-                // Her dokuncak ucu hedefe birer mermi gonderir (kopan dokunac susar)
+                // Her dokuncak ucu uyari cizgisiyle hedefe birer mermi gonderir (kopan dokunac susar)
                 int fired = 0;
                 for (int t = 0; t < BossBuilder.OctoTentacles; t++)
                 {
                     Transform tip = octoSeg[t, BossBuilder.OctoSegments - 1];
                     if (tip == null) continue;
-                    Shoot(tip.position, AimFrom(tip.position, 230f, 7f), 230f, 1);
+                    Fan(tip.position, AimFrom(tip.position, 215f, 7f), 1, 0f, 215f, 1);
                     fired++;
                 }
-                if (fired == 0) Fan(eyes, aim, 5, 26f, 215f, 1);
+                if (fired == 0) Cone(eyes, aim, 14, 10f, 180f, 1, Random.value * 90f);
                 break;
             }
-            case 2:
-                Cone(eyes, aim, 14, 10f, 180f, 2, Random.value * 90f);
-                Fan(eyes, aim, 5, 26f, 215f, 1);
-                break;
             default:
-                if (phase >= 1) StartBeam(octoEyes, 1.1f, 1.6f);
-                else Fan(eyes, aim, 7, 36f, 215f, 1);
+                Cone(eyes, AimFrom(eyes, 180f, 4f), 14 + phase * 3, 10f, 180f, 1, Random.value * 90f);   // murekkep halkasi
                 break;
         }
 
@@ -148,7 +144,8 @@ public partial class BossBrain
                 tr.rotation = Quaternion.Slerp(tr.rotation, Quaternion.LookRotation(to.normalized, Vector3.up),
                     1f - Mathf.Exp(-5f * dt));
 
-            if (!alive) continue;
+            // Boss fazinda taretler surekli atmaz; yalniz "taret yaylimi" saldirisinda uyarili ateslenir
+            if (!alive || mgr.RushActive) continue;
 
             if (zepBurst[i] > 0)
             {
@@ -176,29 +173,30 @@ public partial class BossBrain
     {
         Vector3 nose = zepNose.position;
 
+        // Saldirilar: BOMBA HALISI (imza), bomba yagmuru, taret yaylimi (uyarili)
         switch (step++ % 3)
         {
             case 0:
-            {
-                // Boss fazi imza: arti / carpi bomba halisi
-                if (mgr.RushActive) { StartCarpetBomb(); break; }
-                // Bomba yagmuru: karin altindan yavas, genis bir salvo
-                Vector3 belly = zepBelly.position;
-                Vector3 baseDir = AimFrom(belly, 90f, 0f);
-                for (int i = 0; i < 12; i++)
-                {
-                    Vector3 d = Quaternion.Euler(Random.Range(-14f, 14f), Random.Range(-26f, 26f), 0f) * baseDir;
-                    Shoot(belly, d.normalized, 80f, 1, 9f);
-                }
+                if (mgr.RushActive) StartCarpetBomb();       // boss fazi imza: arti / carpi bomba halisi
+                else RainFromAbove(10, 110f, 150f);
                 break;
-            }
             case 1:
-                Fan(nose, AimFrom(nose, 200f, 4f), 7, 40f, 200f, 1);
+                RainFromAbove(10 + phase * 4, 110f, 150f);   // karin altindan bomba yagmuru
                 break;
             default:
-                if (phase >= 1) Cone(nose, AimFrom(nose, 190f, 4f), 12, 10f, 190f, 2, Random.value * 90f);
-                else Fan(nose, AimFrom(nose, 200f, 4f), 5, 28f, 200f, 1);
+            {
+                // Her taret uyari cizgisiyle dar uclu yaylim; kopan taret susar, hepsi koptuysa burundan
+                int fired = 0;
+                for (int i = 0; i < BossBuilder.ZepTurrets; i++)
+                {
+                    if (zepTurret[i] == null || zepMuzzle[i] == null) continue;
+                    Vector3 m = zepMuzzle[i].position;
+                    Fan(m, AimFrom(m, 220f, 6f), 3, 8f, 220f, 1);
+                    fired++;
+                }
+                if (fired == 0) Fan(nose, AimFrom(nose, 200f, 4f), 5, 28f, 200f, 1);
                 break;
+            }
         }
 
         nextAttack = Mathf.Max(nextAttack, Time.time + Mathf.Lerp(3.2f, 2f, phase / 2f));
@@ -256,24 +254,23 @@ public partial class BossBrain
     {
         Vector3 mouth = dragonMouth.position;
 
-        switch (step++ % 4)
+        // Saldirilar: ATES NEFESI (imza), agiz isini, ates sarmali (hedefli)
+        switch (step++ % 3)
         {
             case 0:
-                Fan(mouth, AimFrom(mouth, 240f, 4f), 5, 22f, 240f, 1);
-                break;
-            case 1:
                 // Boss fazinda imza saldiri: yatay ates nefesi (oyuncunun yuksekligine kilitli; yukari/asagi kac)
                 if (mgr.RushActive)
                     StartSweep(dragonMouth, false, phase >= 2 ? 2 : 1, new Color(1f, 0.92f, 0.6f, 1f), new Color(1f, 0.38f, 0.08f, 0.6f),
                         "ATEŞ NEFESİ: yukarı ya da aşağı kaç!");
                 else StartSpray(dragonMouth, 2.6f, 2 + phase, 12f, 0.08f, 200f);
                 break;
-            case 2:
-                if (phase >= 1 && !dragonJawBroken) StartBeam(dragonMouth, 1.2f, 1.5f);
-                else Cone(mouth, AimFrom(mouth, 190f, 4f), 12, 10f, 190f, 2, Random.value * 90f);
+            case 1:
+                // Cene koptuysa isin yerine ates sarmali
+                if (!dragonJawBroken) StartBeam(dragonMouth, 1.2f, 1.5f);
+                else StartSpray(dragonMouth, 2.4f, 2 + phase, 14f, 0.08f, 200f);
                 break;
             default:
-                StartCharge(1.2f, 150f, 2.0f);
+                StartSpray(dragonMouth, 2.4f, 2 + phase, 14f, 0.08f, 200f);
                 break;
         }
 

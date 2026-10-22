@@ -263,7 +263,7 @@ public partial class BossBrain : MonoBehaviour
         TickBeam(dt);
         TickType(dt);
 
-        if (playerAlive && !overridden && !beamActive && !WheelBusy && !KiWaveBusy && !FistBusy && !SweepBusy && !ZonesBusy && !GaleBusy && Time.time >= nextAttack)
+        if (playerAlive && !overridden && !beamActive && !WheelBusy && !KiWaveBusy && !FistBusy && !SweepBusy && !ZonesBusy && !GaleBusy && !Spraying && !CrabSweeping && Time.time >= nextAttack)
         {
             // Boss fazinda her CurtainEvery saldiridan biri perde (bosluklu mermi duvari)
             if (CurtainTurn) Curtain();
@@ -655,7 +655,10 @@ public partial class BossBrain : MonoBehaviour
             Vector3 up = Mathf.Abs(Vector3.Dot(axis, Vector3.up)) > 0.95f ? Vector3.right : Vector3.up;
             Vector3 u = Vector3.Cross(axis, up).normalized;
             Vector3 v = Vector3.Cross(axis, u).normalized;
-            float tilt = sprayTilt * Mathf.Deg2Rad;
+            // Hedefli sarmal: halka periyodik daralip oyuncunun uzerine kapanir (eskiden sabit egimle ici bos kaliyor,
+            // yerinde duran oyuncuya hic degmiyordu)
+            float breathe = 0.15f + 0.85f * Mathf.Abs(Mathf.Sin((Time.time - sprayStart) * 2.4f));
+            float tilt = sprayTilt * breathe * Mathf.Deg2Rad;
 
             for (int a = 0; a < sprayArms; a++)
             {

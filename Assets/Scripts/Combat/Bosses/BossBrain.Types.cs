@@ -93,7 +93,6 @@ public partial class BossBrain
     // ====================================================================== JET
 
     private Transform jetNose, jetPodL, jetPodR, jetFlameL, jetFlameR;
-    private float jetDashNext;
 
     private void JetInit()
     {
@@ -102,7 +101,6 @@ public partial class BossBrain
         jetPodR = Get("MuzzlePodR");
         jetFlameL = Get("FlameL");
         jetFlameR = Get("FlameR");
-        jetDashNext = Time.time + 10f;
     }
 
     private void JetMove(float dt)
@@ -125,39 +123,21 @@ public partial class BossBrain
         Vector3 nose = jetNose.position;
         Vector3 aim = AimFrom(nose, 240f, 6f);
 
-        switch (step++ % 4)
+        // Saldirilar: FUZE KILIDI (imza), burun yelpazesi, kanat topu yaylimi (uyarili)
+        switch (step++ % 3)
         {
             case 0:
                 Fan(nose, aim, phase >= 1 ? 7 : 5, 28f, 240f, 1);
                 break;
             case 1:
-                // Kanat ucu toplari: kopan topun atisi susar; ikisi de koptuysa burundan dar yelpaze
-                if (jetPodL == null && jetPodR == null)
-                {
-                    Fan(nose, aim, 5, 16f, 260f, 1);
-                    break;
-                }
-                for (int i = 0; i < 3; i++)
-                {
-                    Vector3 spread = Random.insideUnitSphere * 0.04f;
-                    if (jetPodL != null) Shoot(jetPodL.position, (AimFrom(jetPodL.position, 260f, 4f) + spread).normalized, 260f, 1);
-                    if (jetPodR != null) Shoot(jetPodR.position, (AimFrom(jetPodR.position, 260f, 4f) + spread).normalized, 260f, 1);
-                }
-                break;
-            case 2:
-                if (mgr.RushActive) StartMissileRain();     // boss fazi imza: izleyen fuze kilitleri
-                else Cone(nose, aim, 8, 9f, 200f, 1, step * 17f);
+                // Kanat ucu toplari: her toptan uyari cizgili dar uclu yaylim; kopan top susar, ikisi de koptuysa burundan
+                if (jetPodL == null && jetPodR == null) { Fan(nose, aim, 5, 16f, 240f, 1); break; }
+                if (jetPodL != null) Fan(jetPodL.position, AimFrom(jetPodL.position, 240f, 4f), 3 + phase, 6f, 240f, 1);
+                if (jetPodR != null) Fan(jetPodR.position, AimFrom(jetPodR.position, 240f, 4f), 3 + phase, 6f, 240f, 1);
                 break;
             default:
-                if (phase >= 1 && Time.time >= jetDashNext)
-                {
-                    jetDashNext = Time.time + 10f;
-                    StartCharge(0.9f, 175f, 1.7f);
-                }
-                else
-                {
-                    Fan(nose, aim, 3, 10f, 290f, 2);
-                }
+                if (mgr.RushActive) StartMissileRain();     // boss fazi imza: izleyen fuze kilitleri
+                else Fan(nose, aim, 5, 28f, 240f, 1);
                 break;
         }
 
@@ -210,28 +190,17 @@ public partial class BossBrain
         FollowCamera.AddShake(0.5f, 0.3f);
     }
 
+    // Saldirilar: ISIRIK DALISI (imza: dalar, cenesini kapatir, hizla geri doner) ve su halkasi (gecikmeli halka mermi)
     private void SharkAttack()
     {
-        switch (step++ % 4)
+        switch (step++ % 2)
         {
             case 0:
-                sharkPending = 1;
-                sharkFireAt = Time.time + 0.55f;
-                break;
-            case 1:
-                sharkPending = 2;
-                sharkFireAt = Time.time + 0.55f;
-                break;
-            case 2:
-                if (phase >= 1 && !sharkJawBroken) StartBeam(sharkMouth, 1.0f, 1.4f);
-                else
-                {
-                    sharkPending = 1;
-                    sharkFireAt = Time.time + 0.55f;
-                }
+                StartCharge(1.0f, 150f, 1.8f);
                 break;
             default:
-                StartCharge(1.0f, 150f, 1.8f);
+                sharkPending = 2;
+                sharkFireAt = Time.time + 0.55f;
                 break;
         }
 
@@ -245,8 +214,9 @@ public partial class BossBrain
             Vector3 mouth = sharkMouth.position;
             Vector3 aim = AimFrom(mouth, 220f, 4f);
 
-            if (sharkPending == 1) Fan(mouth, aim, sharkJawBroken ? 4 : 7, sharkJawBroken ? 24f : 38f, 220f, 1);
-            else Cone(mouth, aim, 12, 10f, 190f, 2, Random.value * 90f);
+            // Su halkasi: cene koptuysa seyrek; ofkelendikce sik
+            int ring = (sharkJawBroken ? 8 : 12) + phase * 4;
+            Cone(mouth, AimFrom(mouth, 190f, 4f), ring, 10f, 190f, 1, Random.value * 90f);
 
             sharkPending = 0;
         }
@@ -306,31 +276,22 @@ public partial class BossBrain
     {
         Vector3 bodyPos = crabMuzzleBody.position;
 
-        switch (step++ % 4)
+        // Saldirilar: KISKAC (imza), kiskac yelpazesi, kiskac supurmesi (uyarili)
+        switch (step++ % 3)
         {
             case 0:
-                // Kiskaclar: kopan kiskac susar; ikisi de koptuysa govdeden halka
-                if (crabMuzzleL != null) Fan(crabMuzzleL.position, AimFrom(crabMuzzleL.position, 230f, 5f), 3, 12f, 230f, 1);
-                if (crabMuzzleR != null) Fan(crabMuzzleR.position, AimFrom(crabMuzzleR.position, 230f, 5f), 3, 12f, 230f, 1);
-                if (crabMuzzleL == null && crabMuzzleR == null) Cone(bodyPos, AimFrom(bodyPos, 190f, 4f), 10, 10f, 190f, 1, Random.value * 90f);
+                // Kiskaclar: kopan kiskac susar; ikisi de koptuysa govdeden yelpaze
+                if (crabMuzzleL != null) Fan(crabMuzzleL.position, AimFrom(crabMuzzleL.position, 230f, 5f), 3 + phase, 12f, 230f, 1);
+                if (crabMuzzleR != null) Fan(crabMuzzleR.position, AimFrom(crabMuzzleR.position, 230f, 5f), 3 + phase, 12f, 230f, 1);
+                if (crabMuzzleL == null && crabMuzzleR == null) Fan(bodyPos, AimFrom(bodyPos, 220f, 4f), 5, 30f, 220f, 1);
                 break;
             case 1:
                 if (mgr.RushActive) StartPincer();       // boss fazi imza: kiskac (once ortada kal, sonra yana kac)
                 else StartCrabSweep(2.4f);
                 break;
-            case 2:
-                Cone(bodyPos, AimFrom(bodyPos, 190f, 4f), 12, 10f, 190f, 2, Random.value * 90f);
-                break;
             default:
-                if (phase >= 1)
-                {
-                    StartCrabSweep(2.8f);
-                    Fan(bodyPos, AimFrom(bodyPos, 220f, 4f), 5, 30f, 220f, 1);
-                }
-                else
-                {
-                    Fan(bodyPos, AimFrom(bodyPos, 220f, 4f), 5, 30f, 220f, 1);
-                }
+                if (crabMuzzleL != null || crabMuzzleR != null) StartCrabSweep(2.4f + 0.4f * phase);
+                else Fan(bodyPos, AimFrom(bodyPos, 220f, 4f), 5, 30f, 220f, 1);
                 break;
         }
 
@@ -340,16 +301,20 @@ public partial class BossBrain
     private void StartCrabSweep(float duration)
     {
         if (crabMuzzleL == null && crabMuzzleR == null) return;   // iki kiskac da koptu: supurme yok
-        crabSweepStart = Time.time;
-        crabSweepEnd = Time.time + duration;
-        crabSweepNext = Time.time;
+        // Uyari: kiskaclardan supurme yonune cizgi, ShotWarning sonra baslar
+        crabSweepStart = Time.time + ShotWarning;
+        crabSweepEnd = crabSweepStart + duration;
+        crabSweepNext = crabSweepStart;
         crabSweepBase = (player.position - crabMuzzleBody.position).normalized;
+        if (crabMuzzleL != null) warns.Add(new WarnLine { origin = crabMuzzleL.position, dir = crabSweepBase, until = crabSweepStart });
+        if (crabMuzzleR != null) warns.Add(new WarnLine { origin = crabMuzzleR.position, dir = crabSweepBase, until = crabSweepStart });
+        Sfx.PlayAt(Sfx.Lock, crabMuzzleBody.position, 0.5f);
         nextAttack = Mathf.Max(nextAttack, crabSweepEnd + 0.3f);
     }
 
     private void CrabTick()
     {
-        if (!CrabSweeping) return;
+        if (!CrabSweeping || Time.time < crabSweepStart) return;
 
         while (Time.time >= crabSweepNext)
         {

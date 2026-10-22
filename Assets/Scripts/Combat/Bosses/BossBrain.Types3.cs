@@ -57,27 +57,15 @@ public partial class BossBrain
 
     private void DemonAttack()
     {
-        switch (step++ % 4)
+        // Saldirilar: CEHENNEM CUKURLARI (imza), cehennem sarmali (hedefli)
+        switch (step++ % 2)
         {
             case 0:
-            {
-                // Iki elden ates topu yelpazesi (kopan kol susar; iki kol da koptuysa agizdan)
-                if (demonMuzzleL != null) Fan(demonMuzzleL.position, AimFrom(demonMuzzleL.position, 200f, 4f), 5, 24f, 200f, 1);
-                if (demonMuzzleR != null) Fan(demonMuzzleR.position, AimFrom(demonMuzzleR.position, 200f, 4f), 5, 24f, 200f, 1);
-                if (demonMuzzleL == null && demonMuzzleR == null)
-                    Fan(demonMouth.position, AimFrom(demonMouth.position, 200f, 4f), 5, 24f, 200f, 1);
-                break;
-            }
-            case 1:
-                StartSpray(Pick(demonMuzzleR, demonMuzzleL, demonMouth), 2.2f, 2 + phase, 14f, 0.09f, 180f);
-                break;
-            case 2:
                 if (mgr.RushActive) StartHellPits();                                             // boss fazi imza: kovalayan cukurlar
-                else RainFromAbove(8 + phase * 4, 130f, 140f);
+                else StartSpray(Pick(demonMuzzleR, demonMuzzleL, demonMouth), 2.2f, 2 + phase, 14f, 0.09f, 180f);
                 break;
             default:
-                if (phase >= 1) StartBeam(demonMouth, 1.1f, 1.3f);
-                else StartCharge(1.0f, 140f, 1.8f);
+                StartSpray(Pick(demonMuzzleR, demonMuzzleL, demonMouth), 2.2f, 2 + phase, 14f, 0.09f, 180f);
                 break;
         }
 
@@ -110,28 +98,24 @@ public partial class BossBrain
 
     private void AngelAttack()
     {
-        switch (step++ % 4)
+        // Saldirilar: KUTSAL ISIK (imza), tuy yelpazesi (ofkelenince ikinci yelpaze haleden)
+        switch (step++ % 2)
         {
             case 0:
                 if (mgr.RushActive) StartLightPillars();                                         // boss fazi imza: kutsal isik
-                else StartSpray(Pick(angelStaff, angelHaloMuzzle), 3.0f, 3, 20f, 0.07f, 160f);   // tuy yagmuru
+                else Fan(Pick(angelStaff, angelHaloMuzzle).position, AimFrom(Pick(angelStaff, angelHaloMuzzle).position, 210f, 4f), 7, 40f, 210f, 1);
                 break;
-            case 1:
-            {
-                Vector3 h = Pick(angelHaloMuzzle, angelStaff).position;
-                Cone(h, AimFrom(h, 170f, 3f), 14 + phase * 4, 10f, 170f, 1, Random.value * 90f);
-                break;
-            }
-            case 2:
+            default:
             {
                 Transform staff = Pick(angelStaff, angelHaloMuzzle);
-                if (phase >= 1) StartBeam(staff, 1.3f, 1.4f);
-                else Fan(staff.position, AimFrom(staff.position, 210f, 4f), 7, 40f, 210f, 1);
+                Fan(staff.position, AimFrom(staff.position, 210f, 4f), 7 + phase * 2, 40f, 210f, 1);
+                if (phase >= 1)
+                {
+                    Vector3 h = Pick(angelHaloMuzzle, angelStaff).position;
+                    Fan(h, AimFrom(h, 180f, 4f), 5 + phase, 30f, 180f, 1);
+                }
                 break;
             }
-            default:
-                StartCharge(1.1f, 165f, 1.8f);                       // mizrak dalisi
-                break;
         }
 
         nextAttack = Mathf.Max(nextAttack, Time.time + Mathf.Lerp(2.8f, 1.7f, phase / 2f));
@@ -160,30 +144,19 @@ public partial class BossBrain
 
     private void KiAttack()
     {
-        switch (step++ % 5)
+        // Saldirilar: KI DALGASI (imza), ki patlamasi (halka mermi), hamle (dalis)
+        switch (step++ % 3)
         {
             case 0:
-                StartSpray(Pick(kiHandR, kiHandL), 1.7f, 1, 3f, 0.05f, 230f);         // hizli ki atesi akisi
+                // Boss fazinda imza saldiri: oyuncunun duzleminde kirmizi cemberli dev ki dalgasi
+                if (mgr.RushActive) StartKiWave(phase >= 2 ? 2 : 1);
+                else Cone(transform.position, AimFrom(transform.position, 110f, 0f), 18, 12f, 110f, 1, Random.value * 90f);
                 break;
             case 1:
-            {
-                // Iki elden yelpaze (kopan kol susar; iki kol da koptuysa govdeden)
-                if (kiHandL != null) Fan(kiHandL.position, AimFrom(kiHandL.position, 210f, 4f), 7, 30f, 210f, 1);
-                if (kiHandR != null) Fan(kiHandR.position, AimFrom(kiHandR.position, 210f, 4f), 7, 30f, 210f, 1);
-                if (kiHandL == null && kiHandR == null)
-                    Fan(transform.position, AimFrom(transform.position, 210f, 4f), 9, 40f, 210f, 1);
-                break;
-            }
-            case 2:
-                // Boss fazinda imza saldiri: oyuncunun duzleminde kirmizi cemberli dev ki dalgasi; disarida ki isini
-                if (mgr.RushActive) StartKiWave(phase >= 2 ? 2 : 1);
-                else StartBeam(Pick(kiHandR, kiHandL), 1.2f, 1.6f);
-                break;
-            case 3:
-                StartCharge(0.9f, 195f, 1.7f);                         // atilma
+                Cone(transform.position, AimFrom(transform.position, 110f, 0f), 18 + phase * 6, 12f, 110f, 1, Random.value * 90f);   // ki patlamasi
                 break;
             default:
-                Cone(transform.position, AimFrom(transform.position, 120f, 0f), 18 + phase * 6, 12f, 110f, 2, Random.value * 90f);   // ki patlamasi
+                StartCharge(0.9f, 195f, 1.7f);                         // hamle
                 break;
         }
 
@@ -223,28 +196,19 @@ public partial class BossBrain
         Transform wand = Pick(starMuzzle, Get("Brooch"));
         Vector3 m = wand.position;
 
-        switch (step++ % 6)
+        // Saldirilar: YILDIZ CARKI (imza), degnek isini, yildiz yagmuru
+        switch (step++ % 3)
         {
             case 0:
-                Cone(m, AimFrom(m, 180f, 3f), 14, 9f, 180f, 1, Random.value * 90f);               // yildiz halkasi
+                // Boss fazinda imza saldiri: alani tarayan donen yildiz carki
+                if (mgr.RushActive) StartWheel(wand, phase >= 2 ? 4 : 3, 34f + 8f * phase, 3.2f + 0.4f * phase);
+                else RainFromAbove(10 + phase * 5, 125f, 160f);
                 break;
             case 1:
-                // Boss fazinda imza saldiri: alani tarayan donen yildiz carki (sarmal orada ici bos kaliyordu)
-                if (mgr.RushActive) StartWheel(wand, phase >= 2 ? 4 : 3, 34f + 8f * phase, 3.2f + 0.4f * phase);
-                else StartSpray(wand, 3.0f, 4 + phase, 16f, 0.1f, 160f);                     // kalp/yildiz sarmali
-                break;
-            case 2:
-                StartBeam(wand, 1.2f, 1.6f);                                                // gokkusagi isini
-                break;
-            case 3:
-                StartCharge(1.0f, 165f, 1.8f);                                                     // kuyruklu yildiz
-                break;
-            case 4:
-                RainFromAbove(10 + phase * 5, 125f, 160f);                                         // yildiz yagmuru
+                StartBeam(wand, 1.2f, 1.6f);                                                // degnek (gokkusagi) isini
                 break;
             default:
-                Fan(m, AimFrom(m, 220f, 4f), 9, 50f, 220f, 1);
-                if (phase >= 1) Fan(m, AimFrom(m, 180f, 4f), 7, 34f, 180f, 1);
+                RainFromAbove(10 + phase * 5, 125f, 160f);                                         // yildiz yagmuru
                 break;
         }
 
