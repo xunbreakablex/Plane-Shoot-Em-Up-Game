@@ -36,6 +36,13 @@ public partial class BossBrain
     private Material wallMat, wallFrameMat;
     private static Texture2D wallGridTex;
 
+    // Duvar oyuncunun duzlemini gecene kadar yeni saldiri baslamaz (eskiden sonraki saldirinin uyarisi duvar gelirken
+    // basliyor, HUD yalniz bosluk okunu gosterdiginden diger kacis oklari gizleniyordu)
+    private bool CurtainBusy => wallActive && !wallPassed;
+
+    // Perde sirasi geldiyse: carkin son yildizlari ya da dalisin donusu surerken beklenir (ust uste binmesin)
+    private bool CurtainBlocked => CurtainTurn && (Charging || Time.time < wheelEnd + WheelTail);
+
     private bool CurtainTurn
     {
         get

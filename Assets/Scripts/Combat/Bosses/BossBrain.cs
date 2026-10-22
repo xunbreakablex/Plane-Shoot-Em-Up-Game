@@ -263,7 +263,7 @@ public partial class BossBrain : MonoBehaviour
         TickBeam(dt);
         TickType(dt);
 
-        if (playerAlive && !overridden && !beamActive && !WheelBusy && !KiWaveBusy && !FistBusy && !SweepBusy && !ZonesBusy && !GaleBusy && !Spraying && !CrabSweeping && Time.time >= nextAttack)
+        if (playerAlive && !overridden && !beamActive && !WheelBusy && !KiWaveBusy && !FistBusy && !SweepBusy && !ZonesBusy && !GaleBusy && !Spraying && !CrabSweeping && !CurtainBusy && !CurtainBlocked && Time.time >= nextAttack)
         {
             // Boss fazinda her CurtainEvery saldiridan biri perde (bosluklu mermi duvari)
             if (CurtainTurn) Curtain();
