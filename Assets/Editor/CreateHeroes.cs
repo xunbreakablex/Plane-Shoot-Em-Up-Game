@@ -19,11 +19,15 @@ public static class CreateHeroes
 
     // Kullanicinin modeli (Assets/_Art): yalniz Imparator icin var; digerleri gelince ayni yolla takilir
     private const string EmperorModel = "Assets/_Art/Models/Emperor.fbx";
+    private const string MoonModel = "Assets/_Art/Models/Quenn.fbx";
+    private const string KiModel = "Assets/_Art/Models/KiHero.fbx";
 
-    /// <summary>Yalniz Imparator prefab'ini yeniden kurar (sahne / hangar kayitlari ayni prefab'i gosterir).</summary>
-    [MenuItem("Tools/Create Heroes (yalniz Imparator)")]
-    public static void RebuildEmperor()
+    /// <summary>Yalniz kahraman prefab'larini yeniden kurar (sahne / hangar kayitlari ayni prefab'lari gosterir).</summary>
+    [MenuItem("Tools/Create Heroes (yalniz prefab'lar)")]
+    public static void RebuildPrefabs()
     {
+        BuildMoon();
+        BuildKi();
         BuildEmperor();
         AssetDatabase.SaveAssets();
     }
@@ -45,122 +49,62 @@ public static class CreateHeroes
         Debug.Log("Kahramanlar hazir: Ay Savascisi, Ki Kahramani, Imparator (model 9-11).");
     }
 
-    // ================================================================== AY SAVASCISI (dik, 15 derece one egik)
+    // ================================================================== AY SAVASCISI (dik, 6 derece one egik)
 
     private static void BuildMoon()
     {
-        Material white = Lit("Hero_White", new Color(0.97f, 0.96f, 0.98f));
-        Material pink = Lit("Hero_Pink", new Color(1f, 0.55f, 0.75f));
-        Material skin = Lit("Hero_Skin", new Color(0.99f, 0.84f, 0.74f));
-        Material hair = Lit("Hero_Hair", new Color(1f, 0.82f, 0.35f));
-        Material blue = Lit("Hero_Blue", new Color(0.4f, 0.65f, 0.98f));
-        Material red = Lit("Hero_Red", new Color(0.9f, 0.2f, 0.3f));
-        Material gold = Lit("Hero_Gold", new Color(1f, 0.85f, 0.3f));
-        Material glow = Lit("Hero_Wing", new Color(0.8f, 0.9f, 1f));
         Material star = Unlit("Hero_Star", new Color(1f, 0.95f, 0.5f));
-        Material eye = Unlit("Hero_EyeBlue", new Color(0.5f, 0.3f, 0.95f));
+        Material glow = Lit("Hero_Wing", new Color(0.8f, 0.9f, 1f));
+        Material white = Unlit("Hero_StarWhite", new Color(1f, 1f, 1f));
         Material dark = CreateGliderPlane.GetMaterial("Plane_Dark", new Color(0.12f, 0.12f, 0.12f));
 
         var root = new GameObject("AySavascisi");
         GameObject body = Body(root, PlaneBuilder.HeroLean[0]);
 
-        // Govde (dik), etek, kurdeleler, bros
-        Part(body, PrimitiveType.Capsule, "Torso", V(0, 0.3f, 0), V(0.55f, 0.5f, 0.5f), white);
-        Part(body, PrimitiveType.Sphere, "Skirt", V(0, -0.25f, 0), V(0.95f, 0.5f, 0.9f), pink);
-        Part(body, PrimitiveType.Cube, "BowL", V(-0.25f, 0.65f, 0.22f), V(0.3f, 0.22f, 0.1f), pink, V(0, 0, 20));
-        Part(body, PrimitiveType.Cube, "BowR", V(0.25f, 0.65f, 0.22f), V(0.3f, 0.22f, 0.1f), pink, V(0, 0, -20));
-        Part(body, PrimitiveType.Sphere, "Brooch", V(0, 0.7f, 0.28f), V(0.14f, 0.14f, 0.1f), star);
-        Part(body, PrimitiveType.Cube, "Collar", V(0, 0.78f, 0.1f), V(0.6f, 0.08f, 0.45f), blue);
+        // Kullanicinin modeli (Quenn.fbx): FBX yatik ucus pozunda gelir (kokte -90 X); kok donusu sifirlaninca dik durur,
+        // +Z'ye bakar. 2 m -> 1,5 olcekle eski boyuna (3 m). Degnek sag elde, ucu basin ustunde.
+        Model(body, MoonModel, 1.5f, true);
+        // Kullanici istegi: hafif sola donuk (namlu noktalari PlaneBuilder'da ayni aciyla)
+        Transform moonModel = body.transform.Find("Model");
+        if (moonModel != null) moonModel.localRotation = Quaternion.Euler(0f, -15f, 0f);
+        Hitbox(body, "Torso", V(0, 0.05f, 0), V(0.75f, 0.85f, 0.65f));
+        Hitbox(body, "Head", V(0, 0.95f, 0.05f), V(0.85f, 0.8f, 0.8f));
 
-        // Kafa, sac, gozler, topuzlar ve asagi sarkan uzun kuyruklar
-        Part(body, PrimitiveType.Sphere, "Head", V(0, 1.15f, 0.05f), V(0.5f, 0.52f, 0.5f), skin);
-        Part(body, PrimitiveType.Sphere, "HairBack", V(0, 1.22f, -0.05f), V(0.58f, 0.56f, 0.5f), hair);
-        Part(body, PrimitiveType.Sphere, "Bangs", V(0, 1.38f, 0.2f), V(0.5f, 0.22f, 0.3f), hair);
-        Part(body, PrimitiveType.Sphere, "EyeL", V(-0.11f, 1.17f, 0.28f), V(0.1f, 0.13f, 0.05f), eye);
-        Part(body, PrimitiveType.Sphere, "EyeR", V(0.11f, 1.17f, 0.28f), V(0.1f, 0.13f, 0.05f), eye);
-        for (int s = -1; s <= 1; s += 2)
-        {
-            Part(body, PrimitiveType.Sphere, "Bun", V(s * 0.3f, 1.45f, -0.05f), V(0.2f, 0.2f, 0.2f), hair);
-            Part(body, PrimitiveType.Capsule, "Tail", V(s * 0.42f, 0.75f, -0.15f), V(0.12f, 0.75f, 0.12f), hair, V(0, 0, s * -6));
-        }
-
-        // Kollar one uzanir; sag elde degnek, ucunda yildiz
-        Part(body, PrimitiveType.Capsule, "ArmL", V(-0.33f, 0.6f, 0.35f), V(0.14f, 0.42f, 0.14f), skin, V(90, 0, 0));
-        Part(body, PrimitiveType.Capsule, "ArmR", V(0.33f, 0.6f, 0.4f), V(0.14f, 0.42f, 0.14f), skin, V(90, 0, 0));
-        Part(body, PrimitiveType.Sphere, "HandL", V(-0.33f, 0.6f, 0.82f), V(0.16f, 0.16f, 0.16f), white);
-        Part(body, PrimitiveType.Sphere, "HandR", V(0.33f, 0.6f, 0.85f), V(0.16f, 0.16f, 0.16f), white);
-        Part(body, PrimitiveType.Cylinder, "Wand", V(0.33f, 0.6f, 1.35f), V(0.05f, 0.5f, 0.05f), gold, V(90, 0, 0));
-        Part(body, PrimitiveType.Cube, "StarA", V(0.33f, 0.6f, 1.9f), V(0.08f, 0.5f, 0.08f), star);
-        Part(body, PrimitiveType.Cube, "StarB", V(0.33f, 0.6f, 1.9f), V(0.08f, 0.5f, 0.08f), star, V(0, 0, 90));
-        Part(body, PrimitiveType.Sphere, "StarCore", V(0.33f, 0.6f, 1.9f), V(0.18f, 0.18f, 0.18f), white);
-
-        // Bacaklar ve cizmeler
-        Part(body, PrimitiveType.Capsule, "LegL", V(-0.14f, -0.95f, 0), V(0.17f, 0.45f, 0.17f), skin);
-        Part(body, PrimitiveType.Capsule, "LegR", V(0.14f, -0.95f, 0), V(0.17f, 0.45f, 0.17f), skin);
-        Part(body, PrimitiveType.Cube, "BootL", V(-0.14f, -1.5f, 0.05f), V(0.2f, 0.18f, 0.32f), red);
-        Part(body, PrimitiveType.Cube, "BootR", V(0.14f, -1.5f, 0.05f), V(0.2f, 0.18f, 0.32f), red);
+        // Degnek ucunda parlayan yildiz cekirdegi (ates ederken parlar, HeroAnimator "StarCore")
+        Part(body, PrimitiveType.Sphere, "StarCore", V(0.62f, 1.44f, 0.25f), V(0.2f, 0.2f, 0.2f), white);
 
         // Kanat / motor yok: ayaklarinin altinda parlayan buyu halkasi
         Part(body, PrimitiveType.Cylinder, "MagicRing", V(0, -1.6f, 0), V(1.5f, 0.02f, 1.5f), star);
         Part(body, PrimitiveType.Cylinder, "MagicRingInner", V(0, -1.62f, 0), V(1.15f, 0.015f, 1.15f), glow);
 
         Part(body, PrimitiveType.Cube, "BellySkid", V(0, -1.68f, 0), V(0.3f, 0.08f, 0.8f), dark);
+        body.transform.Find("BellySkid").GetComponent<Renderer>().enabled = false;
 
         Finish(root, "AySavascisi", 0.2f, 0f, -1.62f);
     }
 
-    // ================================================================== KI KAHRAMANI (dik, 12 derece one egik)
+    // ================================================================== KI KAHRAMANI (dik, 6 derece one egik)
 
     private static void BuildKi()
     {
-        Material gi = Lit("Hero_Gi", new Color(0.9f, 0.45f, 0.08f));
-        Material blue = Lit("Hero_GiBlue", new Color(0.12f, 0.2f, 0.62f));
-        Material skin = Lit("Hero_SkinTan", new Color(0.93f, 0.74f, 0.58f));
-        Material hair = Unlit("Hero_HairGold", new Color(1f, 0.9f, 0.3f));
-        Material ki = Unlit("Hero_Ki", new Color(0.5f, 0.85f, 1f));
-        Material white = Unlit("Hero_EyeWhite", new Color(0.95f, 0.95f, 0.95f));
+        Material ki = Unlit("Hero_KiGold", new Color(1f, 0.92f, 0.45f));
         Material dark = CreateGliderPlane.GetMaterial("Plane_Dark", new Color(0.12f, 0.12f, 0.12f));
 
         var root = new GameObject("KiKahramani");
         GameObject body = Body(root, PlaneBuilder.HeroLean[1]);
 
-        Part(body, PrimitiveType.Capsule, "Torso", V(0, 0.3f, 0), V(0.62f, 0.5f, 0.55f), gi);
-        Part(body, PrimitiveType.Cube, "Belt", V(0, -0.2f, 0), V(0.66f, 0.14f, 0.58f), blue);
-        Part(body, PrimitiveType.Sphere, "Head", V(0, 1.15f, 0.05f), V(0.5f, 0.52f, 0.5f), skin);
-        Part(body, PrimitiveType.Sphere, "EyeL", V(-0.11f, 1.17f, 0.28f), V(0.1f, 0.08f, 0.05f), white);
-        Part(body, PrimitiveType.Sphere, "EyeR", V(0.11f, 1.17f, 0.28f), V(0.1f, 0.08f, 0.05f), white);
-        Part(body, PrimitiveType.Cube, "Brow", V(0, 1.27f, 0.27f), V(0.34f, 0.04f, 0.05f), dark);
+        // Kullanicinin modeli (KiHero.fbx): Ay Savascisi gibi yatik gelir, kok donusu sifirlaninca dik; 1,5 olcek.
+        // Sol yumruk one uzanik, sag yumruk belde geriye cekik.
+        Model(body, KiModel, 1.5f, true);
+        Hitbox(body, "Torso", V(0, 0.05f, 0), V(0.8f, 0.85f, 0.7f));
+        Hitbox(body, "Head", V(0, 1.0f, 0.05f), V(0.9f, 0.85f, 0.85f));
 
-        // Sivri sac: kafanin ustunden yukari/geri dilimler
-        for (int i = 0; i < 6; i++)
-        {
-            float a = -50f + i * 20f;
-            Part(body, PrimitiveType.Cube, "Hair", V(Mathf.Sin(a * Mathf.Deg2Rad) * 0.22f, 1.45f + 0.1f * Mathf.Cos(a * Mathf.Deg2Rad), -0.05f - i % 2 * 0.1f),
-                V(0.12f, 0.5f, 0.12f), hair, V(-25, 0, -a * 0.7f));
-        }
-
-        // Kollar one uzanir, yumruklar ki kuresi
-        Part(body, PrimitiveType.Capsule, "ArmL", V(-0.33f, 0.6f, 0.4f), V(0.16f, 0.45f, 0.16f), skin, V(90, 0, 0));
-        Part(body, PrimitiveType.Capsule, "ArmR", V(0.33f, 0.6f, 0.4f), V(0.16f, 0.45f, 0.16f), skin, V(90, 0, 0));
-        Part(body, PrimitiveType.Cube, "BandL", V(-0.33f, 0.6f, 0.75f), V(0.2f, 0.2f, 0.12f), blue);
-        Part(body, PrimitiveType.Cube, "BandR", V(0.33f, 0.6f, 0.75f), V(0.2f, 0.2f, 0.12f), blue);
-        Part(body, PrimitiveType.Sphere, "FistL", V(-0.33f, 0.6f, 0.98f), V(0.26f, 0.26f, 0.26f), ki);
-        Part(body, PrimitiveType.Sphere, "FistR", V(0.33f, 0.6f, 0.98f), V(0.26f, 0.26f, 0.26f), ki);
-
-        // Bacaklar ve cizmeler
-        Part(body, PrimitiveType.Capsule, "LegL", V(-0.15f, -0.95f, 0), V(0.2f, 0.45f, 0.2f), gi);
-        Part(body, PrimitiveType.Capsule, "LegR", V(0.15f, -0.95f, 0), V(0.2f, 0.45f, 0.2f), gi);
-        Part(body, PrimitiveType.Cube, "BootL", V(-0.15f, -1.5f, 0.05f), V(0.22f, 0.2f, 0.34f), blue);
-        Part(body, PrimitiveType.Cube, "BootR", V(0.15f, -1.5f, 0.05f), V(0.22f, 0.2f, 0.34f), blue);
-
-        // Aura alevleri: govdenin cevresinde dik parlak dilimler
-        for (int i = 0; i < 8; i++)
-        {
-            float a = Mathf.PI * 2f * i / 8f;
-            Part(body, PrimitiveType.Cube, "Aura", V(Mathf.Cos(a) * 0.65f, 0.2f, Mathf.Sin(a) * 0.6f), V(0.08f, 1.5f, 0.08f), ki, V(0, 0, Mathf.Cos(a) * 12f));
-        }
+        // Yumruklarda ki kureleri: ki ateşi buradan cikar, ates ederken parlar (HeroAnimator "FistL / FistR")
+        Part(body, PrimitiveType.Sphere, "FistL", V(-0.69f, 0f, 1.02f), V(0.2f, 0.2f, 0.2f), ki);
+        Part(body, PrimitiveType.Sphere, "FistR", V(0.69f, -0.18f, -0.25f), V(0.2f, 0.2f, 0.2f), ki);
 
         Part(body, PrimitiveType.Cube, "BellySkid", V(0, -1.65f, 0), V(0.3f, 0.08f, 0.8f), dark);
+        body.transform.Find("BellySkid").GetComponent<Renderer>().enabled = false;
 
         Finish(root, "KiKahramani", 0.15f, 0f, -1.6f);
     }
@@ -177,16 +121,7 @@ public static class CreateHeroes
 
         // Kullanicinin modeli: kukuletali, pelerinli imparator (+Z'ye bakar, 2 m boy, merkezi gobek). 1,2 olcekle
         // eski boyuna (2,4 m) gelir; eller one uzanik (sol ~(-0,45; 0,3; 0,7), sag ~(0,54; 0,27; 0,51) model biriminde).
-        var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(EmperorModel);
-        if (fbx != null)
-        {
-            var model = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
-            model.name = "Model";
-            model.transform.SetParent(body.transform, false);
-            model.transform.localScale = Vector3.one * 1.2f;
-            foreach (var r in model.GetComponentsInChildren<Renderer>(true))
-                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        }
+        Model(body, EmperorModel, 1.2f, false);
 
         // Carpisma hacimleri (gorunmez): govde ve kukuleta
         Hitbox(body, "Robe", V(0, -0.05f, 0), V(0.9f, 1.1f, 0.9f));
@@ -206,7 +141,22 @@ public static class CreateHeroes
         Finish(root, "Imparator", 0.75f, 0f, -1.05f);
     }
 
-    // Gorunmez carpisma hacmi: Finish isme gore collider ekler (Robe = kapsul, Hood = kure)
+    // Kullanicinin FBX modelini govdeye takar (prefab baglantili: model guncellenince prefab da guncellenir).
+    // resetRotation: FBX kokundeki donusu (Blender'in -90 X'i) sifirlar.
+    private static void Model(GameObject body, string path, float scale, bool resetRotation)
+    {
+        var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (fbx == null) { Debug.LogWarning("Kahraman modeli yok: " + path); return; }
+        var model = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
+        model.name = "Model";
+        model.transform.SetParent(body.transform, false);
+        if (resetRotation) model.transform.localRotation = Quaternion.identity;
+        model.transform.localScale = Vector3.one * scale;
+        foreach (var r in model.GetComponentsInChildren<Renderer>(true))
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+    }
+
+    // Gorunmez carpisma hacmi: Finish isme gore collider ekler (Robe / Torso = kapsul, Hood / Head = kure)
     private static void Hitbox(GameObject parent, string name, Vector3 pos, Vector3 scale)
     {
         var go = new GameObject(name);

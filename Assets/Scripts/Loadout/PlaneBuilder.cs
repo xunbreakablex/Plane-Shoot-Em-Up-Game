@@ -36,17 +36,17 @@ public static class PlaneBuilder
     // Dik dururlar; govde "Body" pivotunda HeroLean kadar one egiktir (CreateHeroes ayni degeri kullanir).
     // Noktalar govde-yerel (dik poz) verilir, HeroPoint egimi uygulayip kok-yerel noktayi dondurur.
     public const int HeroStart = 9;
-    public static readonly float[] HeroLean = { 15f, 12f, 10f };   // Imparator: model kendi pozunda zaten hafif egik
+    public static readonly float[] HeroLean = { 6f, 6f, 10f };   // modeller kendi pozlarinda zaten hafif egik
     private static readonly Vector3[][] HeroMuzzle =
     {
-        new[] { new Vector3(0.33f, 0.6f, 2.0f), new Vector3(-0.33f, 0.6f, 0.98f) },   // Ay Savascisi: degnek ucu, sol el
-        new[] { new Vector3(0.33f, 0.6f, 1.14f), new Vector3(-0.33f, 0.6f, 1.14f) }, // Ki Kahramani: yumruklar
+        new[] { new Vector3(0.59f, 1.44f, 0.36f), new Vector3(-0.30f, -0.18f, 0.44f) }, // Ay Savascisi: degnek ucu, sol el (model 15 der sola donuk)
+        new[] { new Vector3(0.69f, -0.18f, -0.1f), new Vector3(-0.69f, 0f, 1.14f) },     // Ki Kahramani: yumruklar
         new[] { new Vector3(0.62f, 0.33f, 0.76f), new Vector3(-0.54f, 0.36f, 0.96f) }, // Imparator: parmak uclari (model elleri)
     };
     private static readonly Vector3[][] HeroShoulder =
     {
-        new[] { new Vector3(-0.85f, 0.95f, 0.1f), new Vector3(0.85f, 0.95f, 0.1f) },
-        new[] { new Vector3(-0.85f, 0.95f, 0.1f), new Vector3(0.85f, 0.95f, 0.1f) },
+        new[] { new Vector3(-1.2f, 1.1f, 0f), new Vector3(1.2f, 1.1f, 0f) },
+        new[] { new Vector3(-1.15f, 1.1f, 0f), new Vector3(1.15f, 1.1f, 0f) },
         new[] { new Vector3(-1.05f, 1.2f, -0.1f), new Vector3(1.05f, 1.2f, -0.1f) },
     };
 
