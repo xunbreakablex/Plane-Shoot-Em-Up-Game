@@ -302,7 +302,7 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     {
         if (mgr == null || mgr.EnemyBulletPrefab == null) return null;
         // Boss mermileri yavaslatilir (kacmasi kolay); menzil ayni kalsin diye omur ayni oranda uzar
-        float mul = Mathf.Max(0.05f, GameSettings.Current.bossBulletSpeedMultiplier);
+        float mul = BossBrain.BulletSpeedMul;   // ayar x zorluk
         Bullet b = Bullet.Spawn(mgr.EnemyBulletPrefab, pos, dir, speed * mul, damage, transform, false);
         if (b != null) b.lifetime = (lifetime > 0f ? lifetime : b.lifetime) / mul;
         return b;

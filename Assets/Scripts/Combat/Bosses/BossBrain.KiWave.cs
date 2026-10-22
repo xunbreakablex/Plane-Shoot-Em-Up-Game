@@ -8,8 +8,8 @@ using UnityEngine;
 public partial class BossBrain
 {
     private const float KiWaveRadius = 42f;         // iki kol saglamken cember (isin) yaricapi (m)
-    private const float KiWaveCharge = 2.0f;        // toplama suresi (sn)
-    private const float KiWaveFreeze = 0.8f;        // ates etmeden bu kadar once cember durur (cikis ~40 m)
+    private static float KiWaveCharge => 2.0f * Difficulty.BossWarningMul;        // toplama suresi (sn)
+    private static float KiWaveFreeze => 0.8f * Difficulty.BossWarningMul;        // ates etmeden bu kadar once cember durur (cikis ~40 m)
     private const float KiWaveFire = 0.9f;          // isin suresi (sn)
     private const float KiWaveCreep = 26f;          // toplarken cemberin oyuncuya kayma hizi (m/sn; her faz +8)
     private const float KiWaveTick = 0.3f;          // isinda kalinirsa vurus araligi (sn)

@@ -184,6 +184,8 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         return true;
     }
 
+    private float bossDamageCarry = 0.5f;   // zorluk hasar carpaninin biriken kesri (0,5 = yuvarlama)
+
     public void TakeHit(int damage, Vector3 point)
     {
         TakeHit(damage, point, false);
@@ -193,6 +195,16 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     public void TakeHit(int damage, Vector3 point, bool ignoreShield)
     {
         if (plane.IsCrashed || Time.time < invulnerableUntil || God) return;
+
+        // Zorluk: boss fazinda (orada yalniz boss vurur) hasar carpani; kesirli kisim birikir, ortalama tam tutar.
+        // Normal'de carpan 1: hasar degismez.
+        CombatManager cm = CombatManager.Instance;
+        if (cm != null && cm.RushActive)
+        {
+            float scaled = damage * Difficulty.BossDamageMul + bossDamageCarry;
+            damage = Mathf.FloorToInt(scaled + 0.0001f);
+            bossDamageCarry = scaled - damage;
+        }
 
         LastHitTime = Time.time;
         float remaining = damage;

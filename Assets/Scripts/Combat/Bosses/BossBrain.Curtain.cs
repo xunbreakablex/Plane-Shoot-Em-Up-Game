@@ -85,7 +85,7 @@ public partial class BossBrain
         }
         if (!found) wallHole = new Vector2(px > 0f ? minX : maxX, Mathf.Clamp(py, minY, maxY));
 
-        wallSpeed = CurtainSpeed * Mathf.Max(0.05f, GameSettings.Current.bossBulletSpeedMultiplier) * RushBulletSpeed;
+        wallSpeed = CurtainSpeed * BulletSpeedMul * RushBulletSpeed;
         wallSpawnAt = Time.time + ShotWarning;
         wallDepth0 = -1f;                            // dogunca bossun hizasindan baslar
         wallActive = true;

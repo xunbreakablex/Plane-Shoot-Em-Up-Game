@@ -17,13 +17,13 @@ public partial class BossBrain
     private Vector3 fistLockAim;
     private LineRenderer fistLineL, fistLineR;
 
-    private const float FistTrack = 2.6f;        // takip suresi (sn)
+    private static float FistTrack => 2.6f * Difficulty.BossWarningMul;        // takip suresi (sn)
     private const float FistHover = 70f;         // oyuncunun onunde durulan uzaklik (m)
     private const float FistSide = 22f;          // iki yumrugun yana acikligi (m)
     private const float FistTrackSpeed = 170f;   // takip hizi (m/s)
     private const float FistStrikeSpeed = 300f;  // vurus hizi (m/s)
     private const float FistReturnSpeed = 240f;
-    private const float FistLockWindow = 0.7f;   // vurustan once hedefin kilitlendigi (cizginin kizardigi) sure
+    private static float FistLockWindow => 0.7f * Difficulty.BossWarningMul;   // vurustan once hedefin kilitlendigi (cizginin kizardigi) sure
     private const float FistHoverRush = 90f;     // boss fazinda: oyuncunun onunde uzaklik
     private const float FistSideRush = 42f;      // boss fazinda: yana aciklik (boss'un onunu kapatmasin)
     private const float FistUpRush = 16f;        // boss fazinda: yukari kaydirma

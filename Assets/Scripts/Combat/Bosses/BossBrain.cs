@@ -271,7 +271,7 @@ public partial class BossBrain : MonoBehaviour
             attackCount++;
             // Zorluk: saldirilar arasi sure (Kolay seyrek, Zor sik); Normal'de degismez
             if (nextAttack > Time.time)
-                nextAttack = Time.time + (nextAttack - Time.time) * Difficulty.FireCooldownMul * (mgr.RushActive ? RushCadence : 1f);
+                nextAttack = Time.time + (nextAttack - Time.time) * Difficulty.BossAttackIntervalMul * (mgr.RushActive ? RushCadence : 1f);
             Sfx.PlayAt(Sfx.BossAttack, pos, 0.7f);
         }
 
@@ -377,7 +377,8 @@ public partial class BossBrain : MonoBehaviour
     private void Steer(Vector3 target, float maxSpeed, float accel, float dt)
     {
         // Yanan kanat / motor boss'u agirlastirir; hamleden eski yerine donus hizlidir
-        maxSpeed *= wingSpeedMul;
+        maxSpeed *= wingSpeedMul * Difficulty.BossMoveSpeedMul;   // zorluk: boss hareket hizi
+        accel *= Difficulty.BossMoveSpeedMul;
         if (ChargeReturning)
         {
             maxSpeed *= 3.4f;
@@ -446,13 +447,16 @@ public partial class BossBrain : MonoBehaviour
         float dist = Vector3.Distance(origin, player.position);
         // Onde tutma merminin GERCEK hiziyla (boss mermisi yavaslatma ve boss fazi carpanlari dahil). Boss fazinda tam
         // onde tutulur: oyuncu yalniz kayabildigi icin rastgele kaymak tek basina yetmesin, yon degistirmek gereksin.
-        float effSpeed = speed * Mathf.Max(0.05f, GameSettings.Current.bossBulletSpeedMultiplier) * (mgr.RushActive ? RushBulletSpeed : 1f);
+        float effSpeed = speed * BulletSpeedMul * (mgr.RushActive ? RushBulletSpeed : 1f);
         float lead = mgr.RushActive ? 1f : 0.85f;
         Vector3 target = player.position + mgr.PlayerVelocity * (dist / Mathf.Max(effSpeed, 1f)) * lead;
         // Zorluk: nisan sapmasi (Normal'e gore; Kolay daha sapmali, Zor daha isabetli)
         target += Random.insideUnitSphere * error * (Difficulty.AimErrorMul / 0.75f) * (mgr.RushActive ? RushAimError : 1f);
         return (target - origin).normalized;
     }
+
+    /// <summary>Boss mermi / perde / cark hiz carpani: GameSettings ayari x zorluk.</summary>
+    public static float BulletSpeedMul => Mathf.Max(0.05f, GameSettings.Current.bossBulletSpeedMultiplier) * Difficulty.BossProjectileSpeedMul;
 
     private Bullet Shoot(Vector3 origin, Vector3 dir, float speed, int damage, float life = 0f)
     {
@@ -463,8 +467,9 @@ public partial class BossBrain : MonoBehaviour
     // ----------------------------------------------------------- uyari (telegraf)
 
     // Yelpaze, halka ve sarmal atislari bu kadar gecikir; yonu kirmizi-turuncu bir cizgiyle gosterilir.
+    // Uyari / kilit sureleri zorluga gore olceklenir (Difficulty.BossWarningMul; Normal'de 1).
     // Atis yonu uyari basladiginda sabitlenir: oyuncu o an hareket ederek kacabilir.
-    private const float ShotWarning = 0.55f;
+    private static float ShotWarning => 0.55f * Difficulty.BossWarningMul;
     private const float WarnLength = 260f;
 
     // fire: atis aninda cagrilir; parametre, uyari basladigindan beri cercevenin (boss fazi) kayma ve donusudur
@@ -678,7 +683,7 @@ public partial class BossBrain : MonoBehaviour
     // genisliginde saydam parilti olarak cizilir.
 
     private const float BeamLength = 760f;
-    private const float BeamLockTime = 0.45f;     // uyarinin sonunda yonun sabitlendigi sure
+    private static float BeamLockTime => 0.45f * Difficulty.BossWarningMul;     // uyarinin sonunda yonun sabitlendigi sure
     private const int BeamMaxHits = 2;
     private const float BeamCoreWidth = 3f;       // atesteki parlak cekirdek (m); parilti = vurus genisligi
 
@@ -699,7 +704,7 @@ public partial class BossBrain : MonoBehaviour
         if (origin == null) return;
 
         beamOrigin = origin;
-        beamTelegraph = telegraph;
+        beamTelegraph = telegraph * Difficulty.BossWarningMul;
         beamFire = fire;
         beamStart = Time.time;
         beamActive = true;
@@ -851,8 +856,8 @@ public partial class BossBrain : MonoBehaviour
     // oyuncunun o anki yerine KILITLENIR (halka kizarir, boss'tan hedefe kirmizi cizgi, HUD "DALIS! KAC" oku).
     // Halka boss govdesinin dalis yonune dik yaricapi kadardir: disina cikan oyuncuya carpmaz.
 
-    private const float ChargeLockTime = 0.65f;
-    private const float ChargeMinTelegraphRush = 1.05f;
+    private static float ChargeLockTime => 0.65f * Difficulty.BossWarningMul;
+    private static float ChargeMinTelegraphRush => 1.05f * Difficulty.BossWarningMul;
     private bool chargeLocked;
     private float chargeRadius;
     private LineRenderer chargeRing, chargeLine;
@@ -873,6 +878,8 @@ public partial class BossBrain : MonoBehaviour
     private void StartCharge(float telegraph, float speed, float duration)
     {
         // Vurkac hizli olsun: boss fazinda hazirlik kisa, dalis hizli; disarida da eskisinden cevik
+        telegraph *= Difficulty.BossWarningMul;
+        speed *= Difficulty.BossMoveSpeedMul;
         if (mgr.RushActive) { telegraph = Mathf.Max(ChargeMinTelegraphRush, telegraph * 0.9f); speed *= 1.5f; }
         else { telegraph *= 0.85f; speed *= 1.25f; }
         chargeActive = true;

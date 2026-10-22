@@ -7,7 +7,7 @@ using UnityEngine;
 // Ekranda ruzgar cizgileri akar; HUD ruzgarin tersine ok gosterir.
 public partial class BossBrain
 {
-    private const float GaleWarn = 0.7f;          // kanat acilisi: ruzgar baslamadan once
+    private static float GaleWarn => 0.7f * Difficulty.BossWarningMul;          // kanat acilisi: ruzgar baslamadan once
     private const float GaleRamp = 0.4f;          // ruzgarin guclenme / dinme suresi
     private const int GaleStreaks = 24;
     private const float GaleStreakLen = 12f;      // cercevede (m)

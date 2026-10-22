@@ -9,7 +9,7 @@ using UnityEngine;
 // cerceve kayip donse de serit oyuncuyla birlikte gider.
 public partial class BossBrain
 {
-    private const float SweepWarn = 1.0f;        // uyari suresi (sn)
+    private static float SweepWarn => 1.0f * Difficulty.BossWarningMul;        // uyari suresi (sn)
     private const float SweepTime = 1.6f;        // bir taramanin suresi
     private const float SweepBand = 15f;         // kilitli seridin yari kalinligi (m)
     private const float SweepHit = 13f;          // akimin vurus yari genisligi (tarama ekseninde)

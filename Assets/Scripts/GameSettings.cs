@@ -175,6 +175,16 @@ public class GameSettings : ScriptableObject
              "Mağazadaki Şans / Ganimet yükseltmesi her seviyede +0,15 ekler")]
     [Range(0f, 1f)] public float pickupDropChance = 0.55f;
 
+    // ------------------------------------------------------------------ zorluk
+
+    [Header("Zorluk (Kolay / Normal / Zor)")]
+    [Tooltip("KOLAY seviyesinin çarpanları")]
+    public DifficultyTuning difficultyEasy = DifficultyTuning.Easy();
+    [Tooltip("NORMAL seviyesinin çarpanları (oyun buna göre ayarlı; boss çarpanları 1)")]
+    public DifficultyTuning difficultyNormal = DifficultyTuning.Normal();
+    [Tooltip("ZOR seviyesinin çarpanları")]
+    public DifficultyTuning difficultyHard = DifficultyTuning.Hard();
+
     // ------------------------------------------------------------------ erisim
 
     private static GameSettings current;

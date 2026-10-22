@@ -7,7 +7,7 @@ using UnityEngine;
 // yonunde kayarak kalmali (ice yakin kol daha yavas gelir, ama gobek yasak).
 public partial class BossBrain
 {
-    private const float WheelWarning = 0.8f;       // uyari cizgileri; ilk yildizlar ardindan cikar
+    private static float WheelWarning => 0.8f * Difficulty.BossWarningMul;       // uyari cizgileri; ilk yildizlar ardindan cikar
     private const float WheelInterval = 0.15f;     // kol atis araligi (sn)
     private const int WheelSlots = 5;              // kol basina yildiz
     private const float WheelSpacing = 40f;        // kol uzerinde yildizlar arasi (m); tek/cift atislarda yarim kayar
@@ -71,7 +71,7 @@ public partial class BossBrain
             wheelHub = WheelHubNow;
             Vector3 origin = wand.position;
             Vector3 right = Vector3.Cross(Vector3.up, mgr.RushHeading).normalized;
-            float effSpeed = WheelSpeed * Mathf.Max(0.05f, GameSettings.Current.bossBulletSpeedMultiplier) * RushBulletSpeed;
+            float effSpeed = WheelSpeed * BulletSpeedMul * RushBulletSpeed;
 
             // Tek/cift atislarda yildizlar kol boyunca yarim aralik kayar: kolda arasindan sizilacak bosluk kalmaz
             bool odd = (wheelTick++ & 1) == 1;
@@ -102,7 +102,7 @@ public partial class BossBrain
         Vector3 o = mgr.RushOrigin;
         Vector3 right = Vector3.Cross(Vector3.up, mgr.RushHeading).normalized;
         float hubY = (CombatManager.RushUp - CombatManager.RushDown) * 0.5f;
-        float effSpeed = WheelSpeed * Mathf.Max(0.05f, GameSettings.Current.bossBulletSpeedMultiplier) * RushBulletSpeed;
+        float effSpeed = WheelSpeed * BulletSpeedMul * RushBulletSpeed;
         float flight = Vector3.Distance(transform.position, player.position) / Mathf.Max(effSpeed, 1f);
         float shotAt = Mathf.Clamp(Time.time - flight, wheelStart, wheelEnd);
         float armAngle = wheelAngle0 + wheelSpin * (shotAt - wheelStart);

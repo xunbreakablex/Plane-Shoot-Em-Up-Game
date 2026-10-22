@@ -48,6 +48,8 @@ public partial class BossBrain
 
     private void AddZone(Vector2 center, float radius, float delay, int style, float chase = 0f, float lockBefore = 0.6f)
     {
+        delay *= Difficulty.BossWarningMul;        // zorluk: uyari suresi
+        lockBefore *= Difficulty.BossWarningMul;
         center.x = Mathf.Clamp(center.x, -CombatManager.RushHalfWidth, CombatManager.RushHalfWidth);
         center.y = Mathf.Clamp(center.y, -CombatManager.RushDown, CombatManager.RushUp);
         zones.Add(new Zone
