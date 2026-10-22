@@ -45,7 +45,7 @@ public partial class BossBrain
         if (FistL) fistPosL = golemFistL.position;
         if (FistR) fistPosR = golemFistR.position;
         nextAttack = Mathf.Max(nextAttack, Time.time + FistTrack + 3.6f);
-        mgr.Announce("TAŞ DEV: yumruklar geliyor, kırmızı çizgi kilitlenince KAÇ!", new Color(1f, 0.6f, 0.3f), 2.2f);
+        mgr.AnnounceNow("TAŞ DEV: yumruklar geliyor, kırmızı çizgi kilitlenince KAÇ!", new Color(1f, 0.6f, 0.3f), 2.2f);
         Sfx.PlayAt(Sfx.Warning, pos, 0.8f);
     }
 

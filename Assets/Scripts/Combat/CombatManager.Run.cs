@@ -622,6 +622,30 @@ public partial class CombatManager
         bannerQueue.Enqueue(new BannerItem { text = text, color = color, duration = duration });
     }
 
+    /// <summary>
+    /// Saldiri ipucu: kuyrugu beklemeden hemen gosterilir; kesilen duyuru kalan suresiyle hemen ardindan devam eder.
+    /// Eskiden boss basinda kuyrukta ~9 sn yazi birikiyor, "FUZE KILIDI: kay!" saldiri bitince cikabiliyordu.
+    /// </summary>
+    public void AnnounceNow(string text, Color color, float duration = 2.2f)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        var rest = new List<BannerItem>(bannerQueue);
+        bannerQueue.Clear();
+        bannerQueue.Enqueue(new BannerItem { text = text, color = color, duration = duration });
+        if (bannerActive)
+        {
+            float left = currentBanner.duration - (Time.time - bannerStart);
+            if (left > 0.6f && currentBanner.text != text)
+            {
+                BannerItem cut = currentBanner;
+                cut.duration = left;
+                bannerQueue.Enqueue(cut);
+            }
+        }
+        foreach (BannerItem b in rest) bannerQueue.Enqueue(b);
+        bannerActive = false;
+    }
+
     private void UpdateBanner()
     {
         float now = Time.time;

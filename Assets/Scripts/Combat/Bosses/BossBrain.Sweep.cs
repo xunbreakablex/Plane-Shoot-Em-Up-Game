@@ -43,7 +43,7 @@ public partial class BossBrain
         Vector2 p = PlayerFrame();
         sweepLock = vertical ? p.x : p.y;
         nextAttack = Mathf.Max(nextAttack, Time.time + SweepWarn + SweepTime * sweepPasses + 0.9f);
-        mgr.Announce(announce, new Color(1f, 0.6f, 0.3f), 2f);
+        mgr.AnnounceNow(announce, new Color(1f, 0.6f, 0.3f), 2f);
         Sfx.PlayAt(Sfx.Warning, pos, 0.8f);
     }
 

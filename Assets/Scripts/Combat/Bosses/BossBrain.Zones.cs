@@ -105,7 +105,7 @@ public partial class BossBrain
                 AddZone(p + Random.insideUnitCircle.normalized * Random.Range(55f, 130f), 24f, delay, 0);
         }
         nextAttack = Mathf.Max(nextAttack, zoneBusyUntil + 0.5f);
-        mgr.Announce("KUTSAL IŞIK: halkaların dışına çık!", new Color(1f, 0.9f, 0.5f), 2f);
+        mgr.AnnounceNow("KUTSAL IŞIK: halkaların dışına çık!", new Color(1f, 0.9f, 0.5f), 2f);
         Sfx.PlayAt(Sfx.BeamCharge, pos, 0.8f);
     }
 
@@ -128,7 +128,7 @@ public partial class BossBrain
         AddZone(p + new Vector2(-d, -d), r, t2, 1);
         if (phase >= 2) AddZone(p, r, t2, 1);
         nextAttack = Mathf.Max(nextAttack, zoneBusyUntil + 0.6f);
-        mgr.Announce("BOMBA HALISI: önce çapraza, sonra düze kaç!", new Color(1f, 0.6f, 0.3f), 2f);
+        mgr.AnnounceNow("BOMBA HALISI: önce çapraza, sonra düze kaç!", new Color(1f, 0.6f, 0.3f), 2f);
         Sfx.PlayAt(Sfx.Warning, pos, 0.7f);
     }
 
@@ -143,7 +143,7 @@ public partial class BossBrain
             AddZone(start, 26f, 2.2f + i * 0.55f, 2, 60f + 10f * phase, 0.6f);
         }
         nextAttack = Mathf.Max(nextAttack, zoneBusyUntil + 0.6f);
-        mgr.Announce("CEHENNEM ÇUKURLARI peşinde: durma, kaç!", new Color(1f, 0.4f, 0.25f), 2f);
+        mgr.AnnounceNow("CEHENNEM ÇUKURLARI peşinde: durma, kaç!", new Color(1f, 0.4f, 0.25f), 2f);
         Sfx.PlayAt(Sfx.BossRoar, pos, 0.6f);
     }
 
@@ -156,7 +156,7 @@ public partial class BossBrain
         for (int i = 0; i < n; i++)
             AddZone(p, 18f, 1.4f + i * 0.45f, 1, 220f, 0.7f);
         nextAttack = Mathf.Max(nextAttack, zoneBusyUntil + 0.5f);
-        mgr.Announce("FÜZE KİLİDİ: durma, sürekli kay!", new Color(1f, 0.6f, 0.3f), 2f);
+        mgr.AnnounceNow("FÜZE KİLİDİ: durma, sürekli kay!", new Color(1f, 0.6f, 0.3f), 2f);
         Sfx.PlayAt(Sfx.Lock, pos, 0.9f);
         Sfx.PlayAt(Sfx.MissileLaunch, pos, 0.7f);
     }
@@ -170,7 +170,7 @@ public partial class BossBrain
         AddZone(p + new Vector2(side, 0f), r, 1.2f, 3);
         AddZone(p, r, phase >= 1 ? 1.9f : 2.2f, 3);
         nextAttack = Mathf.Max(nextAttack, zoneBusyUntil + 0.5f);
-        mgr.Announce("KISKAÇ: önce yanlar, sonra orta kapanır; yukarı ya da aşağı kaç!", new Color(0.5f, 0.9f, 1f), 2f);
+        mgr.AnnounceNow("KISKAÇ: önce yanlar, sonra orta kapanır; yukarı ya da aşağı kaç!", new Color(0.5f, 0.9f, 1f), 2f);
         Sfx.PlayAt(Sfx.Warning, pos, 0.7f);
     }
 

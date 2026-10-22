@@ -52,7 +52,7 @@ public partial class BossBrain
         if (!wheelAnnounced)
         {
             wheelAnnounced = true;
-            mgr.Announce("YILDIZ ÇARKI: kollarla birlikte dön!", new Color(1f, 0.55f, 0.85f), 2.2f);
+            mgr.AnnounceNow("YILDIZ ÇARKI: kollarla birlikte dön!", new Color(1f, 0.55f, 0.85f), 2.2f);
         }
         nextAttack = Mathf.Max(nextAttack, wheelEnd + WheelRest);
     }

@@ -61,7 +61,7 @@ public partial class BossBrain
             galeStreak[i] = new Vector2(Random.Range(-GaleStreakSpanX, GaleStreakSpanX), Random.Range(-GaleStreakSpanY, GaleStreakSpanY));
 
         nextAttack = Mathf.Max(nextAttack, galeEnd + 0.6f);
-        mgr.Announce("FIRTINA KANADI: rüzgâra karşı kay, kenara sürüklenme!", new Color(0.75f, 0.95f, 1f), 2.2f);
+        mgr.AnnounceNow("FIRTINA KANADI: rüzgâra karşı kay, kenara sürüklenme!", new Color(0.75f, 0.95f, 1f), 2.2f);
         Sfx.PlayAt(Sfx.BossRoar, pos, 0.7f);
         Sfx.PlayAt(Sfx.Wind, player.position, 0.9f);
     }

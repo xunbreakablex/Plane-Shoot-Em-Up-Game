@@ -98,7 +98,7 @@ public partial class BossBrain
         if (!kiWaveAnnounced)
         {
             kiWaveAnnounced = true;
-            mgr.Announce("Kİ DALGASI: kırmızı çemberden çık!", new Color(1f, 0.45f, 0.35f), 2.2f);
+            mgr.AnnounceNow("Kİ DALGASI: kırmızı çemberden çık!", new Color(1f, 0.45f, 0.35f), 2.2f);
         }
     }
 
