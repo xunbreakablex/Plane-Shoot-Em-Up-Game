@@ -107,22 +107,24 @@ public partial class BossBrain : MonoBehaviour
     // Boss cani (vurus). Her boss, o noktada acik olan donanima gore ayarli (isabet ~%50 varsayimi):
     //   Sahin-X ~24-40 DPS (2 silah), Kopekbaligi ~55, Yengec ~80, Ahtapot ~90, Zeplin ~130, Ejderha ~180.
     // Hedef sure: orta boss ~30 sn, ana boss ~50-60 sn. Teorik DPS icin konsolda "info" yaz.
+    // 2026-10-22 boss olcumu (Roket, guc 4): Ejderha / Melek ~125 sn, Ki ~145 sn, Yildiz Buyucusu ~195 sn suruyordu
+    // (kahramanla 4 dakikayi asiyordu). Hedef: orta 30-50, asama 50-80, son boss 70-90 sn; uzun olanlar kisaltildi.
     public static int BaseHits(BossType t)
     {
         switch (t)
         {
-            case BossType.Jet: return 450;
-            case BossType.Shark: return 1100;
-            case BossType.Crab: return 1300;
-            case BossType.Octopus: return 2400;
-            case BossType.Zeppelin: return 2000;
-            case BossType.Demon: return 2200;
-            case BossType.Angel: return 2800;
-            case BossType.KiWarrior: return 4200;
-            case BossType.MagicalGirl: return 6000;
-            case BossType.Eagle: return 3200;
-            case BossType.Golem: return 4000;
-            default: return 5000;
+            case BossType.Jet: return 580;       // isinma degisikligi (+%30 hasar) dengelendi: sure ayni
+            case BossType.Shark: return 1400;
+            case BossType.Crab: return 1700;
+            case BossType.Octopus: return 3100;
+            case BossType.Zeppelin: return 2600;
+            case BossType.Demon: return 1900;
+            case BossType.Angel: return 1400;
+            case BossType.KiWarrior: return 2800;
+            case BossType.MagicalGirl: return 3400;
+            case BossType.Eagle: return 2600;
+            case BossType.Golem: return 3200;
+            default: return 3900;   // Ejderha
         }
     }
 

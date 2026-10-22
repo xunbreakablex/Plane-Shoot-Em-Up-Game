@@ -31,6 +31,9 @@ public partial class PlayerGun : MonoBehaviour
     public float Heat { get; private set; }
     public bool Overheated { get; private set; }
     private const float HeatPerSecond = 0.14f;
+    // Boss fazinda isinma yavas: tek hedef boss'tur, atesi birakmak icin sebep yok. Eskiden ~7 sn surekli ateste
+    // 3,2 sn kilitleniyordu (%31 bosta); taret/fuzesi olmayan kahramanlar boss'u yari hizda eritiyordu.
+    private const float RushHeatMul = 0.4f;
     private const float CoolPerSecond = 0.22f;
     private const float BaseReleaseHeat = 0.30f;
     public static float ReleaseHeat => Mathf.Min(0.8f, BaseReleaseHeat + RunUpgrades.Mods.coolReleaseAdd);
@@ -41,7 +44,8 @@ public partial class PlayerGun : MonoBehaviour
         float dt = Time.deltaTime;
         if (firing)
         {
-            Heat += HeatPerSecond * m.heatMul * dt;
+            bool rush = CombatManager.Instance != null && CombatManager.Instance.RushActive;
+            Heat += HeatPerSecond * m.heatMul * (rush ? RushHeatMul : 1f) * dt;
             if (Heat >= 1f)
             {
                 Heat = 1f;
