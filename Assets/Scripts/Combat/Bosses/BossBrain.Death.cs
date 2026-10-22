@@ -32,6 +32,7 @@ public partial class BossBrain
         chargeActive = false;
         ClearWarns();
         if (beamLine != null) beamLine.enabled = false;
+        if (beamGlow != null) beamGlow.enabled = false;
         beamActive = false;
 
         // Artik hedef degil, carpmaz

@@ -662,8 +662,16 @@ public partial class BossBrain : MonoBehaviour
     }
 
     // --------------------------------------------------------------- isin (beam)
+    // Uyari: ince sari cizgi oyuncuyu izler; son BeamLockTime saniyede KILITLENIR (kalin, yanip sonen kirmizi cizgi,
+    // HUD "ISIN! YANA KAY" oku). Ates kilitli yone gider, oyuncuyu izlemez: kilit aninda yana kayan oyuncu kurtulur.
+    // Isin basina en fazla BeamMaxHits vurus. Cizgi oyuncunun derinliginde biter (eskiden 760 m uzayip kameranin
+    // yanindan geciyor, ekranin %40'ini kaplayan dev bir kirmizi kama gibi gorunuyordu); ince parlak cekirdek + vurus
+    // genisliginde saydam parilti olarak cizilir.
 
     private const float BeamLength = 760f;
+    private const float BeamLockTime = 0.45f;     // uyarinin sonunda yonun sabitlendigi sure
+    private const int BeamMaxHits = 2;
+    private const float BeamCoreWidth = 3f;       // atesteki parlak cekirdek (m); parilti = vurus genisligi
 
     private bool beamActive;
     private Transform beamOrigin;
@@ -672,7 +680,10 @@ public partial class BossBrain : MonoBehaviour
     private float beamFire;
     private Vector3 beamDir;
     private float beamNextTick;
-    private LineRenderer beamLine;
+    private int beamHits;
+    private bool beamLockedSet;
+    private Vector2 beamLockFrame;   // boss fazinda kilit noktasi cercevede (yol kivrilsa da ekranda sabit kalir)
+    private LineRenderer beamLine, beamGlow;
 
     private void StartBeam(Transform origin, float telegraph, float fire)
     {
@@ -686,6 +697,8 @@ public partial class BossBrain : MonoBehaviour
         Sfx.PlayAt(Sfx.BeamCharge, origin.position, 0.8f);
         beamDir = (player.position - origin.position).normalized;
         beamNextTick = 0f;
+        beamHits = 0;
+        beamLockedSet = false;
 
         if (beamLine == null)
         {
@@ -697,8 +710,19 @@ public partial class BossBrain : MonoBehaviour
             beamLine.numCapVertices = 4;
             beamLine.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             beamLine.sharedMaterial = new Material(mgr.bossGlow != null ? mgr.bossGlow : mgr.fxMaterial);
+
+            var gg = new GameObject("BossBeamGlow");
+            gg.transform.SetParent(transform, false);
+            beamGlow = gg.AddComponent<LineRenderer>();
+            beamGlow.useWorldSpace = true;
+            beamGlow.positionCount = 2;
+            beamGlow.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            var gm = new Material(mgr.fxMaterial != null ? mgr.fxMaterial : mgr.bossGlow);
+            gm.mainTexture = Texture2D.whiteTexture;
+            beamGlow.sharedMaterial = gm;
         }
         beamLine.enabled = true;
+        beamGlow.enabled = false;
 
         nextAttack = Mathf.Max(nextAttack, Time.time + telegraph + fire + 0.5f);
     }
@@ -711,29 +735,40 @@ public partial class BossBrain : MonoBehaviour
         Vector3 o = beamOrigin.position;
         Vector3 want = (player.position - o).normalized;
 
-        if (t < beamTelegraph)
+        GameSettings gs = GameSettings.Current;
+        if (t >= beamTelegraph - BeamLockTime)
         {
-            // Uyari: ince sari cizgi hedefi takip eder
+            // Kilit: boss fazinda hedef, oyuncunun kilit anindaki cerceve noktasi; isin her adim oraya yeniden
+            // dogrultulur (dunyada sabit yon, kivrilan yolda ekranda kayiyordu)
+            if (!beamLockedSet) { beamLockedSet = true; beamLockFrame = mgr.RushActive ? PlayerFrame() : Vector2.zero; }
+            if (mgr.RushActive) beamDir = (KiWaveWorld(beamLockFrame) - o).normalized;
+        }
+        if (t < beamTelegraph - BeamLockTime)
+        {
+            // Nisan: ince sari cizgi oyuncuyu izler
             beamDir = Vector3.Slerp(beamDir, want, 1f - Mathf.Exp(-5f * dt));
-            SetBeamVisual(o, 0.5f, new Color(1f, 0.85f, 0.2f));
+            SetBeamVisual(o, 0.5f, new Color(1f, 0.85f, 0.2f), 0f);
+        }
+        else if (t < beamTelegraph)
+        {
+            // Kilit: yon sabit, kalin ve yanip sonen cizgi (simdi yana kay)
+            float blink = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(t * 28f));
+            SetBeamVisual(o, 1.4f, new Color(1f, 0.35f * blink, 0.15f), 0f);
         }
         else if (t < beamTelegraph + beamFire)
         {
-            // Ates: yavasca oyuncuya dogru suruklenir (GameSettings.bossBeamTurnRate)
-            GameSettings gs = GameSettings.Current;
-            beamDir = Vector3.RotateTowards(beamDir, want, gs.bossBeamTurnRate * Mathf.Deg2Rad * dt, 0f);
-            SetBeamVisual(o, 4.5f, new Color(1f, 0.25f, 0.2f));
+            // Ates: kilitli yone; gercek vurus genisliginde
+            SetBeamVisual(o, BeamCoreWidth, new Color(1f, 0.35f, 0.25f), gs.bossBeamHitRadius * 2f);
 
             Vector3 toP = player.position - o;
             float along = Vector3.Dot(toP, beamDir);
-            if (along > 0f && along < BeamLength && Time.time >= beamNextTick)
+            if (beamHits < BeamMaxHits && along > 0f && along < BeamLength && Time.time >= beamNextTick)
             {
                 float d = (toP - beamDir * along).magnitude;
-                // Eskiden isabet yaricapi (6,5 m) gorunen isinin (2,75 m) iki katindan genisti ve vurus basina 2
-                // hasar 0,25 sn'de bir veriyordu: lazer cok guclu hissettiriyordu. Ayarlar GameSettings'te.
                 if (d < gs.bossBeamHitRadius)
                 {
                     beamNextTick = Time.time + gs.bossBeamTick;
+                    beamHits++;
                     PlayerHealth ph = mgr.CurrentPlayerHealth;
                     if (ph != null) ph.TakeHit(gs.bossBeamDamage, player.position);
                 }
@@ -743,18 +778,61 @@ public partial class BossBrain : MonoBehaviour
         {
             beamActive = false;
             if (beamLine != null) beamLine.enabled = false;
+            if (beamGlow != null) beamGlow.enabled = false;
         }
     }
 
-    private void SetBeamVisual(Vector3 origin, float width, Color color)
+    private void SetBeamVisual(Vector3 origin, float width, Color color, float glowWidth)
     {
         if (beamLine == null) return;
+        // Oyuncunun derinliginde biter: kameranin yanindan gecip ekrani kaplamasin
+        float along = player != null ? Vector3.Dot(player.position - origin, beamDir) : BeamLength;
+        float len = along > 0f ? Mathf.Min(BeamLength, along) : BeamLength;
         beamLine.SetPosition(0, origin);
-        beamLine.SetPosition(1, origin + beamDir * BeamLength);
+        beamLine.SetPosition(1, origin + beamDir * len);
+        if (beamGlow != null)
+        {
+            beamGlow.enabled = glowWidth > 0f;
+            beamGlow.SetPosition(0, origin);
+            beamGlow.SetPosition(1, origin + beamDir * len);
+            beamGlow.startWidth = beamGlow.endWidth = glowWidth;
+            SetLineColor(beamGlow, new Color(1f, 0.3f, 0.2f, 0.28f));
+        }
         beamLine.startWidth = width;
         beamLine.endWidth = width;
         beamLine.sharedMaterial.color = color;
         if (beamLine.sharedMaterial.HasProperty("_BaseColor")) beamLine.sharedMaterial.SetColor("_BaseColor", color);
+    }
+
+    /// <summary>
+    /// HUD: boss isini nisan aliyor ya da kilitli / ateste. locked: yon sabit (artik kacmanin zamani); inside: oyuncu
+    /// vurus koridorunda; exit: koridorun disinda, cercevede en yakin guvenli nokta (kenara sikismissa obur yan).
+    /// </summary>
+    public bool BeamDanger(out Vector3 exit, out bool locked, out bool inside)
+    {
+        exit = Vector3.zero;
+        locked = inside = false;
+        if (!beamActive || beamOrigin == null || player == null || !mgr.RushActive) return false;
+        float t = Time.time - beamStart;
+        locked = t >= beamTelegraph - BeamLockTime;
+
+        GameSettings gs = GameSettings.Current;
+        Vector3 o = beamOrigin.position;
+        Vector3 toP = player.position - o;
+        float along = Mathf.Max(0f, Vector3.Dot(toP, beamDir));
+        Vector3 off = toP - beamDir * along;
+        Vector3 right = Vector3.Cross(Vector3.up, mgr.RushHeading).normalized;
+        Vector2 off2 = new Vector2(Vector3.Dot(off, right), off.y);
+        float margin = gs.bossBeamHitRadius + 6f;
+        inside = off2.magnitude < margin;
+
+        Vector2 dir2 = off2.magnitude > 0.5f ? off2.normalized : Vector2.right;
+        Vector2 pf = PlayerFrame();
+        Vector2 target = pf + dir2 * (margin + 8f - off2.magnitude);
+        if (Mathf.Abs(target.x) > CombatManager.RushHalfWidth - 6f || target.y > CombatManager.RushUp - 6f || target.y < -CombatManager.RushDown + 6f)
+            target = pf - dir2 * (margin + 8f + off2.magnitude);   // kenara sikisti: obur yan
+        exit = KiWaveWorld(target);
+        return true;
     }
 
     // ----------------------------------------------------------- hamle (charge)

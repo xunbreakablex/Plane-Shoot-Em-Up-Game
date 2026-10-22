@@ -118,7 +118,8 @@ public partial class CombatManager
     private void DrawCurtainGap()
     {
         if (limbBrain == null || limbBrainOf == null || limbBrainOf.IsDead) return;
-        if (limbBrain.CurtainGap(out Vector3 gp)) DrawGapArrow(gp, new Color(0.3f, 1f, 0.45f), 38f, "BOŞLUK", "BOŞLUKTASIN");
+        if (limbBrain.BeamDanger(out Vector3 bx, out bool bLocked, out bool bInside) && (bInside || !bLocked)) DrawBeamWarn(bx, bLocked);
+        else if (limbBrain.CurtainGap(out Vector3 gp)) DrawGapArrow(gp, new Color(0.3f, 1f, 0.45f), 38f, "BOŞLUK", "BOŞLUKTASIN");
         else if (limbBrain.WheelGap(out Vector3 wg)) DrawGapArrow(wg, new Color(1f, 0.45f, 0.85f), 24f, "BOŞLUK", "BOŞLUKTASIN");
         else if (limbBrain.KiWaveDanger(out Vector3 kc, out float kr, out float kLeft)) DrawKiWaveExit(kc, kr, kLeft);
         else if (limbBrain.SweepDanger(out Vector3 bc, out bool vert, out bool inside)) DrawSweepExit(bc, vert, inside);
@@ -135,6 +136,25 @@ public partial class CombatManager
             DrawVignette(new Color(0.75f, 0.92f, 1f), 0.12f + 0.12f * gk);
             DrawGapArrow(up, new Color(0.75f, 0.95f, 1f), 6f, "RÜZGÂRA KARŞI KAY!", null, 1.3f);
         }
+    }
+
+    // Boss isini: nisan alirken uyari yazisi, kilitlenince (ve oyuncu koridordaysa) kirmizi kenar + "YANA KAY" oku
+    private void DrawBeamWarn(Vector3 exit, bool locked)
+    {
+        PlaneController plane = flight != null ? flight.Current : null;
+        if (plane == null || plane.IsCrashed) return;
+        if (!locked)
+        {
+            Vector3 psp = cam.WorldToScreenPoint(plane.transform.position);
+            if (psp.z > 0f)
+            {
+                Vector2 h = Hud.ToHud(psp);
+                Hud.Text(new Rect(h.x - 150f, h.y + 42f, 300f, 20f), "IŞIN NİŞAN ALIYOR: kilitlenince kay", new Color(1f, 0.85f, 0.3f), 14, TextAnchor.UpperCenter);
+            }
+            return;
+        }
+        DrawVignette(new Color(1f, 0.2f, 0.1f), 0.22f + 0.12f * Mathf.Sin(Time.unscaledTime * 22f));
+        DrawGapArrow(exit, new Color(1f, 0.35f, 0.2f), 6f, "IŞIN! YANA KAY", null, 1.5f);
     }
 
     // Supurme: oyuncu kilitli seritteyse en yakin kenara buyuk "KAC" oku (yatay taramada yukari/asagi, dikeyde saga/sola)

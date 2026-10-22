@@ -129,14 +129,12 @@ public class GameSettings : ScriptableObject
     [Header("Boss")]
     [Tooltip("Boss mermilerinin hız çarpanı (1 = eski hız). Küçük = daha yavaş mermi, kaçması kolay. Ömürleri de buna göre uzar.")]
     [Range(0.2f, 1.5f)] public float bossBulletSpeedMultiplier = 0.7f;
-    [Tooltip("Boss lazerinin (köpekbalığı, ahtapot, ejderha) her vuruşta verdiği hasar")]
+    [Tooltip("Boss ışınının her vuruşta verdiği hasar (ışın başına en fazla 2 vuruş)")]
     [Range(0, 4)] public int bossBeamDamage = 1;
     [Tooltip("Lazerin hasar verme aralığı (sn). Büyük = daha az hasar.")]
     [Range(0.1f, 1.5f)] public float bossBeamTick = 0.4f;
-    [Tooltip("Lazerin isabet yarıçapı (m). Görünen kalınlık 4,5 m; bu değer uçağın yarıçapını da içerir.")]
+    [Tooltip("Işının isabet yarıçapı (m). Ateşteki görünen kalınlık bunun iki katı; değer uçağın yarıçapını da içerir.")]
     [Range(1f, 8f)] public float bossBeamHitRadius = 4.2f;
-    [Tooltip("Lazerin oyuncuyu izleme hızı (derece/sn). Küçük = kaçmak kolay.")]
-    [Range(2f, 40f)] public float bossBeamTurnRate = 9f;
 
     // ------------------------------------------------------------------- us
 
