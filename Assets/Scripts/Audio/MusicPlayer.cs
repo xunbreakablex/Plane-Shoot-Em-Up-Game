@@ -1,16 +1,20 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public enum MusicTrack { None, Hangar, Combat, Boss }
 
-// Prosedurel muzik: kod ile uretilen kisa dongu parcalari (hangar, savas, boss). Savasta boss varken boss parcasina
+// Prosedurel muzik: kod ile uretilen parcalar (hangar, her asamaya ozgu savas ve boss). Parcalar arka planda uretilir;
+// hazir olana kadar eski parca calar, savas parcasi calarken ayni asamanin boss parcasi onceden hazirlanir. Savasta boss varken boss parcasina
 // yumusakca gecer. Duraklatmada kisilir ama durmaz. Ses seviyesi GameAudio.Music.
 public class MusicPlayer : MonoBehaviour
 {
-    private static readonly AudioClip[] Clips = new AudioClip[4];
+    private static readonly Dictionary<int, AudioClip> Clips = new Dictionary<int, AudioClip>();
+    private static readonly Dictionary<int, Task<float[]>> Pending = new Dictionary<int, Task<float[]>>();
+    private int currentKey = -1;
 
     private AudioSource a, b;
     private AudioSource active;
-    private MusicTrack track = MusicTrack.None;
     private MusicTrack forced = MusicTrack.None;
     private float fade;
 
@@ -62,11 +66,16 @@ public class MusicPlayer : MonoBehaviour
     private void Update()
     {
         MusicTrack want = Wanted();
-        if (want != track)
+        int style = StyleOf(want);
+        int key = KeyOf(want, style);
+        AudioClip wantClip = key != currentKey ? Clip(want, style) : null;   // hazir degilse eski parca calmaya devam eder
+        if (want == MusicTrack.Combat) Clip(MusicTrack.Boss, style);           // boss parcasini onceden hazirla
+        else if (forced == MusicTrack.Hangar) Clip(MusicTrack.Combat, StyleOf(MusicTrack.Combat));   // hangarda: siradaki asamanin parcasi
+        if (wantClip != null)
         {
-            track = want;
+            currentKey = key;
             AudioSource next = active == a ? b : a;
-            next.clip = Clip(track);
+            next.clip = wantClip;
             next.volume = 0f;
             next.Play();
             AudioSource prev = active;
@@ -87,10 +96,34 @@ public class MusicPlayer : MonoBehaviour
 
     private AudioSource prevSource;
 
-    private static AudioClip Clip(MusicTrack t)
+    private static int StyleOf(MusicTrack t) => t == MusicTrack.Hangar ? 0 : Mathf.Max(0, RunState.Stage) % MusicSynth.StageStyles;
+    private static int KeyOf(MusicTrack t, int style) => (int)t * 16 + style;
+
+    /// <summary>Parca hazirsa doner; degilse uretimi arka planda baslatir (ya da surdurur) ve null doner.</summary>
+    private static AudioClip Clip(MusicTrack t, int style)
     {
-        int i = (int)t;
-        if (Clips[i] == null) Clips[i] = MusicSynth.Make(t);
-        return Clips[i];
+        int key = KeyOf(t, style);
+        if (Clips.TryGetValue(key, out AudioClip c) && c != null) return c;
+        if (Pending.TryGetValue(key, out Task<float[]> task))
+        {
+            if (!task.IsCompleted) return null;
+            Pending.Remove(key);
+            float[] data = task.Status == TaskStatus.RanToCompletion ? task.Result : null;
+            if (data == null || data.Length == 0)
+            {
+                if (task.Exception != null) Debug.LogException(task.Exception);
+                data = new float[MusicSynth.Rate];   // sessiz yedek: tekrar tekrar denenmesin
+            }
+            c = AudioClip.Create($"music_{t}_{style}", data.Length, 1, MusicSynth.Rate, false);
+            c.SetData(data, 0);
+            Clips[key] = c;
+            return c;
+        }
+#if UNITY_WEBGL && !UNITY_EDITOR
+        Pending[key] = Task.FromResult(MusicSynth.Render(t, style));   // WebGL'de is parcacigi yok
+#else
+        Pending[key] = Task.Run(() => MusicSynth.Render(t, style));
+#endif
+        return null;
     }
 }
