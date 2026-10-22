@@ -442,6 +442,7 @@ public partial class CombatManager
         var enemy = go.AddComponent<EnemyPlane>();
         enemy.Init(this, HitsFor(kind), cruise, turn, kind,
             strafe ? EnemyBehavior.Strafe : EnemyBehavior.Chase, look, drop);
+        EngineFx.Attach(go, model, () => enemy.IsDead ? -1f : enemy.EngineThrottle);   // egzoz alevi + duman
 
         enemies.Add(enemy);
         RunState.RegisterSpawn(1);

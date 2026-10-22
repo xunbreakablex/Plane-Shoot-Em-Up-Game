@@ -73,6 +73,8 @@ public class LoadoutApplier : MonoBehaviour
             LoadoutStats stats = LoadoutMath.Compute(loadout);
 
             PlaneBuilder.Apply(plane.gameObject, i, loadout, true);
+            // Gaza gore egzoz alevi + duman (kahramanda buyu parildamasi); cakilinca susar
+            EngineFx.Attach(plane.gameObject, i, () => plane.IsCrashed ? -1f : plane.Throttle);
 
             // Uygulama sirasinda ucagin hizi/gazi bozulmasin
             float speed = plane.Speed;

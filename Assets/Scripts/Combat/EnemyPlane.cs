@@ -288,6 +288,9 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
     public void SetVelocity(Vector3 v) { Velocity = v; }
 
+    /// <summary>Motor efekti icin gaz (0-1): seyirde ~0,4, yetisirken / dalarken / one gecerken artar.</summary>
+    public float EngineThrottle => cruiseSpeed > 1f ? Mathf.Clamp01(0.4f + (Velocity.magnitude / cruiseSpeed - 1f) * 1.3f) : 0.4f;
+
     /// <summary>
     /// Bu dusman oyuncuya ates etmek uzere mi (HUD uyarisi)? Seri atiyor, menzilde ve burnu oyuncuya
     /// donuk ya da desenli atisa 0,8 sn kala. Boss'lar icin her zaman false (zaten hep isaretli).
