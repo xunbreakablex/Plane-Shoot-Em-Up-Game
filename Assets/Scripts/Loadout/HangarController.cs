@@ -677,7 +677,7 @@ public class HangarController : MonoBehaviour
         Rating(x + 14f, ref cy, w - 28f, "Çeviklik (yatış)", st.EffRoll, prev.EffRoll, pd.roll / 58f);
         Rating(x + 14f, ref cy, w - 28f, "Dönüş gücü (G)", st.EffMaxG, prev.EffMaxG, pd.maxG / 2.0f);
         Hud.Text(new Rect(x + 14f, cy - 2f, w - 28f, 16f), "10 üzerinden; ağır donanım puanı düşürür.", Dim, 11, TextAnchor.UpperLeft, false);
-        cy += 26f;
+        cy += 19f;
 
         // ---- Savas
         Hud.Text(new Rect(x + 14f, cy, w - 28f, 20f), "SAVAŞ GÜCÜ", Gold, 14);
@@ -692,7 +692,7 @@ public class HangarController : MonoBehaviour
         Tile(new Rect(tx, cy, tileW, tileH), "SİLAH /sn", $"{st.weaponDps:0}", st.weaponDps - prev.weaponDps, new Color(1f, 0.7f, 0.3f));
         Tile(new Rect(tx + (tileW + 8f), cy, tileW, tileH), "TARET /sn", $"{st.turretDps:0}", st.turretDps - prev.turretDps, new Color(0.8f, 0.65f, 1f));
         Tile(new Rect(tx + (tileW + 8f) * 2f, cy, tileW, tileH), "AĞIRLIK", $"{st.weight:0}", st.weight - prev.weight, Color.white, true);
-        cy += tileH + 16f;
+        cy += tileH + 9f;
 
         // ---- Guc
         Hud.Text(new Rect(x + 14f, cy, w - 28f, 20f), "GÜÇ BÜTÇESİ", Gold, 14);
