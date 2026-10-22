@@ -927,6 +927,7 @@ public partial class BossBrain : MonoBehaviour
         crabSweepBase = mgr.RushMapDir(crabSweepBase);
         fistPosL = mgr.RushMapPoint(fistPosL); fistPosR = mgr.RushMapPoint(fistPosR);
         fistAimL = mgr.RushMapPoint(fistAimL); fistAimR = mgr.RushMapPoint(fistAimR);
+        fistLockAim = mgr.RushMapPoint(fistLockAim);
         fistDirL = mgr.RushMapDir(fistDirL); fistDirR = mgr.RushMapDir(fistDirR);
         for (int i = 0; i < warns.Count; i++)
         {

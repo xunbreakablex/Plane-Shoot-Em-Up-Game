@@ -119,6 +119,11 @@ public partial class CombatManager
     {
         if (limbBrain == null || limbBrainOf == null || limbBrainOf.IsDead) return;
         if (limbBrain.BeamDanger(out Vector3 bx, out bool bLocked, out bool bInside) && (bInside || !bLocked)) DrawBeamWarn(bx, bLocked);
+        else if (limbBrain.FistDanger(out Vector3 fx, out float fLeft))
+        {
+            DrawVignette(new Color(1f, 0.25f, 0.08f), 0.25f + 0.12f * Mathf.Sin(Time.unscaledTime * 20f));
+            DrawGapArrow(fx, new Color(1f, 0.45f, 0.2f), 6f, $"YUMRUK! KAÇ  {Mathf.Max(0f, fLeft):0.0}", null, 1.5f);
+        }
         else if (limbBrain.CurtainGap(out Vector3 gp)) DrawGapArrow(gp, new Color(0.3f, 1f, 0.45f), 38f, "BOŞLUK", "BOŞLUKTASIN");
         else if (limbBrain.WheelGap(out Vector3 wg)) DrawGapArrow(wg, new Color(1f, 0.45f, 0.85f), 24f, "BOŞLUK", "BOŞLUKTASIN");
         else if (limbBrain.KiWaveDanger(out Vector3 kc, out float kr, out float kLeft)) DrawKiWaveExit(kc, kr, kLeft);
