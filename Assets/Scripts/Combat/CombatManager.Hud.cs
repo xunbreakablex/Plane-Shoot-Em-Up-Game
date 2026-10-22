@@ -762,15 +762,17 @@ public partial class CombatManager
                 // Mesafe yazisi: yalniz onemliler ve en yakin hava hedefi (yer birimlerinde yok). Boss fazinda kutunun
                 // sag ustunde: altta ucagin / kahramanin ustune dusuyordu
                 bool rushBoss = e.IsBoss && RushActive;
+                // Boss fazinda yazi kutunun sagina; sag paneli (hurda / guc) asmasin
+                float rushLabelX = Mathf.Min(box.xMax + 6f, Hud.W - Hud.Margin - Hud.RightColumnWidth - 126f);
                 if (important || (!ground && boxes <= 1))
                 {
-                    Rect dr = rushBoss ? new Rect(box.xMax + 6f, box.y, 120f, 16f) : new Rect(box.x - 30f, box.yMax + 2f, size + 60f, 16f);
+                    Rect dr = rushBoss ? new Rect(rushLabelX, box.y, 120f, 16f) : new Rect(box.x - 30f, box.yMax + 2f, size + 60f, 16f);
                     Hud.Text(dr, Hud.Meters(dist), col, 12, rushBoss ? TextAnchor.UpperLeft : TextAnchor.UpperCenter);
                 }
 
                 if (missileLock)
                 {
-                    Rect lr = rushBoss ? new Rect(box.xMax + 6f, box.y + 15f, 120f, 16f) : new Rect(box.x - 40f, box.yMax + 16f, size + 80f, 16f);
+                    Rect lr = rushBoss ? new Rect(rushLabelX, box.y + 15f, 120f, 16f) : new Rect(box.x - 40f, box.yMax + 16f, size + 80f, 16f);
                     Hud.Text(lr, "FÜZE KİLİDİ", new Color(1f, 0.9f, 0.2f), 12, rushBoss ? TextAnchor.UpperLeft : TextAnchor.UpperCenter);
                 }
 
@@ -873,7 +875,9 @@ public partial class CombatManager
             if (b == null) continue;
 
             Vector3 r = b.transform.position - p;
-            Vector3 v = b.Velocity - vp;
+            // Boss fazinda mermi cerceveyle tasinir (Bullet: hiz + cerceve hizi); oyuncunun hizi da cerceve hizini
+            // icerir. Eskiden cerceve hizi mermiye eklenmiyordu: goreli hiz ~seyir hizi kadar yanlis, oklar yanlis yerde
+            Vector3 v = b.Velocity + FrameVelocityAt(b.transform.position) - vp;
             float vv = v.sqrMagnitude;
             if (vv < 1f) continue;
 
