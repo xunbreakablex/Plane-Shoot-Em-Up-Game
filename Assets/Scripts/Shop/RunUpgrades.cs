@@ -33,6 +33,7 @@ public struct UpgradeMods
     public float discount;
 
     public float magnetMul;        // guclendirme cekim menzili carpani
+    public float dropChanceAdd;    // tasiyici odul dusurme oranina eklenen (GameSettings.pickupDropChance)
     public int revives;
 }
 
@@ -214,6 +215,7 @@ public static class RunUpgrades
 
         m.magnetMul = 1f + 0.35f * Level(UpgradeId.Magnet);
         m.revives = Level(UpgradeId.Revive);
+        m.dropChanceAdd = 0.15f * Level(UpgradeId.Luck);
 
         Mods = m;
     }

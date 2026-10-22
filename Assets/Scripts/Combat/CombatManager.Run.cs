@@ -247,6 +247,7 @@ public partial class CombatManager
         Vector3 right = Vector3.Cross(Vector3.up, fwd);
 
         if (w.ace) { SpawnAce(w, playerPos, vel, fwd); return; }
+        w.drop = RollDrop(w.drop);   // as pilot hep dusurur; diger tasiyicilar orana gore
         Radio(w.kind, w.count);
 
         switch (w.formation)

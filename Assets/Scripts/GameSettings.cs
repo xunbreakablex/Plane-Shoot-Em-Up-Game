@@ -171,6 +171,9 @@ public class GameSettings : ScriptableObject
     [Range(4f, 40f)] public float pickupCollectRadius = 16f;
     [Tooltip("Güçlendirmenin sahnede kalma süresi (sn)")]
     [Range(10f, 90f)] public float pickupLifetime = 45f;
+    [Tooltip("Dalga ve üs taşıyıcılarının ödül düşürme oranı (0-1; eskiden hep 1). As pilot ve boss ödülleri her zaman düşer. " +
+             "Mağazadaki Şans / Ganimet yükseltmesi her seviyede +0,15 ekler")]
+    [Range(0f, 1f)] public float pickupDropChance = 0.55f;
 
     // ------------------------------------------------------------------ erisim
 

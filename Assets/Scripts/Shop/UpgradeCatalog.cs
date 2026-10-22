@@ -14,6 +14,8 @@ public enum UpgradeId
     Thrust, Roll, ScrapMul, StreakBonus, Discount,
     // Guclendirme mıknatisi ve ekstra can
     Magnet, Revive,
+    // Odul dusurme orani
+    Luck,
     Count
 }
 
@@ -75,6 +77,7 @@ public static class UpgradeCatalog
         Add(a, UpgradeId.Discount, "İndirim", "Mağaza fiyatları %8 düşer.", UpgradeCategory.Flight, 3, 60);
 
         Add(a, UpgradeId.Magnet, "Mıknatıs", "Düşen güçlendirmeleri %35 daha uzaktan çeker.", UpgradeCategory.Flight, 4, 35);
+        Add(a, UpgradeId.Luck, "Şans / Ganimet", "Ödül taşıyan (altın renkli) düşman ve üs yapısı daha sık çıkar: düşürme oranı +%15 (taban %55, 3 seviyede %100).", UpgradeCategory.Flight, 3, 45);
         Add(a, UpgradeId.Revive, "Ekstra Can", "Düşersen tam canla geri dönersin (seviye başına bir kez) ve çevrendeki düşmanlar patlar; bir güç seviyesi kaybedersin.", UpgradeCategory.Defense, 2, 220);
 
         return a;

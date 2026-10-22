@@ -224,7 +224,7 @@ public static class BaseBuilder
         rb.useGravity = false;
 
         var e = go.AddComponent<EnemyPlane>();
-        e.InitGround(mgr, hits, kind, title, radius, drop);
+        e.InitGround(mgr, hits, kind, title, radius, mgr != null ? mgr.RollDrop(drop) : drop);
         res.units.Add(e);
         return e;
     }

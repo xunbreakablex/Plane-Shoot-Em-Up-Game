@@ -460,6 +460,31 @@ public partial class CombatManager : MonoBehaviour
         PowerUp.Spawn(powerUpPrefab, pos, kind, scatter);
     }
 
+    // Tasiyici odulu seyreltme (eskiden her dalga / us tasiyicisi dusururdu, asama basina ~15 odul). Her odul turunun
+    // kendi sayaci var: oran birikir, 1'i gecince tasiyici olur; rastgele kuraklik ya da tek turun hic gelmemesi olmaz.
+    // As pilot ve boss odulleri buradan gecmez, her zaman duser.
+    private readonly float[] dropMeter = new float[8];
+    private bool dropMeterReady;
+
+    /// <summary>Dalga / us yapisinin odulunu orana gore verir ya da iptal eder (-1).</summary>
+    public int RollDrop(int drop)
+    {
+        if (drop < 0) return -1;
+        if (!dropMeterReady)
+        {
+            dropMeterReady = true;
+            // Baslangiclar esit dagilir (altin oran adimi): her asamaya turlerin yaklasik orani kadari duser
+            float offset = Random.value;
+            for (int i = 0; i < dropMeter.Length; i++) dropMeter[i] = Mathf.Repeat(offset + i * 0.618f, 1f);
+        }
+        float chance = Mathf.Clamp01(GameSettings.Current.pickupDropChance + RunUpgrades.Mods.dropChanceAdd);
+        int k = Mathf.Clamp(drop, 0, dropMeter.Length - 1);
+        dropMeter[k] += chance;
+        if (dropMeter[k] < 1f) return -1;
+        dropMeter[k] -= 1f;
+        return drop;
+    }
+
     private int shieldRefills, shieldRefillStage = -1;
     private float lastShieldRefill = -10f;
 
