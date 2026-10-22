@@ -145,6 +145,32 @@ public static class Sfx
     public static AudioClip KillDing => killDing != null ? killDing : (killDing = MakeKillDing());
     public static AudioClip BossAttack => bossAttack != null ? bossAttack : (bossAttack = MakeBossAttack());
 
+    // Boss uyari sireni (Darius tarzi giris): iki tonlu, titresimli, ~3 sn
+    private static AudioClip siren;
+    public static AudioClip Siren => siren != null ? siren : (siren = MakeSiren());
+
+    private static AudioClip MakeSiren()
+    {
+        const float len = 3.1f;
+        int n = (int)(Rate * len);
+        var d = new float[n];
+        float phase = 0f;
+        for (int i = 0; i < n; i++)
+        {
+            float t = i / (float)Rate;
+            // Yarim saniyelik "vii-uu": tonlar arasi yumusak kayma
+            float k = Mathf.SmoothStep(0f, 1f, Mathf.PingPong(t * 4f, 1f));
+            float f = Mathf.Lerp(560f, 840f, k);
+            phase += f / Rate;
+            phase -= Mathf.Floor(phase);
+            float sq = phase < 0.5f ? 1f : -1f;
+            float v = sq * 0.35f + Mathf.Sin(phase * 2f * Mathf.PI) * 0.65f;
+            float env = Mathf.Clamp01(t / 0.08f) * Mathf.Clamp01((len - t) / 0.4f) * (0.8f + 0.2f * Mathf.Sin(t * 2f * Mathf.PI * 14f));
+            d[i] = v * env * 0.45f;
+        }
+        return Create("siren", d);
+    }
+
     // Ruzgar ugultusu (Kartal firtina kanadi): yavasca dalgalanan suzgecli gurultu, kabarip diner
     private static AudioClip wind;
     public static AudioClip Wind => wind != null ? wind : (wind = MakeWind());

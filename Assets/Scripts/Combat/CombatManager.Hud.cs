@@ -54,6 +54,7 @@ public partial class CombatManager
         DrawBossLimbBars();
         DrawCurtainGap();
         DrawFloatingTexts();
+        DrawBossWarning();
         DrawBanner();
         DrawBottomWarnings();
         DrawVirtualStick();

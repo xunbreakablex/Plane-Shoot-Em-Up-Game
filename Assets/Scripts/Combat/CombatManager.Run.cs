@@ -54,6 +54,7 @@ public partial class CombatManager
         waveClock = 0f;
         bossSpawned = false;
         midBossSpawned = false;
+        CancelBossWarning();
         boss = null;
         midBoss = null;
 
@@ -106,16 +107,17 @@ public partial class CombatManager
 
         float t = RunState.StageTime;
         UpdateTutorialHints(t);
+        UpdateBossWarning();
 
-        // Dalga saati: orta boss yasarken durur (boss savasi kalabaliga bogulmasin)
-        bool midAlive = midBoss != null && !midBoss.IsDead;
+        // Dalga saati: orta boss yasarken (ve boss uyarisi surerken) durur (boss savasi kalabaliga bogulmasin)
+        bool midAlive = (midBoss != null && !midBoss.IsDead) || BossWarningActive;
         if (!midAlive) waveClock += Time.deltaTime;
 
         // Asama ortasi boss
         if (!midBossSpawned && waveClock >= stage.midBossTime)
         {
             midBossSpawned = true;
-            SpawnBossEncounter(stage.midBoss, EnemyKind.MidBoss);
+            WarnThenSpawnBoss(stage.midBoss, EnemyKind.MidBoss);
         }
 
         // Senaryo dalgalari
@@ -138,7 +140,7 @@ public partial class CombatManager
             if (baseDone && (calm || waveClock > lastTime + bossWaitAfterLastWave))
             {
                 bool final = RunState.IsLastStage;
-                SpawnBossEncounter(stage.boss, final ? EnemyKind.FinalBoss : EnemyKind.Boss);
+                WarnThenSpawnBoss(stage.boss, final ? EnemyKind.FinalBoss : EnemyKind.Boss);
             }
         }
 

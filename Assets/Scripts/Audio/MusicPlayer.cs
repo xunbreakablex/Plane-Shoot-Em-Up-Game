@@ -65,6 +65,15 @@ public class MusicPlayer : MonoBehaviour
 
     private void Update()
     {
+        // Boss uyarisi: muzik susar (siren duyulsun), boss parcasi hazirlanir; boss dogunca hemen girer
+        CombatManager warnCm = forced == MusicTrack.None ? CombatManager.Instance : null;
+        if (warnCm != null && warnCm.BossWarningActive)
+        {
+            Clip(MusicTrack.Boss, StyleOf(MusicTrack.Boss));
+            active.volume = Mathf.MoveTowards(active.volume, 0f, Time.unscaledDeltaTime * 0.5f);
+            return;
+        }
+
         MusicTrack want = Wanted();
         int style = StyleOf(want);
         int key = KeyOf(want, style);
@@ -80,7 +89,7 @@ public class MusicPlayer : MonoBehaviour
             next.Play();
             AudioSource prev = active;
             active = next;
-            fade = 0f;
+            fade = want == MusicTrack.Boss ? 0.7f : 0f;   // boss muzigi uyaridan sonra hizla girer
             prevSource = prev;
         }
 
