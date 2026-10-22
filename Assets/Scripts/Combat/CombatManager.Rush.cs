@@ -5,7 +5,7 @@ using UnityEngine;
 // Boss fazi ("rush"): boss gelince diger dusman ucaklar cekilir, yer birimleri susar. Oyuncu ve boss once acik denize,
 // sonra haritanin cevresindeki genis bir cember uzerinde durmadan ilerler (adalar ve ussler sisin otesinde kalir).
 // Ilerleyen ve donen bir cerceve (RushOrigin + RushHeading) her fizik adiminda kayar ve doner; oyuncu bu cercevede
-// yalnizca sag-sol / yukari-asagi hareket eder (W/S yok), fare nisani cerceve yonune gore sinirlidir (PlaneController).
+// yalnizca sag-sol (A/D) / yukari-asagi (W/S) hareket eder (gaz yok), fare nisani cerceve yonune gore sinirlidir (PlaneController).
 // Boss, mermiler, fuzeler, uyari cizgileri ve guclendirmeler cerceveyle birlikte tasinir VE doner: goreli savas mantigi
 // (onde tutma, mermi hizi, boss dumeni) duragan savastaki gibi calisir, cerceve hizla donerken boss geride kalmaz. Boss olunce cerceve durur, ekran kararir ve oyuncu boss'tan onceki yerine doner.
 public partial class CombatManager

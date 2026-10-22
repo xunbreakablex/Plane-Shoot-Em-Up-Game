@@ -213,15 +213,15 @@ public class FlightTestManager : MonoBehaviour
     private const string HelpAimMouse = "FARE  nişan alma        SOL TIK / SPACE  ateş        F  güdümlü füze";
 
     // Kontrol semasina gore 2. satir (ESC menusunden Arcade/Klasik)
-    private const string HelpSteerMouse = "FARE  yönlendir        W / S  ileri / geri        A / D  sağa-sola kay";
-    private const string HelpSteerMouseGas = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  sağa-sola kay";
-    private const string HelpKeysMouse = "SHIFT  yukarı kay       CTRL  aşağı kay        C  kamera mesafesi";
+    private const string HelpSteerMouse = "FARE  yönlendir        A / D  sağa-sola kay        W / S  yukarı-aşağı kay";
+    private const string HelpKeysMouseFwd = "SHIFT / CTRL  ileri / geri kay        C  kamera mesafesi";
+    private const string HelpKeysMouse = "SHIFT  hızlan        CTRL  yavaşla        C  kamera mesafesi";
     private const string HelpKeysDefault = "SHIFT / CTRL  gaz       SPACE (yerde)  fren   C  kamera mesafesi";
-    private const string HelpSteerMouseClassic = "FARE  yönlendir        W / S  hızlan / yavaşla        A / D  dön";
+    private const string HelpSteerMouseClassic = "FARE  yönlendir        SHIFT / CTRL (W / S)  hızlan / yavaşla        A / D  dön";
     // Sanal cubuk (varsayilan): imlec ortada degilken ucak doner
-    private const string HelpSteerStick = "FARE  imleci it: ortada değilse döner     W / S  ileri / geri     A / D  kay";
-    private const string HelpSteerStickGas = "FARE  imleci it: ortada değilse döner     W / S  hızlan / yavaşla     A / D  kay";
-    private const string HelpKeysStick = "SHIFT / CTRL  yukarı-aşağı kay     ORTA TIK  imleci ortala     C  kamera";
+    private const string HelpSteerStick = "FARE  imleci it: ortada değilse döner     A / D  kay     W / S  yukarı-aşağı";
+    private const string HelpKeysStickFwd = "SHIFT / CTRL  ileri / geri kay     ORTA TIK  imleci ortala     C  kamera";
+    private const string HelpKeysStick = "SHIFT  hızlan     CTRL  yavaşla     ORTA TIK  imleci ortala     C  kamera";
     private const string HelpSteerArcade = "W / S  yunuslama        A / D  sağa-sola dön     Q / E  yatış";
     private const string HelpSteerClassic = "W / S  yunuslama        A / D  yatış        Q / E  dümen";
 
@@ -242,16 +242,16 @@ public class FlightTestManager : MonoBehaviour
     private const float RushHelpSeconds = 9f;
     private static readonly string[] rushHelpKeys =
     {
-        "BOSS SAVAŞI  •  W / S kapalı, boss hep önünde",
-        "A / D  sağa-sola kay        SHIFT / CTRL  yukarı-aşağı kay",
+        "BOSS SAVAŞI  •  gaz yok, boss hep önünde",
+        "A / D  sağa-sola kay        W / S  yukarı-aşağı kay",
         "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     F  füze     B  bomba",
         "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
     private const string HelpHeroKeys = "B  özel yetenek     Q / E  yana kaç (kısa dokunulmazlık)     SAĞ TIK  yakınlaştır";
     private static readonly string[] rushHelpHero =
     {
-        "BOSS SAVAŞI  •  W / S kapalı, boss hep önünde",
-        "A / D  sağa-sola kay     SHIFT / CTRL  yukarı-aşağı     Q / E  yana kaç",
+        "BOSS SAVAŞI  •  gaz yok, boss hep önünde",
+        "A / D  sağa-sola kay     W / S  yukarı-aşağı     Q / E  yana kaç",
         "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     B  özel yetenek",
         "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
@@ -259,7 +259,7 @@ public class FlightTestManager : MonoBehaviour
     {
         "BOSS SAVAŞI  •  boss hep önünde",
         "SOL ÇUBUK  hareket        SAĞ ÇUBUK  nişan (±45°)",
-        "SAĞ TETİK  ateş     X  bomba     (klavye: A/D, SHIFT/CTRL, fare)",
+        "SAĞ TETİK  ateş     X  bomba     (klavye: A/D, W/S, fare)",
         "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
 
@@ -296,11 +296,13 @@ public class FlightTestManager : MonoBehaviour
             helpLines[0] = ControlSettings.EffectiveAutoAim ? HelpAimAuto : HelpAimMouse;
             helpLines[1] = ControlSettings.MouseSteering
                 ? (strafeScheme
-                    ? (stick ? (ControlSettings.WsStrafe ? HelpSteerStick : HelpSteerStickGas)
-                             : (ControlSettings.WsStrafe ? HelpSteerMouse : HelpSteerMouseGas))
+                    ? (stick ? HelpSteerStick : HelpSteerMouse)
                     : HelpSteerMouseClassic)
                 : (ControlSettings.Arcade ? HelpSteerArcade : HelpSteerClassic);
-            helpLines[2] = strafeScheme ? (stick ? HelpKeysStick : HelpKeysMouse) : HelpKeysDefault;
+            helpLines[2] = strafeScheme
+                ? (stick ? (ControlSettings.WsStrafe ? HelpKeysStickFwd : HelpKeysStick)
+                         : (ControlSettings.WsStrafe ? HelpKeysMouseFwd : HelpKeysMouse))
+                : HelpKeysDefault;
             helpLines[4] = p.autoLevel ? HelpAutoOn : HelpAutoOff;
             helpLines[3] = hero ? HelpHeroKeys : (DevBuild.Enabled ? "SAĞ TIK  yakınlaştır     1-9 / TAB  uçak değiştir (açık olanlar)" : "SAĞ TIK  yakınlaştır     B  bomba     F  füze");
             lines = helpLines;

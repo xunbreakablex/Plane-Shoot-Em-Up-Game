@@ -117,8 +117,8 @@ public static class ControlSettings
     /// <summary>Ilk oyunlardaki egitim duyurusu: atesin nasil yapildigi (secili semaya gore).</summary>
     public static string FireTutorial => MouseSteering
         ? (MouseStick
-            ? "FAREYİ İT: imleç ortada değilken uçak o yöne döner (ortala = düz uç)  •  W/S hızlan-yavaşla  •  A/D SHIFT CTRL kay  •  SOL TIK / SPACE ateş"
-            : "FARE ile yönlendir, W/S ile hızlan-yavaşla, A/D SHIFT CTRL ile kay, SOL TIK ya da SPACE ile ateş et")
+            ? "FAREYİ İT: imleç ortada değilken uçak o yöne döner (ortala = düz uç)  •  SHIFT hızlan, CTRL yavaşla  •  A/D W/S kay  •  SOL TIK / SPACE ateş"
+            : "FARE ile yönlendir, SHIFT ile hızlan, CTRL ile yavaşla, A/D W/S ile kay, SOL TIK ya da SPACE ile ateş et")
         : AutoAim
             ? "SPACE basılı tut: öndeki en yakın düşmana ateş edersin"
             : "FARE ile nişan al, SOL TIK ya da SPACE ile ateş et";
@@ -134,9 +134,9 @@ public static class ControlSettings
                 {
                     string mouse = MouseStick ? "FARE  imleci it (ortada değilse döner)" : "FARE  yönlendir";
                     if (!GameSettings.Current.keysStrafe)
-                        return mouse + "     W / S  hızlan / yavaşla     A / D  dön     SAĞ TIK  yakınlaştır";
-                    return mouse + (GameSettings.Current.wsForwardStrafe ? "     W / S  ileri / geri" : "     W / S  hızlan / yavaşla")
-                        + "     A / D  sağa-sola kay     SHIFT / CTRL  yukarı-aşağı kay     SAĞ TIK  yakınlaştır";
+                        return mouse + "     SHIFT / CTRL  hızlan / yavaşla     A / D  dön     SAĞ TIK  yakınlaştır";
+                    return mouse + (GameSettings.Current.wsForwardStrafe ? "     SHIFT / CTRL  ileri / geri" : "     SHIFT / CTRL  hızlan / yavaşla")
+                        + "     A / D  sağa-sola kay     W / S  yukarı-aşağı kay     SAĞ TIK  yakınlaştır";
                 }
                 case ControlScheme.Arcade: return "A / D  sağa-sola dön     Q / E  yatış (tonoz)     W / S  yunuslama";
                 default: return "A / D  yatış             Q / E  dümen     W / S  yunuslama";

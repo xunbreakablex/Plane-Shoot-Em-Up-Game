@@ -910,9 +910,9 @@ public class HangarController : MonoBehaviour
                 ? "FARE  imleci it: imleç ortada değilken uçak o yöne döner, ortalayınca düz uçar (ORTA TIK ortalar)\n"
                 : "FARE  burnu doğrudan çevirir (FPS gibi; AYARLAR'dan sanal çubuğa geçilir)\n")
             + "SOL TIK / SPACE  ateş        F  güdümlü füze        " + ControlSettings.BombKey + "  BOMBA        SAĞ TIK  yakınlaştır\n"
-            + (ControlSettings.WsStrafe ? "W/S  ileri / geri" : "W/S  hızlan / yavaşla") + "        A/D  sağa-sola kay        SHIFT/CTRL  yukarı-aşağı kay\n"
+            + (ControlSettings.WsStrafe ? "SHIFT/CTRL  ileri / geri" : "SHIFT  hızlan    CTRL  yavaşla") + "        A/D  sağa-sola kay        W/S  yukarı-aşağı kay\n"
             + "ESC  duraklat, mağaza ve kontrol şeması (Fare / Arcade / Klasik)        H  kontrol ipucu\n"
-            + "BOSS SAVAŞI  W/S kapalı  •  A/D, SHIFT/CTRL ile kay  •  fareyle ±45° nişan  •  yeşil / pembe oku izleyip BOŞLUĞA geç",
+            + "BOSS SAVAŞI  gaz yok  •  A/D, W/S ile kay  •  fareyle ±45° nişan  •  yeşil / pembe oku izleyip BOŞLUĞA geç",
             "Rozetli (P, S, M, B, +, O aşırı yük, W yardımcı İHA, $ hurda) düşmanı vur: güçlendirme düşürür, üstünden geçerek topla. Bomba ekrandaki mermileri temizler, bosslara yüzde hasar verir. Başlangıçta yalnızca 2 gövde silahın açık; her boss'u ilk kez yenince yeni bir slot (füze, kalkan, taret, kanat silahı) açılır ve otomatik takılır. Hurda ile mağazadan yükseltme alırsın. Kampanyayı bitirince Sonsuz Savaş açılır; MOD düğmesiyle yalnızca bosslardan oluşan Boss Rush'ı da seçebilirsin. Zorluğu AYARLAR'dan değiştir."
         };
 

@@ -82,7 +82,7 @@ public static class SettingsPanel
         bool close = Click(new Rect(x, y, w, bh), "GERİ", 10);
         y += bh + 12f;
         Hud.Text(new Rect(panel.x, y, pw, 20f), ControlSettings.SteerHint, new Color(1f, 0.9f, 0.55f), 12, TextAnchor.MiddleCenter, false);
-        Hud.Text(new Rect(panel.x, y + 20f, pw, 20f), "Gamepad: sol çubuk kayma/gaz, sağ çubuk yönlendirme, RT ateş, LT zoom, LB/RB aşağı/yukarı, X bomba, Y füze, menüde dpad/A/B",
+        Hud.Text(new Rect(panel.x, y + 20f, pw, 20f), "Gamepad: sol çubuk kayma (sağ-sol / yukarı-aşağı), sağ çubuk yönlendirme, RB/LB hızlan/yavaşla, RT ateş, LT zoom, X bomba, Y füze, menüde dpad/A/B",
             new Color(0.75f, 0.82f, 0.9f), 12, TextAnchor.MiddleCenter, false);
 
         if (close) UserSettings.Save();   // diske yalniz kapatirken yazilir (her karede degil)

@@ -61,15 +61,15 @@ public class GameSettings : ScriptableObject
     [Range(100f, 1500f)] public float mouseStickPixels = 450f;
     [Tooltip("Sanal çubuk tam saptığında dönüş hızı (uçağın azami dönüş hızının katı)")]
     [Range(0.3f, 1.5f)] public float mouseStickRate = 1f;
-    [Tooltip("Açıksa A/D uçağı sağa-sola, Shift yukarı, Ctrl aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar). Kapalıysa A/D döner, Shift/Ctrl bir şey yapmaz.")]
+    [Tooltip("Açıksa A/D uçağı sağa-sola, W yukarı, S aşağı kaydırır (burun dönmez, uçak yalnız hafifçe yatar). Kapalıysa A/D döner, W/S de gaz verir. Gaz her zaman Shift (hızlan) / Ctrl (yavaşla).")]
     public bool keysStrafe = true;
-    [Tooltip("Açıksa (ve keysStrafe açıkken) W ileri, S geri KAYAR ve gaz mekaniği yoktur. Kapalıyken (varsayılan, eski düzen) W/S gaz: W hızlanır, S yavaşlar.")]
+    [Tooltip("Açıksa (ve keysStrafe açıkken) Shift ileri, Ctrl geri KAYAR ve gaz mekaniği yoktur. Kapalıyken (varsayılan) Shift/Ctrl gaz: Shift hızlanır, Ctrl yavaşlar.")]
     public bool wsForwardStrafe = false;
-    [Tooltip("Kayma (A/D sağa-sola, Shift/Ctrl yukarı-aşağı) azami yan hızı (m/s). Büyük = daha hızlı gidilir.")]
+    [Tooltip("Kayma (A/D sağa-sola, W/S yukarı-aşağı) azami yan hızı (m/s). Büyük = daha hızlı gidilir.")]
     [Range(5f, 120f)] public float strafeSpeed = 42f;
-    [Tooltip("Yalnız wsForwardStrafe açıkken: W basılıyken seyir hızına eklenen ileri hız (m/s). Net hız aracın azami hızını geçmez.")]
+    [Tooltip("Yalnız wsForwardStrafe açıkken: Shift basılıyken seyir hızına eklenen ileri hız (m/s). Net hız aracın azami hızını geçmez.")]
     [Range(0f, 80f)] public float forwardStrafeSpeed = 28f;
-    [Tooltip("Yalnız wsForwardStrafe açıkken: S basılıyken seyir hızından düşülen hız (m/s). Net hız stall'in altına inmez, uçak geri gitmez.")]
+    [Tooltip("Yalnız wsForwardStrafe açıkken: Ctrl basılıyken seyir hızından düşülen hız (m/s). Net hız stall'in altına inmez, uçak geri gitmez.")]
     [Range(0f, 80f)] public float backStrafeSpeed = 20f;
     [Tooltip("Kayma tepkisi (1/sn): büyük = tuşa basınca hemen hızlanır, bırakınca hemen durur; küçük = kuvvet yavaş etki eder, süzülür.")]
     [Range(1f, 20f)] public float strafeResponse = 5f;
@@ -77,7 +77,7 @@ public class GameSettings : ScriptableObject
     [Range(0f, 45f)] public float strafeBank = 12f;
     [Tooltip("Yalnız fizik modelinde (arcade kapalı): fare durunca yönelmenin sönme hızı (1/sn)")]
     [Range(1f, 30f)] public float mouseSteerDecay = 8f;
-    [Tooltip("FARE şemasında W/S bırakılınca gaz seyir hızına döner (kapalıysa rölantiye iner)")]
+    [Tooltip("FARE şemasında Shift/Ctrl bırakılınca gaz seyir hızına döner (kapalıysa rölantiye iner)")]
     public bool throttleReturnsToCruise = true;
 
     // ------------------------------------------------------------------ kamera

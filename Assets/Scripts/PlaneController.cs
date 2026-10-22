@@ -645,8 +645,8 @@ public class PlaneController : MonoBehaviour
         strafeRaw = Vector3.zero;
         brake = false;
 
-        // Fare: fare yonlendirir (yukari-asagi + saga-sola). Havada W/S ileri-geri, A/D sagi-sola, Shift/Ctrl
-        //       yukari-asagi KAYDIRIR (burun donmez); gaz mekanigi ve Q/E yok. keysStrafe kapaliysa/yerde: W/S gaz, A/D donus.
+        // Fare: fare yonlendirir (yukari-asagi + saga-sola). Shift hizlanir, Ctrl yavaslar (gaz). Havada A/D sagi-sola,
+        //       W/S yukari-asagi KAYDIRIR (burun donmez); Q/E yok. keysStrafe kapaliysa / yerde: W/S de gaz, A/D donus.
         // Arcade: A/D (sol cubuk x) otomatik yatisli donus, Q/E (omuz tuslari) yatis, W/S yunuslama.
         // Klasik: A/D (sol cubuk x) yatis, Q/E (omuz tuslari) dumen, W/S yunuslama.
         bool mouseScheme = ControlSettings.MouseSteering;
@@ -667,16 +667,21 @@ public class PlaneController : MonoBehaviour
 
             if (mouseScheme)
             {
-                bool wsStrafe = strafeKeys && GameSettings.Current.wsForwardStrafe;
-                if (!wsStrafe) throttleRaw += wsKeys;                    // varsayilan: W hizlan, S yavasla
+                // Gaz: Shift hizlan, Ctrl yavasla
+                float gas = (kb.leftShiftKey.isPressed ? 1f : 0f) - (kb.leftCtrlKey.isPressed ? 1f : 0f);
+                bool fwdStrafe = strafeKeys && GameSettings.Current.wsForwardStrafe;
+                if (!fwdStrafe) throttleRaw += gas;
                 if (strafeKeys)
                 {
-                    // kayma: D saga, Shift yukari, Ctrl asagi (W/S ileri-geri yalniz wsForwardStrafe aciksa)
-                    float vert = (kb.leftShiftKey.isPressed ? 1f : 0f) - (kb.leftCtrlKey.isPressed ? 1f : 0f);
-                    strafeRaw = new Vector3(side, vert, wsStrafe ? wsKeys : 0f);
+                    // kayma: D saga, W yukari, S asagi (Shift/Ctrl ileri-geri yalniz wsForwardStrafe aciksa; o zaman gaz yok)
+                    strafeRaw = new Vector3(side, wsKeys, fwdStrafe ? gas : 0f);
                 }
-                else turnRaw += side;                                    // eski: A/D donus
-                // Q/E ve Shift/Ctrl gazi bu semada kullanilmaz
+                else
+                {
+                    turnRaw += side;                                     // kayma kapali / yerde: A/D donus,
+                    throttleRaw = Mathf.Clamp(throttleRaw + wsKeys, -1f, 1f);   // W/S de gaz (pistte hizlanmak icin)
+                }
+                // Q/E bu semada kullanilmaz
             }
             else
             {
@@ -704,17 +709,24 @@ public class PlaneController : MonoBehaviour
         var pad = Gamepad.current;
         if (pad != null && mouseScheme)
         {
-            // FARE semasi + gamepad: sol cubuk x = kayma, sol cubuk y = gaz, omuzlar = yukari/asagi, sag cubuk = yonlendirme
+            // FARE semasi + gamepad (klavyeyle ayni duzen): sol cubuk = kayma (x saga-sola, y yukari-asagi; klavyede A/D, W/S),
+            // RB hizlan / LB yavasla (klavyede Shift / Ctrl), sag cubuk = yonlendirme
             // Kumanda girisi klavyeye EKLENIR, onu ezmez: takili (ya da sanal) bir kumanda bos dururken A/D calismaya devam eder
             Vector2 l = Deadzone(pad.leftStick.ReadValue());
             float shoulders = (pad.rightShoulder.isPressed ? 1f : 0f) - (pad.leftShoulder.isPressed ? 1f : 0f);
             if (strafeKeys)
             {
-                strafeRaw += new Vector3(l.x, shoulders, 0f);
+                bool fwdStrafe = GameSettings.Current.wsForwardStrafe;
+                strafeRaw += new Vector3(l.x, l.y, fwdStrafe ? shoulders : 0f);
                 strafeRaw = new Vector3(Mathf.Clamp(strafeRaw.x, -1f, 1f), Mathf.Clamp(strafeRaw.y, -1f, 1f), Mathf.Clamp(strafeRaw.z, -1f, 1f));
+                if (!fwdStrafe) throttleRaw += shoulders;
             }
-            else turnRaw += l.x;
-            throttleRaw += l.y;
+            else
+            {
+                turnRaw += l.x;
+                throttleRaw += l.y + shoulders;
+            }
+            throttleRaw = Mathf.Clamp(throttleRaw, -1f, 1f);
 
             Vector2 r = Deadzone(pad.rightStick.ReadValue());
             if (r.sqrMagnitude > 0f)
@@ -1270,8 +1282,9 @@ public class PlaneController : MonoBehaviour
         {
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) move.x += 1f;
             if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) move.x -= 1f;
-            if (kb.leftShiftKey.isPressed) move.y += 1f;
-            if (kb.leftCtrlKey.isPressed) move.y -= 1f;
+            // W/S yukari-asagi (ucustaki gibi); boss fazinda gaz yok, Shift/Ctrl bir sey yapmaz
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) move.y += 1f;
+            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) move.y -= 1f;
             if (kb.tKey.wasPressedThisFrame) autoLevel = !autoLevel;
         }
 
