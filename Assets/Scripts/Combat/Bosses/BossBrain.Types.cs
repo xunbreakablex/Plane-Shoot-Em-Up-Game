@@ -145,7 +145,8 @@ public partial class BossBrain
                 }
                 break;
             case 2:
-                Cone(nose, aim, 8, 9f, 200f, 1, step * 17f);
+                if (mgr.RushActive) StartMissileRain();     // boss fazi imza: izleyen fuze kilitleri
+                else Cone(nose, aim, 8, 9f, 200f, 1, step * 17f);
                 break;
             default:
                 if (phase >= 1 && Time.time >= jetDashNext)

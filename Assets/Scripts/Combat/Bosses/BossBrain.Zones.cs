@@ -142,6 +142,20 @@ public partial class BossBrain
         Sfx.PlayAt(Sfx.BossRoar, pos, 0.6f);
     }
 
+    // Sahin-X: kanat toplarindan fuze yagmuru; her fuzenin kilidi seni izler, patlamadan 0,7 sn once yerine sabitlenir.
+    // Fuzeler arka arkaya duser: durursan hepsini yersin, surekli kayarsan hicbiri tutmaz.
+    private void StartMissileRain()
+    {
+        Vector2 p = PlayerFrame();
+        int n = 3 + phase;
+        for (int i = 0; i < n; i++)
+            AddZone(p, 18f, 1.4f + i * 0.45f, 1, 220f, 0.7f);
+        nextAttack = Mathf.Max(nextAttack, zoneBusyUntil + 0.5f);
+        mgr.Announce("FÜZE KİLİDİ: durma, sürekli kay!", new Color(1f, 0.6f, 0.3f), 2f);
+        Sfx.PlayAt(Sfx.Lock, pos, 0.9f);
+        Sfx.PlayAt(Sfx.MissileLaunch, pos, 0.7f);
+    }
+
     // Yengec: kiskac once iki yana kapanir (ortada kal), sonra ortaya (yana kac)
     private void StartPincer()
     {
