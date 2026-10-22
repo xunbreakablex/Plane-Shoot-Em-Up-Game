@@ -271,7 +271,7 @@ public partial class CombatManager
         if (insideLabel != null && Mathf.Abs(dx) < 26f && Mathf.Abs(dy) < 26f)
         {
             Hud.Ring(ph, 40f, green);
-            Hud.Text(new Rect(ph.x - 70f, ph.y + 44f, 140f, 18f), insideLabel, green, 13, TextAnchor.UpperCenter);
+            Hud.Text(new Rect(ph.x - 70f, ph.y + 72f, 140f, 18f), insideLabel, green, 13, TextAnchor.UpperCenter);   // ucagin altinda
             return;
         }
 
@@ -481,7 +481,10 @@ public partial class CombatManager
         cy += rowH;
 
         // Bomba sayisi: B tusu
-        Hud.Text(new Rect(x + 10f, cy, 140f, 20f), BombLabel, PowerUp.KindColors[3], 14);
+        // Uzun kahraman yetenek adlari (KAMEHAMEHA [B / X]) kutucuklara binmesin: kucuk yazi
+        string bombLabel = BombLabel;
+        int bombSize = bombLabel.Length > 16 ? 11 : (bombLabel.Length > 12 ? 12 : 14);
+        Hud.Text(new Rect(x + 10f, cy + (14 - bombSize) * 0.5f, w - 130f, 20f), bombLabel, PowerUp.KindColors[3], bombSize);
         for (int b = 0; b < RunState.MaxBombs; b++)
         {
             Rect br = new Rect(x + w - 10f - (RunState.MaxBombs - b) * 20f, cy + 3f, 16f, 14f);
@@ -688,7 +691,11 @@ public partial class CombatManager
                 float size = Mathf.Clamp(projected * 1.15f, 28f, e.IsBoss ? 600f : 360f);
                 if (e.IsBoss) size = Mathf.Max(size, 44f);
 
+                // Boss fazinda boss kutusu kucuk ve ust HUD seridinin altinda (skor / can / boss cubuguna, alttaki
+                // ucaga binmesin; boss'un cani zaten ustte)
+                if (e.IsBoss && RushActive) size = Mathf.Min(size, 220f);
                 Rect box = new Rect(hp.x - size * 0.5f, hp.y - size * 0.5f, size, size);
+                if (e.IsBoss && RushActive) box.y = Mathf.Max(box.y, H * 0.23f);
                 float thick = e.IsBoss ? 3f : 2f;
                 if (size < 70f)
                 {
@@ -738,13 +745,20 @@ public partial class CombatManager
                     Hud.Text(chip, PowerUp.Letters[e.CarrierDrop], Color.black, 14, TextAnchor.MiddleCenter);
                 }
 
-                // Mesafe yazisi: yalniz onemliler ve en yakin hava hedefi (yer birimlerinde yok)
+                // Mesafe yazisi: yalniz onemliler ve en yakin hava hedefi (yer birimlerinde yok). Boss fazinda kutunun
+                // sag ustunde: altta ucagin / kahramanin ustune dusuyordu
+                bool rushBoss = e.IsBoss && RushActive;
                 if (important || (!ground && boxes <= 1))
-                    Hud.Text(new Rect(box.x - 30f, box.yMax + 2f, size + 60f, 16f), Hud.Meters(dist), col, 12, TextAnchor.UpperCenter);
+                {
+                    Rect dr = rushBoss ? new Rect(box.xMax + 6f, box.y, 120f, 16f) : new Rect(box.x - 30f, box.yMax + 2f, size + 60f, 16f);
+                    Hud.Text(dr, Hud.Meters(dist), col, 12, rushBoss ? TextAnchor.UpperLeft : TextAnchor.UpperCenter);
+                }
 
                 if (missileLock)
-                    Hud.Text(new Rect(box.x - 40f, box.yMax + 16f, size + 80f, 16f), "FÜZE KİLİDİ",
-                        new Color(1f, 0.9f, 0.2f), 12, TextAnchor.UpperCenter);
+                {
+                    Rect lr = rushBoss ? new Rect(box.xMax + 6f, box.y + 15f, 120f, 16f) : new Rect(box.x - 40f, box.yMax + 16f, size + 80f, 16f);
+                    Hud.Text(lr, "FÜZE KİLİDİ", new Color(1f, 0.9f, 0.2f), 12, rushBoss ? TextAnchor.UpperLeft : TextAnchor.UpperCenter);
+                }
 
                 // As pilotun adi kutunun ustunde
                 if (e.IsAce)
