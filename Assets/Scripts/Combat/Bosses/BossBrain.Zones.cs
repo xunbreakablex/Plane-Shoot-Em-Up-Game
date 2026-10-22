@@ -6,7 +6,7 @@ using UnityEngine;
 //   Melek    "KUTSAL ISIK": senin ve cevrendeki noktalara dusen isik sutunlari (iki-uc dalga)
 //   Zeplin   "BOMBA HALISI": once arti (+), sonra carpi (x) bicimli bomba isaretleri
 //   Iblis    "CEHENNEM CUKURLARI": seni kovalayan uc cukur; kilitlenip patlar (durma, kac)
-//   Yengec   "KISKAC": once iki yanin (ortada kal), hemen sonra ortan (yana kac)
+//   Yengec   "KISKAC": once iki yanin, hemen sonra ortan kapanir (en guvenlisi yukari / asagi kacmak)
 // Halkalar oyuncunun onunde, uzakta cizilir (onundeki duzlemde cizilse kameranin hemen onunde kalip gorunmuyordu);
 // HUD oyuncu bir bolgenin icindeyse en yakin cikisa "KAC" oku gosterir.
 public partial class BossBrain
@@ -151,7 +151,7 @@ public partial class BossBrain
         AddZone(p + new Vector2(side, 0f), r, 1.2f, 3);
         AddZone(p, r, phase >= 1 ? 1.9f : 2.2f, 3);
         nextAttack = Mathf.Max(nextAttack, zoneBusyUntil + 0.5f);
-        mgr.Announce("KISKAÇ: önce ortada kal, sonra yana kaç!", new Color(0.5f, 0.9f, 1f), 2f);
+        mgr.Announce("KISKAÇ: önce yanlar, sonra orta kapanır; yukarı ya da aşağı kaç!", new Color(0.5f, 0.9f, 1f), 2f);
         Sfx.PlayAt(Sfx.Warning, pos, 0.7f);
     }
 
