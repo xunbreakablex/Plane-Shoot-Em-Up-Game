@@ -32,7 +32,7 @@ public partial class BossBrain
     private void OctoAttack()
     {
         Vector3 eyes = octoEyes.position;
-        Vector3 aim = AimFrom(eyes, 200f, 4f);
+        Vector3 aim = AimFrom(eyes, 180f, 4f);   // halka 180 m/s ile atilir: onde tutma ayni hizla
 
         // Saldirilar: DOKUNAC TOKADI (imza), dokunac yaylimi (uyarili), murekkep halkasi
         switch (step++ % 3)

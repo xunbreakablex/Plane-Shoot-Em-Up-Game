@@ -212,7 +212,6 @@ public partial class BossBrain
         if (sharkPending != 0 && Time.time >= sharkFireAt)
         {
             Vector3 mouth = sharkMouth.position;
-            Vector3 aim = AimFrom(mouth, 220f, 4f);
 
             // Su halkasi: cene koptuysa seyrek; ofkelendikce sik
             int ring = (sharkJawBroken ? 8 : 12) + phase * 4;
