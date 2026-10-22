@@ -140,11 +140,11 @@ public static class PartCatalog
     public static readonly PartDef[] Weapons =
     {
         new PartDef { name = "— Boş —", description = "Bu silah noktası boş." },
-        new PartDef { name = "Makineli Tüfek", description = "Hızlı atış (12/sn), 1 hasar. Güç 1.",
+        new PartDef { name = "Makineli Tüfek", description = "Hızlı atış (6/sn), 2 hasar; güçlendikçe hasar ve paralel mermi hattı artar. Güç 1.",
                       rate = 12f, damage = 1f, speed = 380f, spread = 0.25f, power = 1f, weight = 4f },
-        new PartDef { name = "Ağır Top", description = "Yavaş (3/sn) ama mermi başına 2 hasar. Güç 2.",
+        new PartDef { name = "Ağır Top", description = "Yavaş (3/sn) ama mermi başına 2 hasar (güçlendikçe artar). Güç 2.",
                       rate = 3f, damage = 2f, speed = 330f, spread = 0.1f, power = 2f, weight = 10f },
-        new PartDef { name = "Çift Namlu", description = "Çok hızlı (18/sn), dağınık. Güç 2.",
+        new PartDef { name = "Çift Namlu", description = "Çok hızlı (9/sn), 2 hasar, dağınık. Güç 2.",
                       rate = 18f, damage = 1f, speed = 400f, spread = 0.6f, power = 2f, weight = 7f },
         new PartDef { name = "Lazer Topu", description = "Kesintisiz ışın: anında vurur, önündeki herkesi deler (6 vuruş/sn, 2 hasar). Güç 3.",
                       rate = 6f, damage = 2f, range = 750f, beam = 1, power = 3f, weight = 9f },
@@ -160,13 +160,13 @@ public static class PartCatalog
                       rate = 1.4f, damage = 8f, speed = 900f, spread = 0f, range = 1500f, pierce = 3, power = 4f, weight = 12f },
 
         // ---- Kahraman silahlari (yalniz o karakter takar; group = AircraftDef.weaponGroup)
-        new PartDef { name = "Yıldız Değneği", description = "Değnekten pembe yıldızlar (6/sn, 2 hasar); çarpınca 8 m'lik yıldız tozu patlaması. Güç 2.",
+        new PartDef { name = "Yıldız Değneği", description = "Değnekten pembe yıldızlar (4/sn, 3 hasar); çarpınca 8 m'lik yıldız tozu patlaması. Güç 2.",
                       rate = 6f, damage = 2f, speed = 320f, spread = 0.2f, range = 700f, splash = 8f, power = 2f, weight = 3f, group = 1, look = 2 },
         new PartDef { name = "Ay Işını", description = "Değnekten kesintisiz pembe ışın: anında vurur, önündeki herkesi deler (6 vuruş/sn, 2 hasar). Güç 3.",
                       rate = 6f, damage = 2f, range = 750f, beam = 1, power = 3f, weight = 4f, group = 1 },
         new PartDef { name = "Ki Topu", description = "Avuçtan mavi ki küresi: yavaş ama 5 hasar, 12 m patlama (2,5 atış/sn). Güç 3.",
                       rate = 2.5f, damage = 5f, speed = 260f, spread = 0.2f, range = 650f, splash = 12f, power = 3f, weight = 4f, group = 2, look = 3 },
-        new PartDef { name = "Ki Yağmuru", description = "Hızlı sarı ki ateşi (14/sn, 1 hasar), dağınık. Güç 2.",
+        new PartDef { name = "Ki Yağmuru", description = "Hızlı sarı ki ateşi (7/sn, 2 hasar), dağınık. Güç 2.",
                       rate = 14f, damage = 1f, speed = 400f, spread = 0.9f, range = 600f, power = 2f, weight = 3f, group = 2, look = 4 },
         new PartDef { name = "Güç Yıldırımı", description = "Parmak uçlarından yıldırım: önündeki en yakın düşmana kendiliğinden atlar, oradan 2 düşmana daha sıçrar (5 vuruş/sn, 2 hasar). Güç 3.",
                       rate = 5f, damage = 2f, range = 520f, beam = 4, power = 3f, weight = 4f, group = 3 },

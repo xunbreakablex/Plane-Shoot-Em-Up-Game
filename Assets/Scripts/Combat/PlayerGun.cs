@@ -72,6 +72,44 @@ public partial class PlayerGun : MonoBehaviour
     // Guc seviyesi basina ates hizi artisi (silah DPS hesabi ve ates kodu ayni sabiti kullanir)
     public const float PowerRateStep = 0.05f;
 
+    // Mermi duzeni (2026-10-22): az ama guclu mermi, hep ileri (eskiden guc 2'de +-3, guc 4'te +-6,5 derece yan mermi
+    // ciftleri yelpaze gibi sacilirdi). Hizli silahlarda (6+ atis/sn) mermi sayisi yariya iner, hasar ikiye katlanir;
+    // guc arttikca mermi hasari (PowerDamage), mermi sayisi ve PARALEL mermi hatti (PowerStreams) artar. Yavas
+    // silahlarda (3/sn ve alti) tempo ayni kalir, guc bonusu mermi hasarina eklenir.
+    // Saniyelik hasar eskisinin ISABET EDEN kismi kadar: eski yan mermilerin boss'ta ~%25'i isabet ediyordu
+    // (boss suresi olcumu), paralel hatlarin hepsi isabet eder; yan mermiyi tam saysaydik boss'lar %35-100 hizli olurdu.
+    private static readonly float[] PowerDamage = { 2f, 2.1f, 2.2f, 2.3f, 2.4f };
+    private static readonly int[] PowerStreams = { 1, 1, 2, 2, 3 };
+    private static readonly int[] PowerSideBullets = { 0, 0, 1, 1, 2 };   // eski yan mermi (1 hasar) / atis ortalamasi
+    private const float SideHitShare = 0.25f;   // eski yan mermilerin isabet payi (boss olcumu)
+    private const float StreamSpacing = 0.9f;   // paralel hatlar arasi (m)
+
+    /// <summary>
+    /// Silahin bu guc seviyesindeki duzeni: paralel hat sayisi, hat basina atis hizi carpani (eski taban hiza gore),
+    /// mermi basina hasar (kesirli; atista olasilikla yuvarlanir) ve kritik vurusun ek hasari.
+    /// </summary>
+    public static void ShotPattern(PartDef d, int power, out int streams, out float rateMul, out float damage, out float critBonus)
+    {
+        power = Mathf.Clamp(power, 0, PowerDamage.Length - 1);
+        float baseRate = 1f + PowerRateStep * power;
+        // Hizli silah orani: 3/sn -> 0, 6/sn+ -> 1 (cok hasarli hizli silahta yarim: yildizlar fazla seyrekmesin)
+        float fast = d.pellets <= 1 ? Mathf.Clamp01((d.rate - 3f) / 3f) * (d.damage > 1f ? 0.5f : 1f) : 0f;
+        float side = d.pellets <= 1 ? PowerSideBullets[power] * SideHitShare : 0f;
+        float m = 1f + (PowerDamage[power] - 1f) * fast;
+        streams = fast >= 0.5f ? PowerStreams[power] : 1;
+        damage = (d.damage + side * (1f - fast)) * m;
+        // Saniyelik hasar = eski atis hizi x (hasar + yan mermilerin isabet eden payi)
+        rateMul = baseRate * (d.damage + side) / (streams * damage);
+        critBonus = baseRate / (rateMul * streams);   // eski kritik (+1 / ana mermi) ile ayni saniyelik katki
+    }
+
+    private static int RollDamage(float v)
+    {
+        int n = Mathf.FloorToInt(v);
+        if (Random.value < v - n) n++;
+        return Mathf.Max(1, n);
+    }
+
     /// <summary>
     /// Verilen donanimin, her mermi isabet etse bile, saniyede verecegi teorik hasar (silah + taret).
     /// Denge ayarinda boss canini bununla kiyasla.
@@ -80,16 +118,15 @@ public partial class PlayerGun : MonoBehaviour
     {
         UpgradeMods mods = RunUpgrades.Mods;
         int power = RunState.PowerLevel;
-        float rateMul = mods.fireRateMul * (1f + PowerRateStep * power);
-        int sides = (power >= 2 ? 2 : 0) + (power >= 4 ? 2 : 0);
 
         float dps = 0f;
         foreach (int w in loadout.weapons)
         {
             if (w <= 0) continue;
             PartDef d = PartCatalog.Weapons[w];
-            float perShot = d.beam > 0 ? d.damage : d.ShotDamage + sides * 0.5f;   // yan mermiler her iki atista bir cikar (isinlarda yok)
-            dps += d.rate * rateMul * perShot;
+            if (d.beam > 0) { dps += d.rate * mods.fireRateMul * (1f + PowerRateStep * power) * d.damage; continue; }
+            ShotPattern(d, power, out int streams, out float rateMul, out float damage, out float critBonus);
+            dps += d.rate * mods.fireRateMul * rateMul * (d.pellets > 1 ? d.ShotDamage : streams * damage);
         }
 
         foreach (int t in loadout.turrets)
@@ -159,8 +196,8 @@ public partial class PlayerGun : MonoBehaviour
         }
         HasWeapons = any > 0;
         // Onde tutma, merminin gercek hiziyla (upgrade ve GameSettings carpani dahil) hesaplanir
-        float leadSpeed = (count > 0 ? speedSum / count : (any > 0 ? 1000000f / (RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier) : bulletSpeed))
-                          * RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier;
+        float gunSpeedMul = RunUpgrades.Mods.bulletSpeedMul * GameSettings.Current.playerBulletSpeedMultiplier * GameSettings.Current.playerGunBulletSpeedScale;
+        float leadSpeed = count > 0 ? speedSum / count * gunSpeedMul : (any > 0 ? 1000000f : bulletSpeed * gunSpeedMul);
 
         // Boss fazinda nisan hep burnun onunde (fare burnu sinirli aciyla cevirir)
         if (ControlSettings.EffectiveAutoAim || plane.InRush) UpdateAutoAim(plane, leadSpeed);
@@ -522,16 +559,6 @@ public partial class PlayerGun : MonoBehaviour
         AimPoint = point;
     }
 
-    private void SideBullets(Vector3 muzzle, Vector3 dir, Transform owner, float speed, float angle, int pierce)
-    {
-        for (int s = -1; s <= 1; s += 2)
-        {
-            Vector3 d = Quaternion.AngleAxis(angle * s, owner.up) * dir;
-            // Ayni namlu ucundan; parlama ana atista zaten tetiklendi
-            PlayerShot.Fire(bulletPrefab, null, muzzle, d, speed, 1, owner, pierce);
-        }
-    }
-
     // Namlu noktalari (MuzzleFlash): ucak degisince ya da donanim yeniden kurulunca (eski nesne yok olur) yeniden bulunur
     private readonly MuzzleFlash[] muzzles = new MuzzleFlash[PartCatalog.WeaponSlots];
     private Transform muzzleOwner;
@@ -579,9 +606,10 @@ public partial class PlayerGun : MonoBehaviour
 
             UpgradeMods mods = RunUpgrades.Mods;
 
-            // Guc seviyesi (P ikonlari): ates hizi, hasar ve yan mermi sayisi artar
+            // Guc seviyesi (P ikonlari): mermi hasari ve paralel hat sayisi artar (ShotPattern)
             int power = RunState.PowerLevel;
-            float rateMul = mods.fireRateMul * (1f + PowerRateStep * power) * (RunState.OverdriveActive ? 1.5f : 1f)
+            ShotPattern(def, power, out int streams, out float patternRate, out float shotDamage, out float critBonus);
+            float rateMul = mods.fireRateMul * patternRate * (RunState.OverdriveActive ? 1.5f : 1f)
                             * AircraftCatalog.Get(flight.CurrentIndex).fireRateMul;   // az yuvali ucak / kahraman: hizli atis
             nextFire[i] = Time.time + 1f / Mathf.Max(def.rate * rateMul, 0.1f);
             shotCount[i]++;
@@ -602,9 +630,10 @@ public partial class PlayerGun : MonoBehaviour
             if (def.spread > 0f && def.pellets <= 1)
                 dir = (dir + Random.insideUnitSphere * Mathf.Tan(def.spread * Mathf.Deg2Rad)).normalized;
 
-            // Kritik: ek +1 hasar
-            int dmg = Mathf.RoundToInt(def.damage) + (Random.value < mods.critChance ? 1 : 0);
-            float bulletSpd = def.speed * mods.bulletSpeedMul * gs.playerBulletSpeedMultiplier;
+            // Kritik: ek hasar (eski +1'in saniyelik karsiligi)
+            bool crit = Random.value < mods.critChance;
+            int dmg = RollDamage(shotDamage + (crit ? critBonus : 0f));
+            float bulletSpd = def.speed * mods.bulletSpeedMul * gs.playerBulletSpeedMultiplier * gs.playerGunBulletSpeedScale;
 
             // Standart oyuncu atisi: namlu ucundan mermi + parlama + kisa gorunmezlik. Mermi namlu yonunde
             // (burun) cikar, nisan noktasina ease-in ile kivrilir: namludan acili cikis goze batmasin.
@@ -622,22 +651,22 @@ public partial class PlayerGun : MonoBehaviour
             }
             else
             {
+                // Paralel hatlar: ayni yone, yan yana (yelpaze degil); yalniz ilki namlu parlamasini tetikler
                 Vector3 aimPoint = muzzle + dir * aimDist;
-                Bullet shot = PlayerShot.FireEased(bulletPrefab, muzzlePoint, muzzle, t.forward, aimPoint, bulletSpd, dmg, t, pierce);
-                if (shot != null)
+                for (int s = 0; s < streams; s++)
                 {
-                    shot.splash = def.splash;
-                    if (def.splash > 0f) shot.lifetime = def.range / Mathf.Max(bulletSpd, 1f);
-                    if (def.look > 0) shot.ApplyLook(def.look);   // kahraman mermisi: yildiz / ki kuresi
+                    float off = (s - (streams - 1) * 0.5f) * StreamSpacing;
+                    Vector3 shift = t.right * off;
+                    int sd = s == 0 ? dmg : RollDamage(shotDamage + (crit ? critBonus : 0f));
+                    Bullet shot = PlayerShot.FireEased(bulletPrefab, s == 0 ? muzzlePoint : null, muzzle + shift, t.forward,
+                        aimPoint + shift, bulletSpd, sd, t, pierce);
+                    if (shot != null)
+                    {
+                        shot.splash = def.splash;
+                        if (def.splash > 0f) shot.lifetime = def.range / Mathf.Max(bulletSpd, 1f);
+                        if (def.look > 0) shot.ApplyLook(def.look);   // kahraman mermisi: yildiz / ki kuresi
+                    }
                 }
-            }
-
-            // Guc 2+: iki yan mermi; guc 4: daha genis ikinci cift. Yan mermiler her iki atista bir
-            // cikar (DPS patlamasin diye).
-            if ((shotCount[i] & 1) == 0)
-            {
-                if (power >= 2 && def.pellets <= 1) SideBullets(muzzle, dir, t, bulletSpd, 3f, pierce);
-                if (power >= 4 && def.pellets <= 1) SideBullets(muzzle, dir, t, bulletSpd, 6.5f, pierce);
             }
 
             if (!played)

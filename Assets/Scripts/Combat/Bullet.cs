@@ -207,6 +207,10 @@ public class Bullet : MonoBehaviour
                 b.tracer = b.transform.Find("Tracer");
                 if (b.tracer != null)
                 {
+                    // Ince iz (yalniz gorunum): GameSettings.playerTracerThickness; uzunluk ayni
+                    Vector3 ts = b.tracer.localScale;
+                    float k = GameSettings.Current.playerTracerThickness;
+                    b.tracer.localScale = new Vector3(ts.x * k, ts.y * k, ts.z);
                     b.tracerFullLength = b.tracer.localScale.z;
                     b.tracerRenderer = b.tracer.GetComponent<Renderer>();
                     b.tracer.localPosition = new Vector3(0f, 0f, -b.tracerFullLength * 0.5f);
