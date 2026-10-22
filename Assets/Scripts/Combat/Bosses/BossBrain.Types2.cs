@@ -180,6 +180,8 @@ public partial class BossBrain
         {
             case 0:
             {
+                // Boss fazi imza: arti / carpi bomba halisi
+                if (mgr.RushActive) { StartCarpetBomb(); break; }
                 // Bomba yagmuru: karin altindan yavas, genis bir salvo
                 Vector3 belly = zepBelly.position;
                 Vector3 baseDir = AimFrom(belly, 90f, 0f);

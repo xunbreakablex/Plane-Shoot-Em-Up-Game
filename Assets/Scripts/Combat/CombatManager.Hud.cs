@@ -121,6 +121,13 @@ public partial class CombatManager
         else if (limbBrain.WheelGap(out Vector3 wg)) DrawGapArrow(wg, new Color(1f, 0.45f, 0.85f), 24f, "BOŞLUK", "BOŞLUKTASIN");
         else if (limbBrain.KiWaveDanger(out Vector3 kc, out float kr, out float kLeft)) DrawKiWaveExit(kc, kr, kLeft);
         else if (limbBrain.SweepDanger(out Vector3 bc, out bool vert, out bool inside)) DrawSweepExit(bc, vert, inside);
+        else if (limbBrain.ZoneDanger(out Vector3 zx, out float zLeft))
+        {
+            // Isaretli bolgenin icindesin: ekran kenari kizarir, en yakin guvenli noktaya ok ve kalan sure
+            float urgency = Mathf.Clamp01(1f - zLeft / 1.5f);
+            DrawVignette(new Color(1f, 0.25f, 0.08f), (0.2f + 0.3f * urgency) * (0.8f + 0.2f * Mathf.Sin(Time.unscaledTime * 18f)));
+            DrawGapArrow(zx, new Color(1f, 0.45f, 0.2f), 6f, $"KAÇ!  {Mathf.Max(0f, zLeft):0.0}", null, 1.4f);
+        }
     }
 
     // Supurme: oyuncu kilitli seritteyse en yakin kenara buyuk "KAC" oku (yatay taramada yukari/asagi, dikeyde saga/sola)

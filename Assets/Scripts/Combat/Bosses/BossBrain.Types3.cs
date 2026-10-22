@@ -72,7 +72,8 @@ public partial class BossBrain
                 StartSpray(Pick(demonMuzzleR, demonMuzzleL, demonMouth), 2.2f, 2 + phase, 14f, 0.09f, 180f);
                 break;
             case 2:
-                RainFromAbove(8 + phase * 4, 130f, 140f);
+                if (mgr.RushActive) StartHellPits();                                             // boss fazi imza: kovalayan cukurlar
+                else RainFromAbove(8 + phase * 4, 130f, 140f);
                 break;
             default:
                 if (phase >= 1) StartBeam(demonMouth, 1.1f, 1.3f);
@@ -112,7 +113,8 @@ public partial class BossBrain
         switch (step++ % 4)
         {
             case 0:
-                StartSpray(Pick(angelStaff, angelHaloMuzzle), 3.0f, 3, 20f, 0.07f, 160f);   // tuy yagmuru
+                if (mgr.RushActive) StartLightPillars();                                         // boss fazi imza: kutsal isik
+                else StartSpray(Pick(angelStaff, angelHaloMuzzle), 3.0f, 3, 20f, 0.07f, 160f);   // tuy yagmuru
                 break;
             case 1:
             {

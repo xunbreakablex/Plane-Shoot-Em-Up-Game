@@ -254,10 +254,11 @@ public partial class BossBrain : MonoBehaviour
         TickWheel();
         TickKiWave(dt);
         TickSweep();
+        TickZones(dt);
         TickBeam(dt);
         TickType(dt);
 
-        if (playerAlive && !overridden && !beamActive && !WheelBusy && !KiWaveBusy && !FistBusy && !SweepBusy && Time.time >= nextAttack)
+        if (playerAlive && !overridden && !beamActive && !WheelBusy && !KiWaveBusy && !FistBusy && !SweepBusy && !ZonesBusy && Time.time >= nextAttack)
         {
             // Boss fazinda her CurtainEvery saldiridan biri perde (bosluklu mermi duvari)
             if (CurtainTurn) Curtain();
@@ -286,6 +287,7 @@ public partial class BossBrain : MonoBehaviour
         DrawKiWave();
         DrawFistLines();
         DrawSweep();
+        DrawZones();
         DrawWarns();
 
         // Hasar parlamasi
@@ -534,6 +536,7 @@ public partial class BossBrain : MonoBehaviour
         EndKiWave();
         EndFists();
         EndSweep();
+        ClearZones();
         if (gapLine != null) gapLine.enabled = false;
         foreach (var lr in warnPool) if (lr != null) lr.enabled = false;
     }

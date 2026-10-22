@@ -117,9 +117,8 @@ public partial class BossBrain
             Vector2 a = sweepVertical ? new Vector2(sweepLock + off, lo) : new Vector2(lo, sweepLock + off);
             Vector2 b = sweepVertical ? new Vector2(sweepLock + off, hi) : new Vector2(hi, sweepLock + off);
             // Oyuncunun duzleminde cizilse kameranin hemen onunde kalip ekran disina tasiyordu: ileride ciz
-            Vector3 ahead = mgr.RushHeading * SweepEdgeAhead;
-            lr.SetPosition(0, KiWaveWorld(a) + ahead);
-            lr.SetPosition(1, KiWaveWorld(b) + ahead);
+            lr.SetPosition(0, OverlayPoint(a, SweepEdgeAhead));
+            lr.SetPosition(1, OverlayPoint(b, SweepEdgeAhead));
             SetLineColor(lr, edge);
             lr.enabled = true;
         }

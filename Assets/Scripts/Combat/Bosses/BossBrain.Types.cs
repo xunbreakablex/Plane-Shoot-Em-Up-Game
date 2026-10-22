@@ -314,7 +314,8 @@ public partial class BossBrain
                 if (crabMuzzleL == null && crabMuzzleR == null) Cone(bodyPos, AimFrom(bodyPos, 190f, 4f), 10, 10f, 190f, 1, Random.value * 90f);
                 break;
             case 1:
-                StartCrabSweep(2.4f);
+                if (mgr.RushActive) StartPincer();       // boss fazi imza: kiskac (once ortada kal, sonra yana kac)
+                else StartCrabSweep(2.4f);
                 break;
             case 2:
                 Cone(bodyPos, AimFrom(bodyPos, 190f, 4f), 12, 10f, 190f, 2, Random.value * 90f);
