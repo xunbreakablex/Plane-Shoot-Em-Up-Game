@@ -110,8 +110,9 @@ public partial class BossBrain
     // Zeplin: arti, sonra carpi (bosluklar capraz / duz; once capraza, sonra duze kac)
     private void StartCarpetBomb()
     {
-        Vector2 p = PlayerFrame();
         const float step = 58f, r = 30f;
+        // Kalip cerceveye sigsin: kenarda kollar kirpilip oyuncunun ustune sikismasin
+        Vector2 p = InsideFrame(PlayerFrame(), step, step);
         AddZone(p, r, 1.3f, 1);
         AddZone(p + new Vector2(step, 0f), r, 1.3f, 1);
         AddZone(p + new Vector2(-step, 0f), r, 1.3f, 1);
@@ -161,14 +162,22 @@ public partial class BossBrain
     // Yengec: kiskac once iki yana kapanir (ortada kal), sonra ortaya (yana kac)
     private void StartPincer()
     {
-        Vector2 p = PlayerFrame();
         const float side = 62f, r = 34f;
+        Vector2 p = InsideFrame(PlayerFrame(), side, 0f);
         AddZone(p + new Vector2(-side, 0f), r, 1.2f, 3);
         AddZone(p + new Vector2(side, 0f), r, 1.2f, 3);
         AddZone(p, r, phase >= 1 ? 1.9f : 2.2f, 3);
         nextAttack = Mathf.Max(nextAttack, zoneBusyUntil + 0.5f);
         mgr.Announce("KISKAÇ: önce yanlar, sonra orta kapanır; yukarı ya da aşağı kaç!", new Color(0.5f, 0.9f, 1f), 2f);
         Sfx.PlayAt(Sfx.Warning, pos, 0.7f);
+    }
+
+    /// <summary>Kalip merkezini, merkezden (mx, my) uzaklikta kollar cercevenin icinde kalacak sekilde iceri ceker.</summary>
+    private static Vector2 InsideFrame(Vector2 p, float mx, float my)
+    {
+        p.x = Mathf.Clamp(p.x, -CombatManager.RushHalfWidth + mx, CombatManager.RushHalfWidth - mx);
+        p.y = Mathf.Clamp(p.y, -CombatManager.RushDown + my, CombatManager.RushUp - my);
+        return p;
     }
 
     // ------------------------------------------------------------------ dongu
@@ -338,12 +347,15 @@ public partial class BossBrain
             Vector2 cand = w.center + dir * (w.radius + 10f);
             if (Mathf.Abs(cand.x) > CombatManager.RushHalfWidth - 6f || cand.y > CombatManager.RushUp - 6f || cand.y < -CombatManager.RushDown + 6f) continue;
             float cost = (cand - p).magnitude;
+            // Kalan surede ulasilamayan nokta secilmez (~70 m/sn ortalama kayma)
+            if (cost > Mathf.Max(12f, (w.fireAt - Time.time) * 70f)) cost += 1000f;
             for (int j = 0; j < zones.Count; j++)
             {
                 Zone o = zones[j];
                 if (j == worst || o.fired) continue;
-                // Yakinda patlayacak baska bir bolgenin icine kacma
-                if ((cand - o.center).magnitude < o.radius + 4f && o.fireAt < w.fireAt + 1f) cost += 500f;
+                // Baska bir bolgenin icine kacma: yakinda patlayacaksa yasak; sonraki dalgadaysa hafifce kacin (oraya
+                // simdilik kacip sonra yine okla cikilir)
+                if ((cand - o.center).magnitude < o.radius + 4f) cost += o.fireAt < w.fireAt + 1f ? 500f : 40f;
             }
             if (cost < bestCost) { bestCost = cost; best = cand; }
         }
