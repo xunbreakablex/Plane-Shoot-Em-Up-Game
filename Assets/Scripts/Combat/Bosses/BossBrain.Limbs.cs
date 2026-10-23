@@ -231,8 +231,9 @@ public partial class BossBrain
             case BossType.Eagle:
                 Wing("SOL KANAT", 0.10f, "WingL");
                 Wing("SAĞ KANAT", 0.10f, "WingR");
-                Weapon("SOL TOP", 0.08f, () => eagleMuzzleL = null, "WingPodL");
-                Weapon("SAĞ TOP", 0.08f, () => eagleMuzzleR = null, "WingPodR");
+                // Kanat ucu toplari cirpinirken zor vurulur: can payi dusuk (koruma diger bosslar gibi ~15-25 sn)
+                Weapon("SOL TOP", 0.035f, () => eagleMuzzleL = null, "WingPodL");
+                Weapon("SAĞ TOP", 0.035f, () => eagleMuzzleR = null, "WingPodR");
                 break;
 
             case BossType.Golem:

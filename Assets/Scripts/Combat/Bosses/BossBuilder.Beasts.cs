@@ -32,8 +32,10 @@ public static partial class BossBuilder
                 Part(wing, PrimitiveType.Cube, "Primary" + side + f, V(s * (5f + f * 3.6f), 0.1f, -2.6f - f * 0.5f),
                     V(3.2f, 0.35f, len), f % 2 == 0 ? dark : light, V(0, s * -6f, 0));
             }
-            Part(wing, PrimitiveType.Sphere, "WingPod" + side, V(s * 18.5f, 0.2f, 0.4f), V(1.8f, 1.8f, 3f), glow, default, true);
-            Pivot(wing, "MuzzleWing" + side, V(s * 18.5f, 0.2f, 2.4f));
+            // Namlu kapsulu govde korumasinin hedefi: 1,8 m'lik kure cirpinan kanat ucunda neredeyse vurulamiyordu
+            // (koruma Roket'te 46-57 sn, kahramanlarda 86-146 sn; diger bosslarda 4-25 sn)
+            Part(wing, PrimitiveType.Sphere, "WingPod" + side, V(s * 18.5f, 0.2f, 0.4f), V(3f, 3f, 4.5f), glow, default, true);
+            Pivot(wing, "MuzzleWing" + side, V(s * 18.5f, 0.2f, 3f));
         }
 
         // Kuyruk: yelpaze
