@@ -6,6 +6,7 @@ public class ShopUI : MonoBehaviour
     public bool IsOpen { get; private set; }
 
     private Vector2 scroll;
+    private float scrollViewH = 400f;   // kaydirma alaninin yuksekligi (gamepad odagini gorunur tutmak icin)
     private string message = "";
     private float messageUntil;
 
@@ -62,6 +63,10 @@ public class ShopUI : MonoBehaviour
         if (!IsOpen) return;
         EnsureStyles();
 
+        // Gamepad: uzamsal gezinme (dpad / sol cubuk, A satin al), B kapatir
+        PadNav.BeginScreen();
+        if (PadNav.Back) { Close(); return; }
+
         float s = UiScale();
         GUI.matrix = Matrix4x4.Scale(new Vector3(s, s, 1f));
         float W = Screen.width / s;
@@ -88,8 +93,9 @@ public class ShopUI : MonoBehaviour
         GUILayout.Label("Düşman uçaklardan kazandığın hurda ile bu savaşın upgrade'lerini al. Savaş bitince sıfırlanır.", small);
         GUILayout.Space(6f);
 
+        scrollViewH = panel.height - 170f;
         scroll = GUILayout.BeginScrollView(scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar,
-            GUILayout.Height(panel.height - 170f));
+            GUILayout.Height(scrollViewH));
 
         for (int c = 0; c < UpgradeCatalog.CategoryNames.Length; c++)
         {
@@ -117,7 +123,7 @@ public class ShopUI : MonoBehaviour
             GUILayout.Label(message, msg);
         }
 
-        if (GUILayout.Button("GERİ  (ESC)", button, GUILayout.Height(40f)))
+        if (GUILayout.Button("GERİ  (ESC)", button, GUILayout.Height(40f)) | PadNav.Item(GUILayoutUtility.GetLastRect()))
             Close();
 
         GUILayout.EndArea();
@@ -149,7 +155,7 @@ public class ShopUI : MonoBehaviour
 
         GUI.enabled = !max && RunUpgrades.Scrap >= cost;
         string text = max ? "MAKS" : $"AL  {cost}";
-        if (GUILayout.Button(text, button, GUILayout.Width(110f), GUILayout.Height(30f)))
+        if (GUILayout.Button(text, button, GUILayout.Width(110f), GUILayout.Height(30f)) | PadItem())
         {
             if (RunUpgrades.TryBuy(def.id)) Say($"{def.name} Sv {RunUpgrades.Level(def.id)} alındı.");
         }
@@ -168,13 +174,26 @@ public class ShopUI : MonoBehaviour
         GUILayout.Label(UpgradeCatalog.ConsumableDescription(item), small, GUILayout.Width(450f));
 
         GUI.enabled = RunUpgrades.Scrap >= cost && left != 0;
-        if (GUILayout.Button(left == 0 ? "BİTTİ" : $"AL  {cost}", button, GUILayout.Width(110f), GUILayout.Height(30f)))
+        if (GUILayout.Button(left == 0 ? "BİTTİ" : $"AL  {cost}", button, GUILayout.Width(110f), GUILayout.Height(30f)) | PadItem())
         {
             RunUpgrades.TryBuyConsumable(item, out string msg);
             Say(msg);
         }
         GUI.enabled = true;
         GUILayout.EndHorizontal();
+    }
+
+    // Kaydirma alanindaki satin al dugmesi: gamepad gezinmesine kaydeder, odaklanan satiri gorunur alana kaydirir
+    private bool PadItem()
+    {
+        Rect r = GUILayoutUtility.GetLastRect();
+        bool pressed = PadNav.Item(r);
+        if (PadNav.LastItemFocused && Event.current.type == EventType.Repaint)
+        {
+            if (r.yMin < scroll.y + 4f) scroll.y = Mathf.Max(0f, r.yMin - 40f);
+            else if (r.yMax > scroll.y + scrollViewH - 4f) scroll.y = r.yMax - scrollViewH + 40f;
+        }
+        return pressed;
     }
 
     private void Say(string text)

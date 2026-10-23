@@ -445,6 +445,10 @@ public class HangarController : MonoBehaviour
             return;
         }
 
+        // Gamepad: uzamsal gezinme (dpad / sol cubuk en yakin dugmeye, A bas); B acik paneli kapatir
+        PadNav.BeginScreen();
+        if ((showHelp || showMedals) && PadNav.Back) { showHelp = false; showMedals = false; }
+
         DrawTopBar(W);
         DrawLeft(H);
         DrawRight(W, H);
@@ -477,6 +481,7 @@ public class HangarController : MonoBehaviour
 
         Hud.Text(r, text, Color.white, size, TextAnchor.MiddleCenter);
         bool clicked = !showHelp && GUI.Button(r, GUIContent.none, GUIStyle.none);
+        if (!showHelp && !showMedals && PadNav.Item(r)) clicked = true;   // panel acikken gamepad arkadakilere gitmez
         if (clicked) GameAudio.PlayUi(Sfx.Click, 0.5f);
         return clicked;
     }
@@ -892,7 +897,7 @@ public class HangarController : MonoBehaviour
         Rect close = new Rect(p.center.x - 110f, p.yMax - 54f, 220f, 40f);
         Hud.Fill(close, new Color(0.2f, 0.5f, 0.3f, 0.95f));
         Hud.Text(close, "KAPAT", Color.white, 18, TextAnchor.MiddleCenter);
-        if (GUI.Button(close, GUIContent.none, GUIStyle.none)) showMedals = false;
+        if (GUI.Button(close, GUIContent.none, GUIStyle.none) | PadNav.Item(close)) showMedals = false;
     }
 
     // Nasil oynanir: hedef, kontroller, ilerleme
@@ -936,6 +941,6 @@ public class HangarController : MonoBehaviour
         Rect close = new Rect(p.center.x - 110f, p.yMax - 62f, 220f, 44f);
         Hud.Fill(close, new Color(0.2f, 0.5f, 0.3f, 0.95f));
         Hud.Text(close, "ANLADIM", Color.white, 18, TextAnchor.MiddleCenter);
-        if (GUI.Button(close, GUIContent.none, GUIStyle.none)) showHelp = false;
+        if (GUI.Button(close, GUIContent.none, GUIStyle.none) | PadNav.Item(close)) showHelp = false;
     }
 }
