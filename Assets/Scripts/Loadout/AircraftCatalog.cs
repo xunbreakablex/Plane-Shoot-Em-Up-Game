@@ -240,7 +240,7 @@ public static class AircraftCatalog
         {
             name = "Ay Savaşçısı", tagline = "Sihirli değnekli kahraman kız: yıldız büyüleri ve AY IŞIĞI yeteneği; çok çevik, narin.",
             preset = PlaneController.PlanePreset.MagicGirl,
-            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 0.8f, fireRateMul = 1.35f, bossDamageMul = 1.2f,
+            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 0.8f, fireRateMul = 1.35f, bossDamageMul = 1.45f,
             character = true, weaponGroup = 1, special = HeroSpecial.Kind.MoonBeam, specialName = "AY IŞIĞI",
             unlock = Requirement.Boss(BossType.MagicalGirl),
             rules = new[]
