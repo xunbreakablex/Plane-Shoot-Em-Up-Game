@@ -798,11 +798,20 @@ public class HangarController : MonoBehaviour
         bool owned = Unlocks.OwnsAircraft(model);
 
         int stageIdx = resume ? Mathf.Max(0, RunState.PendingStage) : 0;
-        // Kapi ucagin ulasabilecegi en yuksek ates gucunu asmaz (Sonsuz Savas'ta kapi her tur artiyor; kahraman takiliyordu)
+        // Onerilen ates gucu (asama minFirepower'i): engel degil uyari; yalniz silahsiz cikilamaz. Eskiden sert kapiydi ama
+        // yeni oyuncu bile 2 silahla 36'ya ulasip gecebiliyordu, Sonsuz Savas'ta da kahramanlari kilitliyordu.
+        // Ucagin ulasabilecegi en yuksek ates gucunu asmaz.
         if (maxFirepowerModel != model) { maxFirepowerModel = model; maxFirepower = LoadoutMath.MaxFirepower(model); }
         float needed = Mathf.Min(Stages.Get(stageIdx).minFirepower, maxFirepower);
         float firepower = cur.weaponDps + cur.turretDps;
-        if (owned && firepower >= needed) Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), goal, resume ? Gold : Dim, 13, TextAnchor.MiddleCenter, false);
+        bool unarmed = firepower <= 0.01f;
+        if (owned && !unarmed)
+        {
+            if (firepower >= needed) Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), goal, resume ? Gold : Dim, 13, TextAnchor.MiddleCenter, false);
+            else Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f),
+                $"Önerilen ateş gücü AŞAMA {stageIdx + 1} için {needed:0} (SİLAH + TARET /sn), şu an {firepower:0}: zorlanabilirsin.",
+                new Color(1f, 0.82f, 0.4f), 13, TextAnchor.MiddleCenter, false);
+        }
 
         float bw = 380f, bh = 56f;
         string startLabel = resume ? $"AŞAMA {RunState.PendingStage + 1}'E DEVAM" : "SAVAŞA BAŞLA";
@@ -816,15 +825,13 @@ public class HangarController : MonoBehaviour
             Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), "Açmak için: " + Unlocks.AircraftRequirement(model),
                 new Color(1f, 0.82f, 0.5f), 13, TextAnchor.MiddleCenter, false);
         }
-        else if (firepower < needed)
+        else if (unarmed)
         {
-            // Silahsiz ya da gereken ates gucunun altindaki donanimla savasa girilmez
+            // Silahsiz savasa girilmez
             Hud.Fill(startRect, new Color(0.14f, 0.12f, 0.1f, 0.95f));
-            Hud.Text(startRect, "ATEŞ GÜCÜ YETERSİZ", new Color(1f, 0.55f, 0.4f), 22, TextAnchor.MiddleCenter);
-            string why = firepower <= 0.01f
-                ? "Silahsız savaşa çıkılamaz: en az bir silah tak."
-                : $"AŞAMA {stageIdx + 1} için en az {needed:0} ateş gücü (SİLAH + TARET /sn) gerek, şu an {firepower:0}.";
-            Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), why, new Color(1f, 0.82f, 0.5f), 13, TextAnchor.MiddleCenter, false);
+            Hud.Text(startRect, "SİLAH YOK", new Color(1f, 0.55f, 0.4f), 22, TextAnchor.MiddleCenter);
+            Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), "Silahsız savaşa çıkılamaz: en az bir silah tak.",
+                new Color(1f, 0.82f, 0.5f), 13, TextAnchor.MiddleCenter, false);
         }
         else if (Btn(startRect, startLabel, 26, true, new Color(0.3f, 0.85f, 0.4f)))
         {
