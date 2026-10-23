@@ -232,7 +232,7 @@ public class HeroSpecial : MonoBehaviour
             float off = (rel - d * along).magnitude;
             if (off > radius + e.HitRadius) continue;
             int dmg = e.IsBoss ? Mathf.Max(3, Mathf.RoundToInt(e.MaxHits * 0.0055f)) : (e.IsGround ? 2 : 3);
-            e.TakeHit(dmg, e.transform.position);
+            e.TakeHit(CombatManager.PlayerDamage(e, dmg), e.transform.position);
             if (Random.value < 0.35f) mgr.SpawnHitSpark(e.transform.position + Random.insideUnitSphere * 2f, 1.4f);
         }
     }
@@ -261,7 +261,7 @@ public class HeroSpecial : MonoBehaviour
         {
             EnemyPlane e = targets[i];
             int dmg = e.IsBoss ? Mathf.Max(4, Mathf.RoundToInt(e.MaxHits * 0.009f)) : (e.IsGround ? 3 : 4);
-            e.TakeHit(dmg, e.transform.position);
+            e.TakeHit(CombatManager.PlayerDamage(e, dmg), e.transform.position);
             mgr.SpawnHitSpark(e.transform.position, 1.8f);
             DrawBolt(bolts[i], i % 2 == 0 ? handL : handR, e.transform.position, fade);
         }

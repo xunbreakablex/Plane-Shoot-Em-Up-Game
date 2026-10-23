@@ -172,7 +172,7 @@ public class Bullet : MonoBehaviour
         {
             var e = SplashHits[i].GetComponentInParent<EnemyPlane>();
             if (e == null || ReferenceEquals(e, direct) || !done.Add(e)) continue;
-            e.TakeHit(dmg, point);
+            e.TakeHit(CombatManager.PlayerDamage(e, dmg), point);
         }
     }
 
@@ -393,7 +393,7 @@ public class Bullet : MonoBehaviour
         if (target != null)
         {
             // Oyuncu mermisi dusman ucagini vurunca uzuv (kanat/kuyruk/motor) hasari da islenir
-            if (fromPlayer && target is EnemyPlane ep) ep.TakeHitLocal(damage, point, hit.collider);
+            if (fromPlayer && target is EnemyPlane ep) ep.TakeHitLocal(CombatManager.PlayerDamage(ep, damage), point, hit.collider);
             else target.TakeHit(damage, point);
 
             // Delici mermi: dusmani gecip devam eder

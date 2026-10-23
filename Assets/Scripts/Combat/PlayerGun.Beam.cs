@@ -203,7 +203,7 @@ public partial class PlayerGun
             if (dup) continue;
             if (seen < beamSeen.Length) beamSeen[seen++] = target;
 
-            if (target is EnemyPlane ep) ep.TakeHitLocal(dmg, h.point, h.collider);
+            if (target is EnemyPlane ep) ep.TakeHitLocal(CombatManager.PlayerDamage(ep, dmg), h.point, h.collider);
             else target.TakeHit(dmg, h.point);
         }
 
@@ -300,7 +300,7 @@ public partial class PlayerGun
             int dmg = Mathf.RoundToInt(def.damage) + (Random.value < mods.critChance ? 1 : 0);
             foreach (var e in zapChain)
             {
-                e.TakeHit(dmg, e.transform.position);
+                e.TakeHit(CombatManager.PlayerDamage(e, dmg), e.transform.position);
                 mgr.SpawnHitSpark(e.transform.position + Random.insideUnitSphere * 1.5f, 1.2f);
             }
             if (Random.value < 0.5f) Sfx.PlayAt(Sfx.Zap, origin, 0.22f);

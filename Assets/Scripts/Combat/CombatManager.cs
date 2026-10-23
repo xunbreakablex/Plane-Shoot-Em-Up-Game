@@ -487,6 +487,22 @@ public partial class CombatManager : MonoBehaviour
         return drop;
     }
 
+    // Oyuncu hasari boss'a: ucagin bossDamageMul carpani (kahramanlar) uygulanir, kesir birikir
+    private float bossDamageCarry;
+
+    /// <summary>Oyuncunun bir dusmana verdigi hasar: boss'ta ucagin boss carpani uygulanir (kahraman 1,2-1,5).</summary>
+    public static int PlayerDamage(EnemyPlane target, int damage)
+    {
+        CombatManager cm = Instance;
+        if (cm == null || target == null || !target.IsBoss || cm.flight == null) return damage;
+        float mul = AircraftCatalog.Get(cm.flight.CurrentIndex).bossDamageMul;
+        if (Mathf.Abs(mul - 1f) < 0.001f) return damage;
+        float v = damage * mul + cm.bossDamageCarry;
+        int n = Mathf.FloorToInt(v);
+        cm.bossDamageCarry = v - n;
+        return n;
+    }
+
     private int shieldRefills, shieldRefillStage = -1;
     private float lastShieldRefill = -10f;
 

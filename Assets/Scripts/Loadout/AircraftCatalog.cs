@@ -63,6 +63,9 @@ public class AircraftDef
     // Atis hizi carpani: az silah yuvasi olan ucaklar / kahramanlar her silahi daha hizli atar; boylece tam donanimla
     // ileri asamalarin ates gucu kapisini (Stages.minFirepower) gecebilirler ve yuva azligi ceza olmaz
     public float fireRateMul = 1f;
+    // Boss'a verilen hasar carpani: kahramanlarin taret / fuzesi yok, boss'u Roket'in 1,3-1,7 katinda bitiriyorlardi
+    // (2026-10-23 olcumu); carpanla ~1,1 katina iner. Ucaklarda 1.
+    public float bossDamageMul = 1f;
 
     // Ucagin kendisini acma sarti (None = baslangicta acik)
     public Requirement unlock;
@@ -237,7 +240,7 @@ public static class AircraftCatalog
         {
             name = "Ay Savaşçısı", tagline = "Sihirli değnekli kahraman kız: yıldız büyüleri ve AY IŞIĞI yeteneği; çok çevik, narin.",
             preset = PlaneController.PlanePreset.MagicGirl,
-            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 0.8f, fireRateMul = 1.35f,
+            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 0.8f, fireRateMul = 1.35f, bossDamageMul = 1.2f,
             character = true, weaponGroup = 1, special = HeroSpecial.Kind.MoonBeam, specialName = "AY IŞIĞI",
             unlock = Requirement.Boss(BossType.MagicalGirl),
             rules = new[]
@@ -250,7 +253,7 @@ public static class AircraftCatalog
         {
             name = "Ki Kahramanı", tagline = "Ki savaşçısı: yumruklarından ki ateşi, KAMEHAMEHA yeteneği; en hızlı ivme.",
             preset = PlaneController.PlanePreset.KiHero,
-            weapons = 2, missiles = 0, shields = 1, turrets = 2, hpMul = 1.1f, fireRateMul = 1.3f,
+            weapons = 2, missiles = 0, shields = 1, turrets = 2, hpMul = 1.1f, fireRateMul = 1.3f, bossDamageMul = 1.7f,
             character = true, weaponGroup = 2, special = HeroSpecial.Kind.Kamehameha, specialName = "KAMEHAMEHA",
             unlock = Requirement.Boss(BossType.KiWarrior),
             rules = new[]
@@ -262,7 +265,7 @@ public static class AircraftCatalog
         {
             name = "İmparator", tagline = "Karanlık lord: parmaklarından yıldırım, YILDIRIM FIRTINASI yeteneği; yavaş ama dayanıklı.",
             preset = PlaneController.PlanePreset.DarkLord,
-            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 1.3f, fireRateMul = 1.5f,
+            weapons = 2, missiles = 0, shields = 2, turrets = 2, hpMul = 1.3f, fireRateMul = 1.5f, bossDamageMul = 1.5f,
             character = true, weaponGroup = 3, special = HeroSpecial.Kind.LightningStorm, specialName = "YILDIRIM",
             unlock = Requirement.Boss(BossType.Demon),
             rules = new[]
