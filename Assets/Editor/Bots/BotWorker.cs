@@ -25,6 +25,7 @@ public static class BotWorker
         public float duration = 140f; // wave: oyun suresi; boss: zaman asimi
         public int power = 2;
         public float timeScale = 1f;
+        public bool chain;           // flow: asama sonu ekranindan sonraki asamaya gec (oyun sonuna kadar)
         public int seed;             // 0 = rastgele; ayni tohumu ayarlar arasinda paylasmak gurultuyu azaltir
         public string[] set;         // "EnemyPlane.OrganicAimSpread=1.3", "GameSettings.enemyHitsScale=1.2"
     }
@@ -49,6 +50,8 @@ public static class BotWorker
     private static float startAt, nextPoll, settleUntil;
     private static int pendingAircraft = -1, waitFrames;
     private static bool prevRunInBackground;
+    private static int jobErrors;
+    private static string firstError;
 
     static BotWorker()
     {
@@ -87,6 +90,7 @@ public static class BotWorker
         prevRunInBackground = PlayerSettings.runInBackground;
         Application.runInBackground = true;
         Install(true);
+        Application.logMessageReceived += OnLog;
         Log("basladi " + Application.dataPath);
     }
 
@@ -95,6 +99,7 @@ public static class BotWorker
         if (root == null) return;
         if (current != null) Finish("iptal");
         root = null;
+        Application.logMessageReceived -= OnLog;
         Install(false);
         PlayerSettings.runInBackground = prevRunInBackground;
         BotInput.Clear();
@@ -172,6 +177,8 @@ public static class BotWorker
             ApplyOverrides(job.set);
             Time.captureFramerate = 60;
             Time.timeScale = job.timeScale;
+            jobErrors = 0;
+            firstError = null;
             pendingAircraft = job.aircraft;
             settleUntil = 0f;
             // Her is temiz sahneyle baslar (oyunun yeniden deneme yolu da Flight sahnesini yukler); onceki isin
@@ -194,6 +201,7 @@ public static class BotWorker
         {
             case "wave": s = new WaveScenario(); break;
             case "boss": s = new BossScenario(); break;
+            case "flow": s = new FlowScenario(); break;
             default: throw new ArgumentException("bilinmeyen senaryo " + job.scenario);
         }
         s.job = job;
@@ -203,6 +211,7 @@ public static class BotWorker
     private static void Finish(string result)
     {
         string id = current.job.id;
+        if (jobErrors > 0) result += "\terrors=" + jobErrors + "\tfirstError=" + firstError;
         File.WriteAllText(Path.Combine(root, "results", id + ".txt"), id + "\t" + workerName + "\t" + result + "\n");
         try { File.Delete(currentFile); } catch (IOException) { }
         RevertOverrides();
@@ -210,6 +219,19 @@ public static class BotWorker
         Time.timeScale = 1f;
         current = null;
         Log("bitti " + id + " " + result);
+    }
+
+    // Is sirasinda konsola dusen hata / istisna sayisi ve ilki (akis testi icin)
+    private static void OnLog(string msg, string stack, LogType type)
+    {
+        if (current == null || (type != LogType.Error && type != LogType.Exception && type != LogType.Assert)) return;
+        jobErrors++;
+        if (firstError == null)
+        {
+            string line = stack.Split('\n')[0];
+            firstError = (msg + " @ " + line).Replace('\t', ' ').Replace('\n', ' ').Replace('\r', ' ');
+            if (firstError.Length > 220) firstError = firstError.Substring(0, 220);
+        }
     }
 
     // "Tip.alan=deger": statik alan (const olmayan) ya da GameSettings.Current uzerindeki alan

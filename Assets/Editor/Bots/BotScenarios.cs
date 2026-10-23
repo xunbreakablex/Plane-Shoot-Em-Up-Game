@@ -160,3 +160,173 @@ public class BossScenario : BotWorker.Scenario
         return "guard=" + (guardAt < 0f ? "-" : guardAt.ToString("0")) + "\tttk=" + ttk.ToString("0") + "\tdead=" + (dead ? 1 : 0);
     }
 }
+
+// Akis testi: asamayi bastan sona oynar (dalgalar, orta boss, us, boss, asama sonu). Oyuncu olumsuz; hava dusmani
+// "killAfter" sn yasayinca vurulmus sayilir (iyi oyuncu taklidi), us hedefleri 25 sn'den sonra sirayla yikilir;
+// boss fazinda BossScenario'nun nisan botu oynar, 200 sn'de bitmezse boss zorla oldurulur (forced). Asama sonu
+// gelmezse "duration" sonunda takilma durumu yazilir. Hatalar BotWorker'da sayilir.
+public class FlowScenario : BotWorker.Scenario
+{
+    private static readonly FieldInfo fEnemies = BotWorker.F(typeof(CombatManager), "enemies");
+    private static readonly FieldInfo fWave = BotWorker.F(typeof(CombatManager), "waveIndex");
+    private static readonly FieldInfo fMid = BotWorker.F(typeof(CombatManager), "midBossSpawned");
+    private static readonly FieldInfo fBossSp = BotWorker.F(typeof(CombatManager), "bossSpawned");
+    private static readonly FieldInfo fAim = BotWorker.F(typeof(PlaneController), "rushAim");
+    private static readonly FieldInfo fHeat = BotWorker.F(typeof(PlayerGun), "<Heat>k__BackingField");
+    private static readonly FieldInfo fGuard = BotWorker.F(typeof(BossBrain), "limbGuardOff");
+
+    private static readonly MethodInfo mClose = typeof(StageClearUI).GetMethod("Close", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    public float killAfter = 8f;
+    private float t0, stageT0, lastGroundKill, clearAt = -1f, bossT0;
+    private readonly System.Text.StringBuilder stages = new System.Text.StringBuilder();
+    private float tMid = -1f, midTtk = -1f, tBoss = -1f, bossTtk = -1f;
+    private bool midForced, bossForced, uiOpen;
+    private int airKills, groundKills;
+    private EnemyPlane fighting;
+    private Vector3 lockFwd;
+    private string timeoutState;
+    private readonly Dictionary<int, float> born = new Dictionary<int, float>();
+
+    public override void Begin()
+    {
+        CombatManager.Instance.DebugJumpToStage(job.stage);
+        t0 = stageT0 = Time.time;
+    }
+
+    public override bool Tick()
+    {
+        CombatManager cm = CombatManager.Instance;
+        float total = Time.time - t0;
+        float el = Time.time - stageT0;
+        PlaneController plane = cm.flight.Current;
+        PlayerHealth ph = cm.CurrentPlayerHealth;
+        RunState.DebugSetPower(job.power);
+        if (ph != null) ph.SetState(ph.maxHealth, ph.maxShield);
+        if (cm.gun != null) fHeat.SetValue(cm.gun, 0f);
+
+        // Asama sonu: ekran acilinca (ya da 60 sn) biter; chain ise sonraki asamaya gecer
+        if (RunState.StageIsClear || RunState.Ended)
+        {
+            BotInput.Clear();
+            if (clearAt < 0f)
+            {
+                clearAt = el;
+                if (fighting != null) { if (fighting.Kind == EnemyKind.MidBoss) midTtk = el - bossT0; else bossTtk = el - bossT0; fighting = null; }
+            }
+            var sc = UnityEngine.Object.FindFirstObjectByType<StageClearUI>();
+            var rr = UnityEngine.Object.FindFirstObjectByType<RunResultUI>();
+            uiOpen = (sc != null && sc.IsOpen) || (rr != null && rr.IsOpen);
+            if (!uiOpen && el - clearAt <= 60f) return false;
+            if (job.chain && sc != null && sc.IsOpen && RunState.StageIsClear)
+            {
+                stages.Append(StageSummary()).Append(" | ");
+                mClose.Invoke(sc, null);
+                cm.NextStage();
+                stageT0 = Time.time;
+                clearAt = tMid = midTtk = tBoss = bossTtk = -1f;
+                lastGroundKill = 0f;   // asama saati sifirlandi: us hedefleri yine 25 sn'den sonra
+                midForced = bossForced = uiOpen = false;
+                lockFwd = Vector3.zero;
+                born.Clear();
+                return false;
+            }
+            return true;
+        }
+        if (total > job.duration)
+        {
+            IList list = (IList)fEnemies.GetValue(cm);
+            int air = 0, ground = 0;
+            foreach (EnemyPlane e in list) if (e != null && !e.IsDead) { if (e.IsGround) ground++; else if (!e.IsBoss) air++; }
+            timeoutState = "wave=" + fWave.GetValue(cm) + "/" + cm.WaveCount + " mid=" + fMid.GetValue(cm) + " boss=" + fBossSp.GetValue(cm)
+                + " base=" + cm.BaseCleared + " rush=" + cm.RushActive + " active=" + (cm.ActiveBoss != null) + " air=" + air + " ground=" + ground
+                + " phase=" + RunState.Phase + " paused=" + GameState.Paused;
+            return true;
+        }
+
+        EnemyPlane boss = cm.ActiveBoss;
+        if (boss != null)
+        {
+            if (boss != fighting)
+            {
+                fighting = boss;
+                bossT0 = el;
+                if (boss.Kind == EnemyKind.MidBoss) tMid = el; else tBoss = el;
+            }
+            if (el - bossT0 > 200f)
+            {
+                BossBrain br = boss.GetComponent<BossBrain>();
+                if (boss.Kind == EnemyKind.MidBoss) midForced = true; else bossForced = true;
+                if (br != null) fGuard.SetValue(br, true);
+                boss.TakeHit(999999, boss.transform.position);
+                if (br != null) fGuard.SetValue(br, false);
+            }
+            else if (cm.RushActive)
+            {
+                Vector3 to = boss.AimPoint - plane.transform.position;
+                Vector3 local = Quaternion.Inverse(Quaternion.LookRotation(cm.RushHeading, Vector3.up)) * to;
+                fAim.SetValue(plane, new Vector2(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg,
+                    Mathf.Atan2(local.y, new Vector2(local.x, local.z).magnitude) * Mathf.Rad2Deg));
+                BotInput.Fire = true;
+                BotInput.Strafe = Mathf.Repeat(el, 2.2f) < 1.1f ? -1f : 1f;
+            }
+            return false;
+        }
+        if (fighting != null)
+        {
+            if (fighting.Kind == EnemyKind.MidBoss) midTtk = el - bossT0; else bossTtk = el - bossT0;
+            fighting = null;
+        }
+        BotInput.Clear();
+        if (cm.RushActive) return false;   // boss fazindan donus
+
+        // Ucus: sabit irtifa, yavas donus (arenada kalir), ates
+        Transform t = plane.transform;
+        Rigidbody prb = plane.GetComponent<Rigidbody>();
+        if (lockFwd == Vector3.zero) lockFwd = Vector3.ProjectOnPlane(t.forward, Vector3.up).normalized;
+        if (lockFwd == Vector3.zero) lockFwd = Vector3.forward;
+        lockFwd = Quaternion.AngleAxis(6f * Time.deltaTime, Vector3.up) * lockFwd;
+        Vector3 pp = prb.position;
+        pp.y = Mathf.Max(pp.y, cm.GroundHeight(pp) + 150f);
+        prb.position = pp; t.position = pp;
+        prb.rotation = Quaternion.LookRotation(lockFwd, Vector3.up); t.rotation = prb.rotation;
+        prb.linearVelocity = lockFwd * plane.cruiseSpeed; prb.angularVelocity = Vector3.zero;
+        BotInput.Fire = true;
+
+        // Dusmanlar: hava "killAfter" sn sonra, yer hedefleri 25 sn'den sonra 2 sn arayla (cekirdek en son)
+        EnemyPlane groundPick = null;
+        int groundAlive = 0;
+        foreach (EnemyPlane e in new List<EnemyPlane>((List<EnemyPlane>)fEnemies.GetValue(cm)))
+        {
+            if (e == null || e.IsDead || e.IsBoss) continue;
+            int id = e.GetInstanceID();
+            if (!born.ContainsKey(id)) born[id] = el;
+            if (e.IsGround)
+            {
+                groundAlive++;
+                if (groundPick == null || (groundPick.IsCore && !e.IsCore)) groundPick = e;
+            }
+            else if (el - born[id] > killAfter) { e.TakeHit(999999, e.transform.position); airKills++; }
+        }
+        if (groundPick != null && el > 25f && el - lastGroundKill > 2f && (!groundPick.IsCore || groundAlive == 1 || el > 120f))
+        {
+            groundPick.TakeHit(999999, groundPick.transform.position);
+            groundKills++;
+            lastGroundKill = el;
+        }
+        return false;
+    }
+
+    private string StageSummary()
+    {
+        return "s" + (RunState.Stage + 1) + " mid@" + tMid.ToString("0") + "/" + midTtk.ToString("0") + (midForced ? "!" : "")
+            + " boss@" + tBoss.ToString("0") + "/" + bossTtk.ToString("0") + (bossForced ? "!" : "")
+            + " clear@" + clearAt.ToString("0") + " ui=" + (uiOpen ? 1 : 0);
+    }
+
+    public override string Result()
+    {
+        return "stages=" + stages + StageSummary() + "\tphase=" + RunState.Phase + "\ttotal=" + (Time.time - t0).ToString("0")
+            + "\tair=" + airKills + "\tground=" + groundKills + (timeoutState != null ? "\tTAKILDI=" + timeoutState : "");
+    }
+}
