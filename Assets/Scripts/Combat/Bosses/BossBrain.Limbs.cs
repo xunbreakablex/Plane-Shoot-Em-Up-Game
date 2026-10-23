@@ -35,6 +35,7 @@ public partial class BossBrain
     private int weaponLimbs, brokenWeapons;
     private float wingSpeedMul = 1f;
 
+    private const float WeaponLimbHpMul = 0.55f;  // silah uzvu cani (InitLimbs oranlarinin carpani)
     private const float LimbBarShowTime = 1.6f;   // vurulduktan sonra can cubugunun gorundugu sure (sn)
     private const float LimbLowFraction = 0.3f;   // bu oranin altindaki uzvun cubugu hep acik
 
@@ -286,7 +287,10 @@ public partial class BossBrain
         }
         if (limb.parts.Count == 0) return null;
 
-        limb.maxHp = limb.hp = Mathf.Max(6, Mathf.RoundToInt(enemy.MaxHits * hpFraction));
+        // Silah uzvu govde korumasinin anahtari: kucuk ve hareketli oldugundan isabet dusuk, cani %55 (koruma eklenince
+        // boss sureleri %0-25 uzamisti, Jet 10 -> 23 sn). Uzva verilen hasar toplam candan dustugu icin toplam can ayni.
+        float mul = kind == LimbKind.Weapon ? WeaponLimbHpMul : 1f;
+        limb.maxHp = limb.hp = Mathf.Max(6, Mathf.RoundToInt(enemy.MaxHits * hpFraction * mul));
         // Sonra eklenen uzuv ayni collider'i devralir (kanat once, ustundeki top sonra)
         foreach (Transform t in limb.parts)
             foreach (var c in t.GetComponentsInChildren<Collider>(true))
