@@ -348,11 +348,15 @@ public class FlowScenario : BotWorker.Scenario
 public class DeathScenario : BotWorker.Scenario
 {
     private static readonly MethodInfo mLeave = typeof(RunResultUI).GetMethod("Leave", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly FieldInfo FlowEnemies = BotWorker.F(typeof(CombatManager), "enemies");
 
     private int state, frames;
     private float t0, deathAt = -1f, uiAt = -1f;
-    private string phaseAtDeath = "-", after = "-";
+    private string phaseAtDeath = "-", after = "-", hpInfo = "-";
     private Vector3 lockFwd;
+    private int hits, kills;
+    private float lastHit;
+    private readonly HashSet<int> seenDead = new HashSet<int>();
 
     public override void Begin()
     {
@@ -372,6 +376,14 @@ public class DeathScenario : BotWorker.Scenario
             {
                 if (el > job.duration) { after = "olmedi"; return true; }
                 CombatManager cm = CombatManager.Instance;
+                PlayerHealth ph = cm.CurrentPlayerHealth;
+                if (ph != null)
+                {
+                    if (hpInfo == "-") { hpInfo = ph.maxHealth + "/" + ph.maxShield.ToString("0"); lastHit = ph.LastHitTime; }
+                    if (ph.LastHitTime != lastHit) { hits++; lastHit = ph.LastHitTime; }
+                }
+                foreach (EnemyPlane e in (List<EnemyPlane>)FlowEnemies.GetValue(cm))
+                    if (e != null && e.IsDead && !e.IsBoss && seenDead.Add(e.GetInstanceID())) kills++;
                 if (RunState.Ended)
                 {
                     deathAt = el;
@@ -448,6 +460,7 @@ public class DeathScenario : BotWorker.Scenario
 
     public override string Result()
     {
-        return "death=" + deathAt.ToString("0") + "\tfaz=" + phaseAtDeath + "\tui=" + uiAt.ToString("0") + "\tsonra=" + after;
+        return "death=" + deathAt.ToString("0") + "\tcan=" + hpInfo + "\tisabet=" + hits + "\tindirilen=" + kills + "\tfaz=" + phaseAtDeath
+            + "\tui=" + uiAt.ToString("0") + "\tsonra=" + after;
     }
 }
