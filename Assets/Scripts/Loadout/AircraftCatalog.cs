@@ -106,7 +106,8 @@ public static class AircraftCatalog
 {
     public const int Count = 12;
 
-    // Ilk uc model (WW1, WW2, planor) eski global kurallari kullanir
+    // Ilk uc model (WW1, WW2, planor) eski global kurallari kullanir. Yuvalari 2026-10-23'te azaldi (baslangic
+    // ucaklari tam yuvayla 82 ates gucuyle en guclusuydu, sonradan acilanlar 57-77); olmayan yuvanin kurali etkisiz.
     private static SlotRule[] ClassicRules()
     {
         return new[]
@@ -129,21 +130,21 @@ public static class AircraftCatalog
         {
             name = "Çift Kanatlı (WW1)", tagline = "Sağlam ve dengeli; yavaş ama kolay uçar.",
             preset = PlaneController.PlanePreset.Biplane,
-            weapons = 4, missiles = 2, shields = 3, turrets = 2, hpMul = 1f,
+            weapons = 3, missiles = 1, shields = 2, turrets = 1, hpMul = 1f,
             rules = ClassicRules()
         },
         new AircraftDef
         {
             name = "Avcı (WW2)", tagline = "Hızlı ve atik klasik av uçağı.",
             preset = PlaneController.PlanePreset.Fighter,
-            weapons = 4, missiles = 2, shields = 3, turrets = 2, hpMul = 1f,
+            weapons = 3, missiles = 1, shields = 2, turrets = 1, hpMul = 1f,
             rules = ClassicRules()
         },
         new AircraftDef
         {
-            name = "Planör", tagline = "Çok hafif; süzülür, hantal döner.",
+            name = "Planör", tagline = "Çok hafif; süzülür, hantal döner, az yük taşır.",
             preset = PlaneController.PlanePreset.Glider,
-            weapons = 4, missiles = 2, shields = 3, turrets = 2, hpMul = 1f,
+            weapons = 2, missiles = 1, shields = 1, turrets = 1, hpMul = 1f,
             rules = ClassicRules()
         },
 
