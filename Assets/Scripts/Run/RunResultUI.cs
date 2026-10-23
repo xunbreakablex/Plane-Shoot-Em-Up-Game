@@ -17,6 +17,11 @@ public class RunResultUI : MonoBehaviour
         return c;
     }
 
+    private void Awake()
+    {
+        useGUILayout = false;   // yalniz GUI.* kullanilir: OnGUI'nin Layout gecisi atlanir (kare basina GC ve sure)
+    }
+
     private void Update()
     {
         if (IsOpen || !RunState.Ended) return;

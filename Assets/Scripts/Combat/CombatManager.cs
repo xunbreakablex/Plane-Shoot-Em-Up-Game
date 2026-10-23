@@ -88,6 +88,7 @@ public partial class CombatManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        useGUILayout = false;   // yalniz GUI.* kullanilir: OnGUI'nin Layout gecisi atlanir (kare basina GC ve sure)
 
         uiAudio = gameObject.AddComponent<AudioSource>();
         uiAudio.spatialBlend = 0f;

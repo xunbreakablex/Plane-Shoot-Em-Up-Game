@@ -64,6 +64,7 @@ public class HangarController : MonoBehaviour
 
     private void Start()
     {
+        useGUILayout = false;   // yalniz GUI.* kullanilir: OnGUI'nin Layout gecisi atlanir (kare basina GC ve sure)
         MusicPlayer.Ensure(gameObject, MusicTrack.Hangar);
         GameAudio.Apply();
 

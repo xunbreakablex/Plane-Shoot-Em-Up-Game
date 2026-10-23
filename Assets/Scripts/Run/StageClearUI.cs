@@ -63,6 +63,7 @@ public class StageClearUI : MonoBehaviour
 
     private void Start()
     {
+        useGUILayout = false;   // yalniz GUI.* kullanilir: OnGUI'nin Layout gecisi atlanir (kare basina GC ve sure)
         shop = GetComponent<ShopUI>();
         if (shop == null) shop = FindFirstObjectByType<ShopUI>();
     }

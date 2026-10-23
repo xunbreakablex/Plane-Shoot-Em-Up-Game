@@ -19,6 +19,7 @@ public class FlightTestManager : MonoBehaviour
 
     private void Start()
     {
+        useGUILayout = false;   // yalniz GUI.* kullanilir: OnGUI'nin Layout gecisi atlanir (kare basina GC ve sure)
         if (planes == null || planes.Length == 0) return;
 
         // Hangarda secilen model ile basla (acik degilse ilk ucak)

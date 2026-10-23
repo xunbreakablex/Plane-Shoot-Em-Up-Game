@@ -20,6 +20,11 @@ public class ScreenFader : MonoBehaviour
         Alpha = target;
     }
 
+    private void Awake()
+    {
+        useGUILayout = false;   // yalniz GUI.* kullanilir: OnGUI'nin Layout gecisi atlanir (kare basina GC ve sure)
+    }
+
     private void OnGUI()
     {
         if (Alpha <= 0.001f || Event.current.type != EventType.Repaint) return;
