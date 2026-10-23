@@ -137,9 +137,10 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private const float TurnEaseOut = 3f;         // kalan aci (derece) x bu = istenen donus hizi (yaklastikca yavaslar)
     private Vector3 smoothDesired;
     private float turnVel;                        // anlik donus hizi (derece/sn)
-    // Organik donuste dusman daha iyi konumdan ates eder: ayni mermi sayisinda oyuncu ~1,5 kat isabet aliyordu
-    // (2026-10-23, asama 1: sert 18,8 / organik 27,6 isabet). Nisanli atisin sapmasi bu kat (boss haric): 19,0.
-    private const float OrganicAimSpread = 1.8f;
+    // Organik donuste dusman daha iyi konumdan ates eder: ayni mermi sayisinda oyuncu ~1,3 kat isabet aliyordu.
+    // Nisanli atisin sapmasi bu kat (boss haric). 2026-10-23 bot, 140 sn isabet (asama 1 / 3):
+    // sert donus 21,8 / 31,0; organik 1,6 kat 22,7 / 25,8 (1,8 katta 18,0 / 19,2: fazla kolay).
+    private const float OrganicAimSpread = 1.6f;
     private float climbVel;                       // duz gecen bombardimancinin tirmanma hizi
     private float weavePhase;
     private float weaveRate;
