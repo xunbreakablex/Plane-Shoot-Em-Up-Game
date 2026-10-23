@@ -118,10 +118,10 @@ public partial class BossBrain : MonoBehaviour
             case BossType.Crab: return 1700;
             case BossType.Octopus: return 3100;
             case BossType.Zeppelin: return 2600;
-            case BossType.Demon: return 1900;
-            case BossType.Angel: return 1400;
+            case BossType.Demon: return 2500;       // 2026-10-23: 1900 / 1400 / 3400 -> son asamalarin bosslari 3. asamadan
+            case BossType.Angel: return 2000;       // kisa suruyordu (Roket: orta 57 -> 45 -> 46, ana 81 -> 100 -> 92 sn)
             case BossType.KiWarrior: return 2800;
-            case BossType.MagicalGirl: return 3400;
+            case BossType.MagicalGirl: return 4200;
             case BossType.Eagle: return 2600;
             case BossType.Golem: return 3200;
             default: return 3900;   // Ejderha
