@@ -340,3 +340,114 @@ public class FlowScenario : BotWorker.Scenario
             + "\tair=" + airKills + "\tground=" + groundKills + (timeoutState != null ? "\tTAKILDI=" + timeoutState : "");
     }
 }
+
+
+// Olum yolu: oyuncu olumlu (pasif, sabit irtifa, ates eder). Olunce sonuc ekrani acilmali; sonra "retry" (TEKRAR OYNA)
+// yeni oyunu asama 1 / skor 0'dan baslatmali, "hangar" (HANGARA DON) hangari acmali ve hangarin savasa cik dugmesi
+// ucusa donmeli. Sureler ve her adimin sonucu yazilir; hatalar BotWorker'da sayilir.
+public class DeathScenario : BotWorker.Scenario
+{
+    private static readonly MethodInfo mLeave = typeof(RunResultUI).GetMethod("Leave", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private int state, frames;
+    private float t0, deathAt = -1f, uiAt = -1f;
+    private string phaseAtDeath = "-", after = "-";
+    private Vector3 lockFwd;
+
+    public override void Begin()
+    {
+        CombatManager.Instance.DebugJumpToStage(job.stage);
+        t0 = Time.time;
+    }
+
+    private static string Scene => UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+    public override bool Tick()
+    {
+        float el = Time.time - t0;
+        frames++;
+        switch (state)
+        {
+            case 0:   // ucus: olene kadar
+            {
+                if (el > job.duration) { after = "olmedi"; return true; }
+                CombatManager cm = CombatManager.Instance;
+                if (RunState.Ended)
+                {
+                    deathAt = el;
+                    phaseAtDeath = RunState.Phase.ToString();
+                    BotInput.Clear();
+                    state = 1;
+                    return false;
+                }
+                PlaneController plane = cm.flight.Current;
+                if (plane == null || plane.IsCrashed || cm.RushActive) { BotInput.Clear(); return false; }
+                Transform t = plane.transform;
+                Rigidbody prb = plane.GetComponent<Rigidbody>();
+                if (lockFwd == Vector3.zero) lockFwd = Vector3.ProjectOnPlane(t.forward, Vector3.up).normalized;
+                if (lockFwd == Vector3.zero) lockFwd = Vector3.forward;
+                lockFwd = Quaternion.AngleAxis(6f * Time.deltaTime, Vector3.up) * lockFwd;
+                Vector3 pp = prb.position;
+                pp.y = Mathf.Max(pp.y, cm.GroundHeight(pp) + 150f);
+                prb.position = pp; t.position = pp;
+                prb.rotation = Quaternion.LookRotation(lockFwd, Vector3.up); t.rotation = prb.rotation;
+                prb.linearVelocity = lockFwd * plane.cruiseSpeed; prb.angularVelocity = Vector3.zero;
+                BotInput.Fire = true;
+                return false;
+            }
+            case 1:   // sonuc ekrani
+            {
+                var rr = UnityEngine.Object.FindFirstObjectByType<RunResultUI>();
+                if (rr == null || !rr.IsOpen)
+                {
+                    if (el - deathAt > 60f) { after = "ekran-acilmadi"; return true; }
+                    return false;
+                }
+                uiAt = el;
+                mLeave.Invoke(rr, new object[] { job.after == "hangar" ? GameScenes.Hangar : GameScenes.Flight });
+                frames = 0;
+                state = job.after == "hangar" ? 3 : 2;
+                return false;
+            }
+            case 2:   // TEKRAR OYNA: yeni oyun
+            {
+                if (frames < 120) return false;
+                bool ok = Scene == GameScenes.Flight && CombatManager.Instance != null && RunState.Phase == RunPhase.Playing
+                          && RunState.Stage == 0 && RunState.Score == 0 && !GameState.Paused;
+                after = (ok ? "retry-ok" : "retry-HATA") + " sahne=" + Scene + " faz=" + RunState.Phase + " asama=" + RunState.Stage
+                        + " skor=" + RunState.Score + " durak=" + GameState.Paused;
+                return true;
+            }
+            case 3:   // HANGARA DON: hangar acilir, savasa cik
+            {
+                if (frames < 120) return false;
+                if (Scene != GameScenes.Hangar || UnityEngine.Object.FindFirstObjectByType<HangarController>() == null)
+                {
+                    after = "hangar-HATA sahne=" + Scene;
+                    return true;
+                }
+                LoadoutStore.SelectedModel = job.aircraft >= 0 ? job.aircraft : LoadoutStore.SelectedModel;
+                LoadoutStore.Save();
+                UnityEngine.SceneManagement.SceneManager.LoadScene(GameScenes.Flight);
+                frames = 0;
+                state = 4;
+                return false;
+            }
+            default:  // hangardan ucusa donus
+            {
+                if (frames < 120) return false;
+                bool ok = Scene == GameScenes.Flight && CombatManager.Instance != null && RunState.Phase == RunPhase.Playing
+                          && RunState.Stage == 0 && !GameState.Paused
+                          && (job.aircraft < 0 || CombatManager.Instance.flight.CurrentIndex == job.aircraft);
+                after = (ok ? "hangar-ok" : "hangar-HATA") + " sahne=" + Scene + " faz=" + RunState.Phase + " ucak="
+                        + (CombatManager.Instance != null ? CombatManager.Instance.flight.CurrentIndex.ToString() : "-") + " durak=" + GameState.Paused;
+                return true;
+            }
+        }
+    }
+
+    public override string Result()
+    {
+        return "death=" + deathAt.ToString("0") + "\tfaz=" + phaseAtDeath + "\tui=" + uiAt.ToString("0") + "\tsonra=" + after;
+    }
+}

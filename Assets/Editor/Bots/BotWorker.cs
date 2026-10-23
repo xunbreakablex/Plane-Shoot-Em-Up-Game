@@ -28,6 +28,7 @@ public static class BotWorker
         public bool chain;           // flow: asama sonu ekranindan sonraki asamaya gec (oyun sonuna kadar)
         public int endless;          // flow + chain: zaferden sonra Sonsuz Savas'ta bu kadar asama daha
         public bool rush;            // oyun Boss Rush olarak baslar (hangardaki MOD secimi)
+        public string after;         // death: sonuc ekranindan "retry" (tekrar oyna) ya da "hangar" (hangar -> savasa cik)
         public int seed;             // 0 = rastgele; ayni tohumu ayarlar arasinda paylasmak gurultuyu azaltir
         public string[] set;         // "EnemyPlane.OrganicAimSpread=1.3", "GameSettings.enemyHitsScale=1.2"
     }
@@ -188,7 +189,7 @@ public static class BotWorker
             GameState.UiOpen = false;
             GameState.SetPaused(false);
             RunState.NextRush = job.rush;   // sahne yuklenince NewCampaign uygular
-            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+            UnityEngine.SceneManagement.SceneManager.LoadScene(GameScenes.Flight);
             waitFrames = 90;
             started = false;
             Log("is " + job.id);
@@ -205,6 +206,7 @@ public static class BotWorker
             case "wave": s = new WaveScenario(); break;
             case "boss": s = new BossScenario(); break;
             case "flow": s = new FlowScenario(); break;
+            case "death": s = new DeathScenario(); break;
             default: throw new ArgumentException("bilinmeyen senaryo " + job.scenario);
         }
         s.job = job;
