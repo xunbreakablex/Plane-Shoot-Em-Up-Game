@@ -368,7 +368,13 @@ public partial class CombatManager
         SetLayerRecursively(go, EnemyLayer);
 
         float endlessMul = RunState.Endless ? 1f + 0.12f * (RunState.Stage - Stages.All.Length + 1) : 1f;   // sonsuz modda bosslar her turda guclenir
-        int hits = Mathf.Max(1, Mathf.RoundToInt(BossBrain.BaseHits(bossType) * Difficulty.BossHitsMul * endlessMul));
+        int baseHits = BossBrain.BaseHits(bossType);
+        // Sonsuz Savas kampanya bosslarini sirayla tekrar eder: ana bossun can tabani kampanya finali bossunun %80'i.
+        // Yoksa her tur 1. asamanin Kopekbaligi'yla (1400) baslayip zorluk dusuyordu (final ~80 sn, sonraki boss ~30 sn).
+        // Orta bosslara uygulanmaz: Jet'in dusuk cani bilerek (kucuk, hizli hedef), tabanla dovus 100 sn'yi asiyordu.
+        if (RunState.Endless && RunState.Stage >= Stages.All.Length && stageBoss)
+            baseHits = Mathf.Max(baseHits, Mathf.RoundToInt(BossBrain.BaseHits(Stages.All[Stages.All.Length - 1].boss) * 0.8f));
+        int hits = Mathf.Max(1, Mathf.RoundToInt(baseHits * Difficulty.BossHitsMul * endlessMul));
 
         var enemy = go.AddComponent<EnemyPlane>();
         var brain = go.AddComponent<BossBrain>();
