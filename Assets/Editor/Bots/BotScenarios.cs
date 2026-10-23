@@ -105,7 +105,6 @@ public class BossScenario : BotWorker.Scenario
     private static readonly FieldInfo fWave = BotWorker.F(typeof(CombatManager), "waveIndex");
     private static readonly FieldInfo fAim = BotWorker.F(typeof(PlaneController), "rushAim");
     private static readonly FieldInfo fHeat = BotWorker.F(typeof(PlayerGun), "<Heat>k__BackingField");
-    private static readonly FieldInfo fGuard = BotWorker.F(typeof(BossBrain), "limbGuardOff");
 
     private int state;
     private float t0, waitUntil, guardAt = -1f, ttk = -1f;
@@ -138,19 +137,13 @@ public class BossScenario : BotWorker.Scenario
             state = 1;
             return false;
         }
-        if (state == 2) return Time.time >= waitUntil;
-
         float el = Time.time - t0;
         if (brain != null && guardAt < 0f && !brain.BodyProtected) guardAt = el;
         if (boss == null || boss.IsDead || el > job.duration)
         {
             dead = boss == null || boss.IsDead;
             ttk = el;
-            if (!dead) { fGuard.SetValue(brain, true); boss.TakeHit(999999, boss.transform.position); fGuard.SetValue(brain, false); }
-            cm.DebugJumpToStage(0);
-            state = 2;
-            waitUntil = Time.time + 3f;
-            return false;
+            return true; // sonraki is sahneyi yeniden yukler
         }
         if (cm.RushActive)
         {

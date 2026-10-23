@@ -25,6 +25,7 @@ public static class BotWorker
         public float duration = 140f; // wave: oyun suresi; boss: zaman asimi
         public int power = 2;
         public float timeScale = 1f;
+        public int seed;             // 0 = rastgele; ayni tohumu ayarlar arasinda paylasmak gurultuyu azaltir
         public string[] set;         // "EnemyPlane.OrganicAimSpread=1.3", "GameSettings.enemyHitsScale=1.2"
     }
 
@@ -48,6 +49,8 @@ public static class BotWorker
     private static float startAt, nextPoll, settleUntil;
     private static int pendingAircraft = -1, waitFrames;
     private static bool prevRunInBackground;
+    private static UnityEngine.InputSystem.InputSettings.EditorInputBehaviorInPlayMode prevEditorInput;
+    private static UnityEngine.InputSystem.InputSettings.BackgroundBehavior prevBackground;
 
     static BotWorker()
     {
@@ -85,6 +88,12 @@ public static class BotWorker
         // Odakta olmayan editorde oyun karesi ilerlemez; kosu boyunca arka planda calis (ayar cikista geri alinir)
         prevRunInBackground = PlayerSettings.runInBackground;
         Application.runInBackground = true;
+        // Game gorunumu odakta degilken klavye olaylari editore gider (bot Space'e bassa da silah ateslemez)
+        var input = UnityEngine.InputSystem.InputSystem.settings;
+        prevEditorInput = input.editorInputBehaviorInPlayMode;
+        prevBackground = input.backgroundBehavior;
+        input.editorInputBehaviorInPlayMode = UnityEngine.InputSystem.InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+        input.backgroundBehavior = UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus;
         Install(true);
         Log("basladi " + Application.dataPath);
     }
@@ -95,6 +104,8 @@ public static class BotWorker
         root = null;
         Install(false);
         PlayerSettings.runInBackground = prevRunInBackground;
+        UnityEngine.InputSystem.InputSystem.settings.editorInputBehaviorInPlayMode = prevEditorInput;
+        UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior = prevBackground;
         if (current != null) Finish("iptal");
         Time.captureFramerate = 0;
         Time.timeScale = 1f;
@@ -135,7 +146,13 @@ public static class BotWorker
                 pendingAircraft = -1;
             }
             if (Time.time < settleUntil) return;
-            if (!started) { current.Begin(); started = true; }
+            if (!GameState.Paused) Time.timeScale = current.job.timeScale; // oyun duraklat / devam'da 1'e cekiyor
+            if (!started)
+            {
+                if (current.job.seed != 0) UnityEngine.Random.InitState(current.job.seed);
+                current.Begin();
+                started = true;
+            }
             if (current.Tick()) Finish(current.Result());
         }
         catch (Exception e)
@@ -165,7 +182,10 @@ public static class BotWorker
             Time.timeScale = job.timeScale;
             pendingAircraft = job.aircraft;
             settleUntil = 0f;
-            // Her is temiz sahneyle baslar (oyunun yeniden deneme yolu da Flight sahnesini yukler)
+            // Her is temiz sahneyle baslar (oyunun yeniden deneme yolu da Flight sahnesini yukler); onceki isin
+            // acik biraktigi asama sonu ekrani duraklatmayi tasimasin
+            GameState.UiOpen = false;
+            GameState.SetPaused(false);
             UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
             waitFrames = 90;
             started = false;
