@@ -1287,6 +1287,7 @@ public class PlaneController : MonoBehaviour
             if (kb.sKey.isPressed || kb.downArrowKey.isPressed) move.y -= 1f;
             if (kb.tKey.wasPressedThisFrame) autoLevel = !autoLevel;
         }
+        move.x += BotInput.Strafe;
 
         var pad = Gamepad.current;
         if (pad != null)

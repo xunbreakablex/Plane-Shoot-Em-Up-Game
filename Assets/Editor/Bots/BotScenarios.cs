@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
 
 // Dalga olcumu: oyuncu olumsuz, sabit irtifa / yavas donus, surekli ates. Asamaya atlar ve "duration" sn boyunca
 // gelen ucaklari, indirilenleri, dusman mermilerini ve oyuncuya isabetleri sayar (boss'lar kapali).
@@ -86,7 +84,7 @@ public class WaveScenario : BotWorker.Scenario
         }
         foreach (var kv in aliveE)
             if (!deadE.Contains(kv.Key) && (kv.Value == null || kv.Value.IsDead)) { deadE.Add(kv.Key); if (kv.Value != null) killed++; }
-        InputSystem.QueueStateEvent(Keyboard.current, new KeyboardState(Key.Space));
+        BotInput.Fire = true;
         return false;
     }
 
@@ -151,8 +149,8 @@ public class BossScenario : BotWorker.Scenario
             Vector3 local = Quaternion.Inverse(Quaternion.LookRotation(cm.RushHeading, Vector3.up)) * to;
             fAim.SetValue(plane, new Vector2(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg,
                 Mathf.Atan2(local.y, new Vector2(local.x, local.z).magnitude) * Mathf.Rad2Deg));
-            bool left = Mathf.Repeat(el, 2.2f) < 1.1f;
-            InputSystem.QueueStateEvent(Keyboard.current, new KeyboardState(Key.Space, left ? Key.A : Key.D));
+            BotInput.Fire = true;
+            BotInput.Strafe = Mathf.Repeat(el, 2.2f) < 1.1f ? -1f : 1f;
         }
         return false;
     }

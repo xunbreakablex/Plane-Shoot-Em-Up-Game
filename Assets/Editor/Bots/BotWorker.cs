@@ -49,8 +49,6 @@ public static class BotWorker
     private static float startAt, nextPoll, settleUntil;
     private static int pendingAircraft = -1, waitFrames;
     private static bool prevRunInBackground;
-    private static UnityEngine.InputSystem.InputSettings.EditorInputBehaviorInPlayMode prevEditorInput;
-    private static UnityEngine.InputSystem.InputSettings.BackgroundBehavior prevBackground;
 
     static BotWorker()
     {
@@ -88,12 +86,6 @@ public static class BotWorker
         // Odakta olmayan editorde oyun karesi ilerlemez; kosu boyunca arka planda calis (ayar cikista geri alinir)
         prevRunInBackground = PlayerSettings.runInBackground;
         Application.runInBackground = true;
-        // Game gorunumu odakta degilken klavye olaylari editore gider (bot Space'e bassa da silah ateslemez)
-        var input = UnityEngine.InputSystem.InputSystem.settings;
-        prevEditorInput = input.editorInputBehaviorInPlayMode;
-        prevBackground = input.backgroundBehavior;
-        input.editorInputBehaviorInPlayMode = UnityEngine.InputSystem.InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
-        input.backgroundBehavior = UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus;
         Install(true);
         Log("basladi " + Application.dataPath);
     }
@@ -101,12 +93,11 @@ public static class BotWorker
     private static void Stop()
     {
         if (root == null) return;
+        if (current != null) Finish("iptal");
         root = null;
         Install(false);
         PlayerSettings.runInBackground = prevRunInBackground;
-        UnityEngine.InputSystem.InputSystem.settings.editorInputBehaviorInPlayMode = prevEditorInput;
-        UnityEngine.InputSystem.InputSystem.settings.backgroundBehavior = prevBackground;
-        if (current != null) Finish("iptal");
+        BotInput.Clear();
         Time.captureFramerate = 0;
         Time.timeScale = 1f;
     }
@@ -132,7 +123,8 @@ public static class BotWorker
         {
             if (current == null)
             {
-                if (Time.realtimeSinceStartup < nextPoll || !Claim()) { nextPoll = Time.realtimeSinceStartup + 1f; return; }
+                if (Time.realtimeSinceStartup < nextPoll) return;
+                if (!Claim()) { nextPoll = Time.realtimeSinceStartup + 1f; return; }
             }
             if (waitFrames > 0) { waitFrames--; return; } // sahne yeniden yukleniyor
             if (pendingAircraft >= 0)
@@ -214,6 +206,7 @@ public static class BotWorker
         File.WriteAllText(Path.Combine(root, "results", id + ".txt"), id + "\t" + workerName + "\t" + result + "\n");
         try { File.Delete(currentFile); } catch (IOException) { }
         RevertOverrides();
+        BotInput.Clear();
         Time.timeScale = 1f;
         current = null;
         Log("bitti " + id + " " + result);

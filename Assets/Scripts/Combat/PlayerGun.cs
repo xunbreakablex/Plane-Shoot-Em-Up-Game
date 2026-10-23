@@ -206,7 +206,8 @@ public partial class PlayerGun : MonoBehaviour
         // Ates: SPACE basili tut (her iki nisan modunda) ya da sol tik. SPACE yerde ayrica frendir.
         bool trigger = (Mouse.current != null && Mouse.current.leftButton.isPressed)
                        || (Keyboard.current != null && Keyboard.current.spaceKey.isPressed)
-                       || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > 0.35f);
+                       || (Gamepad.current != null && Gamepad.current.rightTrigger.ReadValue() > 0.35f)
+                       || BotInput.Fire;
         IsFiring = trigger && !plane.IsCrashed && HasWeapons && !Overheated;
         TickHeat(IsFiring);
 
