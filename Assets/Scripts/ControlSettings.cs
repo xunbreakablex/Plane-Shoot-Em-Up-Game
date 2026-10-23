@@ -147,4 +147,8 @@ public static class ControlSettings
     /// <summary>Bomba tusu: klavyede B; kol bagliysa sol yuz dugmesi (Xbox X) de yazilir.</summary>
     public static string BombKey => PadNav.Connected ? "B / X" : "B";
     public static string BombLabel => PadNav.Connected ? "BOMBA [B/X]" : "BOMBA [B]";
+
+    /// <summary>Kahraman kacisi: FARE semasinda Q / E; Arcade ve Klasik'te Q/E yatis / dumen oldugu icin Z / X.</summary>
+    public static string DashKeys => MouseSteering ? "Q / E" : "Z / X";
+    public static string DashKeysShort => MouseSteering ? "[Q/E]" : "[Z/X]";
 }

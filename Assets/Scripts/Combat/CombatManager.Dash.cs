@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Kahraman kacisi (Q / E, gamepad dpad sol/sag): kahraman aninda yana sicrar; ucaklarda yok (onlari ucaktan ayiran hareket).
+// Kahraman kacisi (FARE semasinda Q / E, Arcade / Klasik'te Z / X, gamepad dpad sol/sag): kahraman aninda yana sicrar;
+// ucaklarda yok (onlari ucaktan ayiran hareket).
 //   Ay Savascisi  "Yildiz Adimi": pembe yildiz tozu, kisa bekleme
 //   Ki Kahramani  "Anlik Isinlanma": en uzun sicrama, mavi iz
 //   Imparator     "Karanlik Adim": mor duman, en kisa ama uzun dokunulmazlik
@@ -50,14 +51,16 @@ public partial class CombatManager
         if (!dashHintShown && RunState.Active && Time.timeSinceLevelLoad > 4f)
         {
             dashHintShown = true;
-            Announce(DashOf(model).name + ":  Q / E ile yana kaç (kısa dokunulmazlık)", new Color(0.55f, 1f, 0.9f), 4f);
+            Announce(DashOf(model).name + ":  " + ControlSettings.DashKeys + " ile yana kaç (kısa dokunulmazlık)", new Color(0.55f, 1f, 0.9f), 4f);
         }
 
         var kb = UnityEngine.InputSystem.Keyboard.current;
         var pad = UnityEngine.InputSystem.Gamepad.current;
         int dir = 0;
-        if ((kb != null && kb.qKey.wasPressedThisFrame) || (pad != null && pad.dpad.left.wasPressedThisFrame)) dir = -1;
-        if ((kb != null && kb.eKey.wasPressedThisFrame) || (pad != null && pad.dpad.right.wasPressedThisFrame)) dir = 1;
+        // Arcade / Klasik'te Q/E yatis / dumen: kacis orada Z / X (eskiden her yatista istemeden sicraniyordu)
+        bool mouse = ControlSettings.MouseSteering;
+        if ((kb != null && (mouse ? kb.qKey : kb.zKey).wasPressedThisFrame) || (pad != null && pad.dpad.left.wasPressedThisFrame)) dir = -1;
+        if ((kb != null && (mouse ? kb.eKey : kb.xKey).wasPressedThisFrame) || (pad != null && pad.dpad.right.wasPressedThisFrame)) dir = 1;
         if (dir != 0) TryDash(dir);
     }
 

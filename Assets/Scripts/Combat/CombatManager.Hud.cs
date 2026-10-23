@@ -522,11 +522,11 @@ public partial class CombatManager
             cy += 20f;
         }
 
-        // Kahraman kacisi: Q / E, dolma cubugu
+        // Kahraman kacisi: Q / E (Arcade / Klasik'te Z / X), dolma cubugu
         if (dash)
         {
             Color dc = dashReady >= 1f ? new Color(0.55f, 1f, 0.9f) : new Color(0.55f, 0.7f, 0.8f);
-            Hud.Text(new Rect(x + 10f, cy, 170f, 20f), dashName + " [Q/E]", dc, 13);
+            Hud.Text(new Rect(x + 10f, cy, 170f, 20f), dashName + " " + ControlSettings.DashKeysShort, dc, 13);
             Rect bar = new Rect(x + 190f, cy + 5f, w - 200f, 10f);
             Hud.Fill(bar, new Color(1f, 1f, 1f, 0.15f));
             Hud.Fill(new Rect(bar.x, bar.y, bar.width * dashReady, bar.height), dc);

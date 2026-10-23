@@ -248,11 +248,20 @@ public class FlightTestManager : MonoBehaviour
         "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     F  füze     B  bomba",
         "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
-    private const string HelpHeroKeys = "B  özel yetenek     Q / E  yana kaç (kısa dokunulmazlık)     SAĞ TIK  yakınlaştır";
+    private const string HelpHeroKeysQE = "B  özel yetenek     Q / E  yana kaç (kısa dokunulmazlık)     SAĞ TIK  yakınlaştır";
+    private const string HelpHeroKeysZX = "B  özel yetenek     Z / X  yana kaç (kısa dokunulmazlık)     SAĞ TIK  yakınlaştır";
+    private static string HelpHeroKeys => ControlSettings.MouseSteering ? HelpHeroKeysQE : HelpHeroKeysZX;
     private static readonly string[] rushHelpHero =
     {
         "BOSS SAVAŞI  •  gaz yok, boss hep önünde",
         "A / D  sağa-sola kay     W / S  yukarı-aşağı     Q / E  yana kaç",
+        "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     B  özel yetenek",
+        "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
+    };
+    private static readonly string[] rushHelpHeroZX =
+    {
+        "BOSS SAVAŞI  •  gaz yok, boss hep önünde",
+        "A / D  sağa-sola kay     W / S  yukarı-aşağı     Z / X  yana kaç",
         "FARE  nişan (±45°)     SPACE / SOL TIK  ateş     B  özel yetenek",
         "Yeşil / pembe ok: duvardaki ya da çarktaki BOŞLUK, oraya kay",
     };
@@ -287,7 +296,7 @@ public class FlightTestManager : MonoBehaviour
         bool hero = cm != null && cm.flight != null && PlaneBuilder.IsHero(cm.flight.CurrentIndex);
         if (rush)
         {
-            lines = PadNav.Connected ? rushHelpPad : (hero ? rushHelpHero : rushHelpKeys);
+            lines = PadNav.Connected ? rushHelpPad : (hero ? (ControlSettings.MouseSteering ? rushHelpHero : rushHelpHeroZX) : rushHelpKeys);
         }
         else
         {

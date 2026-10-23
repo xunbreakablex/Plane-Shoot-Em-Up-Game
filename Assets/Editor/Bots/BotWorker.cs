@@ -209,6 +209,7 @@ public static class BotWorker
             case "boss": s = new BossScenario(); break;
             case "flow": s = new FlowScenario(); break;
             case "death": s = new DeathScenario(); break;
+            case "dashkeys": s = new DashKeysScenario(); break;
             default: throw new ArgumentException("bilinmeyen senaryo " + job.scenario);
         }
         s.job = job;

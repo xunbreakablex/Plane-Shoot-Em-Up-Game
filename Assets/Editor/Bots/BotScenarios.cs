@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 
 // Dalga olcumu: oyuncu olumsuz, sabit irtifa / yavas donus, surekli ates. Asamaya atlar ve "duration" sn boyunca
 // gelen ucaklari, indirilenleri, dusman mermilerini ve oyuncuya isabetleri sayar (boss'lar kapali).
@@ -462,4 +464,61 @@ public class DeathScenario : BotWorker.Scenario
         return "death=" + deathAt.ToString("0") + "\tcan=" + hpInfo + "\tisabet=" + hits + "\tindirilen=" + kills + "\tfaz=" + phaseAtDeath
             + "\tui=" + uiAt.ToString("0") + "\tsonra=" + after;
     }
+}
+
+// Kahraman kacisi tus testi: Arcade ve Fare semalarinda Q ve Z'ye basar, kacisin tetiklenip tetiklenmedigini yazar
+// (klavye olayi enjekte eder: yalniz klonlarda ulasir). Beklenen: Arcade Q yok / Z var, Fare Q var / Z yok.
+public class DashKeysScenario : BotWorker.Scenario
+{
+    private static readonly FieldInfo fNext = typeof(CombatManager).GetField("nextDash", BindingFlags.NonPublic | BindingFlags.Instance);
+    private static readonly ControlScheme[] Schemes = { ControlScheme.Arcade, ControlScheme.Mouse };
+    private static readonly Key[] Keys = { Key.Q, Key.Z };
+
+    private int step, phase, frames;
+    private float before;
+    private ControlScheme prev;
+    private readonly System.Text.StringBuilder log = new System.Text.StringBuilder();
+
+    public override void Begin()
+    {
+        prev = ControlSettings.Scheme;
+        PlayerHealth.God = true;
+    }
+
+    public override bool Tick()
+    {
+        CombatManager cm = CombatManager.Instance;
+        frames++;
+        if (step >= Schemes.Length * Keys.Length)
+        {
+            ControlSettings.Scheme = prev;
+            PlayerHealth.God = false;
+            return true;
+        }
+        ControlScheme scheme = Schemes[step / Keys.Length];
+        Key key = Keys[step % Keys.Length];
+        switch (phase)
+        {
+            case 0:   // bekleme suresi dolsun
+                ControlSettings.Scheme = scheme;
+                if (frames < 150) return false;
+                before = (float)fNext.GetValue(cm);
+                InputSystem.QueueStateEvent(Keyboard.current, new KeyboardState(key));
+                phase = 1; frames = 0;
+                return false;
+            case 1:
+                if (frames < 3) return false;
+                InputSystem.QueueStateEvent(Keyboard.current, new KeyboardState());
+                phase = 2; frames = 0;
+                return false;
+            default:
+                if (frames < 10) return false;
+                bool dashed = !Mathf.Approximately((float)fNext.GetValue(cm), before);
+                log.Append(scheme + "-" + key + "=" + (dashed ? "kacti" : "yok") + " ");
+                step++; phase = 0; frames = 0;
+                return false;
+        }
+    }
+
+    public override string Result() { return log.ToString().Trim(); }
 }
