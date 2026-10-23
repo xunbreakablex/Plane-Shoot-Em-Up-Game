@@ -177,7 +177,6 @@ public class FlowScenario : BotWorker.Scenario
 
     private static readonly MethodInfo mClose = typeof(StageClearUI).GetMethod("Close", BindingFlags.NonPublic | BindingFlags.Instance);
 
-    public float killAfter = 8f;
     private float t0, stageT0, lastGroundKill, clearAt = -1f, bossT0;
     private readonly System.Text.StringBuilder stages = new System.Text.StringBuilder();
     private float tMid = -1f, midTtk = -1f, tBoss = -1f, bossTtk = -1f;
@@ -316,9 +315,9 @@ public class FlowScenario : BotWorker.Scenario
                 groundAlive++;
                 if (groundPick == null || (groundPick.IsCore && !e.IsCore)) groundPick = e;
             }
-            else if (el - born[id] > killAfter) { e.TakeHit(999999, e.transform.position); airKills++; }
+            else if (el - born[id] > job.killAfter) { e.TakeHit(999999, e.transform.position); airKills++; }
         }
-        if (groundPick != null && el > 25f && el - lastGroundKill > 2f && (!groundPick.IsCore || groundAlive == 1 || el > 120f))
+        if (groundPick != null && el > 25f && el - lastGroundKill > job.groundEvery && (!groundPick.IsCore || groundAlive == 1 || el > 120f))
         {
             groundPick.TakeHit(999999, groundPick.transform.position);
             groundKills++;
@@ -331,7 +330,7 @@ public class FlowScenario : BotWorker.Scenario
     {
         return "s" + (RunState.Stage + 1) + " mid@" + tMid.ToString("0") + "/" + midTtk.ToString("0") + (midForced ? "!" : "")
             + " boss@" + tBoss.ToString("0") + "/" + bossTtk.ToString("0") + (bossForced ? "!" : "")
-            + " clear@" + clearAt.ToString("0") + " ui=" + (uiOpen ? 1 : 0);
+            + " clear@" + clearAt.ToString("0") + " ui=" + (uiOpen ? 1 : 0) + " skor=" + RunState.Score + " hurda=" + RunUpgrades.TotalEarned;
     }
 
     public override string Result()

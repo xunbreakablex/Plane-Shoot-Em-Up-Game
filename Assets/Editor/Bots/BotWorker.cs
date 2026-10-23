@@ -27,6 +27,8 @@ public static class BotWorker
         public float timeScale = 1f;
         public bool chain;           // flow: asama sonu ekranindan sonraki asamaya gec (oyun sonuna kadar)
         public int endless;          // flow + chain: zaferden sonra Sonsuz Savas'ta bu kadar asama daha
+        public float killAfter = 8f; // flow: hava dusmani bu kadar sn yasayinca vurulmus sayilir
+        public float groundEvery = 2f; // flow: yer hedefleri arasi sn (5 sn ustu seriyi bozar)
         public bool rush;            // oyun Boss Rush olarak baslar (hangardaki MOD secimi)
         public string after;         // death: sonuc ekranindan "retry" (tekrar oyna) ya da "hangar" (hangar -> savasa cik)
         public int seed;             // 0 = rastgele; ayni tohumu ayarlar arasinda paylasmak gurultuyu azaltir
