@@ -128,6 +128,7 @@ public partial class PlayerGun : MonoBehaviour
             ShotPattern(d, power, out int streams, out float rateMul, out float damage, out float critBonus);
             dps += d.rate * mods.fireRateMul * rateMul * (d.pellets > 1 ? d.ShotDamage : streams * damage);
         }
+        dps *= AircraftCatalog.Get(loadout.model).fireRateMul;   // ucagin atis hizi (silah ateslerken de uygulanir)
 
         foreach (int t in loadout.turrets)
         {
@@ -140,7 +141,8 @@ public partial class PlayerGun : MonoBehaviour
 
     /// <summary>
     /// Donanimin temel DPS'i: guc seviyesi ve yukseltmeler dahil degil. Dusman canini bununla belirlenince
-    /// guclenen oyuncu dusmani daha hizli dusurur; yukseltme dusmani tanklastirmaz.
+    /// guclenen oyuncu dusmani daha hizli dusurur; yukseltme dusmani tanklastirmaz. Ucagin atis hizi carpani dahil:
+    /// yoksa az yuvali ucaklar / kahramanlar siradan dusmani %20-50 daha hizli indiriyordu (carpan boss ve kapi icin).
     /// </summary>
     public static float ReferenceDps(PlaneLoadout loadout)
     {
@@ -151,6 +153,7 @@ public partial class PlayerGun : MonoBehaviour
             PartDef d = PartCatalog.Weapons[w];
             dps += d.rate * (d.beam > 0 ? d.damage : d.ShotDamage);
         }
+        dps *= AircraftCatalog.Get(loadout.model).fireRateMul;
         foreach (int t in loadout.turrets)
         {
             if (t <= 0) continue;
