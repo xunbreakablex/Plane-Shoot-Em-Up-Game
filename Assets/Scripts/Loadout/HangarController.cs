@@ -35,6 +35,8 @@ public class HangarController : MonoBehaviour
 
     private Tab tab = Tab.Body;
     private int model;
+    private int maxFirepowerModel = -1;   // LoadoutMath.MaxFirepower onbellegi (ucak degisince yeniden)
+    private float maxFirepower;
     private PlaneLoadout loadout;
     private GameObject preview;
 
@@ -791,7 +793,9 @@ public class HangarController : MonoBehaviour
         bool owned = Unlocks.OwnsAircraft(model);
 
         int stageIdx = resume ? Mathf.Max(0, RunState.PendingStage) : 0;
-        float needed = Stages.Get(stageIdx).minFirepower;
+        // Kapi ucagin ulasabilecegi en yuksek ates gucunu asmaz (Sonsuz Savas'ta kapi her tur artiyor; kahraman takiliyordu)
+        if (maxFirepowerModel != model) { maxFirepowerModel = model; maxFirepower = LoadoutMath.MaxFirepower(model); }
+        float needed = Mathf.Min(Stages.Get(stageIdx).minFirepower, maxFirepower);
         float firepower = cur.weaponDps + cur.turretDps;
         if (owned && firepower >= needed) Hud.Text(new Rect(0f, H - BottomH + 2f, W, 20f), goal, resume ? Gold : Dim, 13, TextAnchor.MiddleCenter, false);
 

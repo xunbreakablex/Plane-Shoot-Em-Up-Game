@@ -177,6 +177,50 @@ public static class LoadoutMath
         return s.powerUsed <= s.powerCap + 0.001f;
     }
 
+    /// <summary>
+    /// Ucagin acik yuvalarla ulasabilecegi en yuksek ates gucu (silah + taret): en guclu motor, her silah turu
+    /// tum acik silah yuvalarina, guc kalirsa otomatik taret; butce asilirsa sondan silah cikarilir.
+    /// Hangar kapisi bunu asmaz (Sonsuz Savas'ta artan kapi kahramanlarin ulasamayacagi degerlere cikiyordu).
+    /// </summary>
+    public static float MaxFirepower(int model)
+    {
+        AircraftDef craft = AircraftCatalog.Get(model);
+        int engine = 0;
+        for (int i = 1; i < PartCatalog.Engines.Length; i++)
+            if (PartCatalog.Engines[i].power > PartCatalog.Engines[engine].power) engine = i;
+
+        float best = 0f;
+        for (int w = 1; w < PartCatalog.Weapons.Length; w++)
+        {
+            if (PartCatalog.Weapons[w].group != craft.weaponGroup) continue;
+            var l = PlaneLoadout.CreateDefault();
+            l.model = model;
+            l.engine = engine;
+            l.weapons = new int[PartCatalog.WeaponSlots];
+            l.shields = new int[PartCatalog.ShieldSlots];
+            l.turrets = new int[PartCatalog.TurretSlots];
+            l.missiles = new int[PartCatalog.MissileSlots];
+            for (int i = 0; i < l.weapons.Length; i++)
+                if (Unlocks.IsOpen(model, SlotKind.Weapon, i)) l.weapons[i] = w;
+            for (int i = 0; i < l.turrets.Length; i++)
+            {
+                if (!Unlocks.IsOpen(model, SlotKind.Turret, i)) continue;
+                l.turrets[i] = 1;
+                if (!Fits(l)) l.turrets[i] = 0;
+            }
+            for (int i = l.weapons.Length - 1; i >= 0 && !Fits(l); i--) l.weapons[i] = 0;
+            LoadoutStats s = Compute(l.Clone());
+            best = Mathf.Max(best, s.weaponDps + s.turretDps);
+        }
+        return best;
+    }
+
+    private static bool Fits(PlaneLoadout l)
+    {
+        LoadoutStats s = Compute(l.Clone());
+        return s.powerUsed <= s.powerCap + 0.001f;
+    }
+
     public static void Set(PlaneLoadout l, SlotKind kind, int slot, int option)
     {
         switch (kind)
