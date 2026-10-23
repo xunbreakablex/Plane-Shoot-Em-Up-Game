@@ -218,7 +218,17 @@ public class FlowScenario : BotWorker.Scenario
             var rr = UnityEngine.Object.FindFirstObjectByType<RunResultUI>();
             uiOpen = (sc != null && sc.IsOpen) || (rr != null && rr.IsOpen);
             if (!uiOpen && el - clearAt <= 60f) return false;
-            if (job.chain && sc != null && sc.IsOpen && RunState.StageIsClear)
+            // Zafer ekranindan Sonsuz Savas'a devam (dugmenin yaptigi): asama tamam ekrani acilir, zincir surer
+            if (job.chain && job.endless > 0 && rr != null && rr.IsOpen && RunState.Phase == RunPhase.Won && !RunState.Rush)
+            {
+                typeof(RunResultUI).GetProperty("IsOpen").SetValue(rr, false);
+                GameState.UiOpen = false;
+                GameState.SetPaused(false);
+                RunState.ResumeAsEndless();
+                return false;
+            }
+            bool endlessDone = RunState.Endless && RunState.Stage - (Stages.All.Length - 1) >= job.endless;
+            if (job.chain && sc != null && sc.IsOpen && RunState.StageIsClear && !endlessDone)
             {
                 stages.Append(StageSummary()).Append(" | ");
                 mClose.Invoke(sc, null);
@@ -326,7 +336,7 @@ public class FlowScenario : BotWorker.Scenario
 
     public override string Result()
     {
-        return "stages=" + stages + StageSummary() + "\tphase=" + RunState.Phase + "\ttotal=" + (Time.time - t0).ToString("0")
+        return "stages=" + stages + StageSummary() + "\tphase=" + RunState.Phase + (RunState.Rush ? "\trush" : "") + (RunState.Endless ? "\tendless" : "") + "\ttotal=" + (Time.time - t0).ToString("0")
             + "\tair=" + airKills + "\tground=" + groundKills + (timeoutState != null ? "\tTAKILDI=" + timeoutState : "");
     }
 }

@@ -26,6 +26,8 @@ public static class BotWorker
         public int power = 2;
         public float timeScale = 1f;
         public bool chain;           // flow: asama sonu ekranindan sonraki asamaya gec (oyun sonuna kadar)
+        public int endless;          // flow + chain: zaferden sonra Sonsuz Savas'ta bu kadar asama daha
+        public bool rush;            // oyun Boss Rush olarak baslar (hangardaki MOD secimi)
         public int seed;             // 0 = rastgele; ayni tohumu ayarlar arasinda paylasmak gurultuyu azaltir
         public string[] set;         // "EnemyPlane.OrganicAimSpread=1.3", "GameSettings.enemyHitsScale=1.2"
     }
@@ -185,6 +187,7 @@ public static class BotWorker
             // acik biraktigi asama sonu ekrani duraklatmayi tasimasin
             GameState.UiOpen = false;
             GameState.SetPaused(false);
+            RunState.NextRush = job.rush;   // sahne yuklenince NewCampaign uygular
             UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
             waitFrames = 90;
             started = false;
@@ -216,6 +219,7 @@ public static class BotWorker
         try { File.Delete(currentFile); } catch (IOException) { }
         RevertOverrides();
         BotInput.Clear();
+        RunState.NextRush = false;
         Time.timeScale = 1f;
         current = null;
         Log("bitti " + id + " " + result);
