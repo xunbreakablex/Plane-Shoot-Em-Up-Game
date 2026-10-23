@@ -41,7 +41,8 @@ public struct UpgradeMods
 // (LoadoutApplier savas sahnesi basinda Reset cagirir). Olup yeniden dogunca korunur.
 public static class RunUpgrades
 {
-    public const int BaseKillScrap = 10;
+    // 2026-10-23: 10 -> 5 (tum dusmanlari indiren bot tam kampanyada ~18 bin hurda topluyordu, magazanin tamami 8,6 bin)
+    public const int BaseKillScrap = 5;
 
     private static readonly int[] levels = new int[(int)UpgradeId.Count];
 

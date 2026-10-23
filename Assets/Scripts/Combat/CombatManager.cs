@@ -344,7 +344,7 @@ public partial class CombatManager : MonoBehaviour
         if (enemy.IsAce)
         {
             Announce("AS PİLOT İNDİRİLDİ!  " + enemy.Title.Replace("AS: ", "").ToUpper(), new Color(1f, 0.85f, 0.3f), 3f, true);
-            RunUpgrades.AddScrap(80);
+            RunUpgrades.AddScrap(40);
             FollowCamera.AddShake(0.8f, 0.5f);
             HitStop(0.2f, 0.2f);
             if (uiAudio != null) uiAudio.PlayOneShot(Sfx.Victory, 0.5f);
@@ -369,13 +369,13 @@ public partial class CombatManager : MonoBehaviour
         if (enemy.IsDiving)
         {
             RunState.AddScore(300);
-            RunUpgrades.AddScrap(30);
+            RunUpgrades.AddScrap(15);
             Announce("SON DALIŞ BOZULDU  +300", new Color(1f, 0.6f, 0.3f), 1.8f);
         }
 
         // Hurda odulu: dusman cani x seri carpani x upgrade carpani (bossta sinirli)
         // Bossta hurda sinirli kalsin; diger sert hedefler (agir, as, kara birimi) 15 vurustan sonra azalarak artar
-        int rewardHits = enemy.IsBoss ? Mathf.Min(enemy.MaxHits, 15) : SoftHits(enemy.MaxHits);
+        int rewardHits = enemy.IsBoss ? Mathf.Min(enemy.MaxHits, 15) : SoftHits(enemy.RewardHits > 0 ? enemy.RewardHits : enemy.MaxHits);
         int reward = RunUpgrades.ComputeReward(rewardHits, Streak);
         RunUpgrades.AddScrap(reward);
 
@@ -558,7 +558,7 @@ public partial class CombatManager : MonoBehaviour
 
             case PickupKind.Scrap:
             {
-                int gain = 60 + RunState.Stage * 25;
+                int gain = 30 + RunState.Stage * 12;
                 RunUpgrades.AddScrap(gain);
                 text = $"HURDA +{gain}";
                 break;

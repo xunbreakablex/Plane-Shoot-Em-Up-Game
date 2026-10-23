@@ -105,6 +105,8 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 {
     public int MaxHits { get; private set; }
     public int HitsRemaining { get; private set; }
+    /// <summary>Hurda odulunun esas aldigi can (0 = MaxHits). Hava dusmaninda oyuncunun donanimindan bagimsiz.</summary>
+    public int RewardHits { get; set; }
     public Vector3 Velocity { get; private set; }
     public EnemyKind Kind { get; private set; }
     public EnemyBehavior Behavior { get; private set; }

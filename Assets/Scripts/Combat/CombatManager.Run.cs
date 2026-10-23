@@ -450,6 +450,7 @@ public partial class CombatManager
         var enemy = go.AddComponent<EnemyPlane>();
         enemy.Init(this, HitsFor(kind), cruise, turn, kind,
             strafe ? EnemyBehavior.Strafe : EnemyBehavior.Chase, look, drop);
+        enemy.RewardHits = RewardHitsFor(kind);
         EnemyThemes.Decorate(go, themeLook);
         EngineFx.Attach(go, model, () => enemy.IsDead ? -1f : enemy.EngineThrottle, EnemyThemes.Style(themeLook));   // egzoz alevi + duman
 
@@ -477,6 +478,17 @@ public partial class CombatManager
     private const float MinKillSeconds = 0.5f;
 
     private float waveCountCarry;
+
+    // Hurda odulunun esas aldigi can: HitsFor gibi ama sabit referans ates gucuyle. Oyuncunun donanimindan bagimsiz;
+    // eskiden guclu donanim dusmani dayaniklilastirdigi icin ayni oyunda %28'e kadar daha cok hurda kazandiriyordu.
+    private const float RewardReferenceDps = 40f;
+
+    private static int RewardHitsFor(EnemyKind kind)
+    {
+        float grow = 1f + 0.12f * RunState.Stage;
+        float hits = RewardReferenceDps * 0.5f * TimeToKill(kind) * grow * Difficulty.HitsMul * GameSettings.Current.enemyHitsScale;
+        return Mathf.Max(kind == EnemyKind.Kamikaze ? 2 : 4, Mathf.RoundToInt(hits));
+    }
 
     private int HitsFor(EnemyKind kind)
     {

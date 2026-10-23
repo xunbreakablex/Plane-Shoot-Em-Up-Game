@@ -38,7 +38,7 @@ public class UpgradeDef
 // Etki degerleri RunUpgrades.Recompute icinde (seviye basina).
 public static class UpgradeCatalog
 {
-    public const float CostGrowth = 1.45f;
+    public const float CostGrowth = 1.6f;   // seviye basina fiyat carpani (1,45'te magazanin tamami 8,6 bin, 1,6'da 10,5 bin)
 
     public static readonly string[] CategoryNames = { "SİLAH", "KALKAN VE GÖVDE", "FÜZE VE TARET", "UÇUŞ VE EKONOMİ" };
 

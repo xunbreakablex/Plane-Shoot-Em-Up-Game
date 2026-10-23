@@ -379,7 +379,7 @@ public partial class CombatManager
         string text = weapon ? label + " KOPTU!" : label + " PARÇALANDI!";
         Announce(text, weapon ? new Color(1f, 0.6f, 0.25f) : new Color(1f, 0.85f, 0.45f), 1.8f);
         RunState.AddScore(weapon ? 600 : 350);
-        RunUpgrades.AddScrap(weapon ? 25 : 15);
+        RunUpgrades.AddScrap(weapon ? 13 : 8);
         killMarkerTime = Time.unscaledTime;
         HitStop(weapon ? 0.09f : 0.05f, 0.25f);
         if (uiAudio != null)
