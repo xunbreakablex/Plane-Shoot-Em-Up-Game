@@ -137,6 +137,9 @@ public class EnemyPlane : MonoBehaviour, IDamageable
     private const float TurnEaseOut = 3f;         // kalan aci (derece) x bu = istenen donus hizi (yaklastikca yavaslar)
     private Vector3 smoothDesired;
     private float turnVel;                        // anlik donus hizi (derece/sn)
+    // Organik donuste dusman daha iyi konumdan ates eder: ayni mermi sayisinda oyuncu ~1,5 kat isabet aliyordu
+    // (2026-10-23, asama 1: sert 18,8 / organik 27,6 isabet). Nisanli atisin sapmasi bu kat (boss haric): 19,0.
+    private const float OrganicAimSpread = 1.8f;
     private float climbVel;                       // duz gecen bombardimancinin tirmanma hizi
     private float weavePhase;
     private float weaveRate;
@@ -792,8 +795,8 @@ public class EnemyPlane : MonoBehaviour, IDamageable
 
                 float s = transform.localScale.x;
                 Vector3 muzzle = pos + rot * new Vector3((Random.value < 0.5f ? -0.9f : 0.9f) * s, 0f, 1.6f * s);
-                Vector3 aim = target.position + mgr.PlayerVelocity * (dist / bulletSpeed)
-                              + Random.insideUnitSphere * (mgr.enemyAimError * Difficulty.AimErrorMul * aimSpread);
+                float spread = mgr.enemyAimError * Difficulty.AimErrorMul * aimSpread * (IsBoss ? 1f : OrganicAimSpread);
+                Vector3 aim = target.position + mgr.PlayerVelocity * (dist / bulletSpeed) + Random.insideUnitSphere * spread;
                 Spawn(muzzle, (aim - muzzle).normalized, bulletSpeed);
                 Sfx.PlayAt(Sfx.Shot, muzzle, 0.25f);
             }
